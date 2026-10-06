@@ -1,0 +1,176 @@
+@import 'tailwindcss';
+
+@theme {
+  /* Colors — Wise brand */
+  --color-forest-ink: #163300;
+  --color-lime-voltage: #9fe870;
+  --color-spruce: #054d28;
+  --color-linen-mist: #e2f6d5;
+  --color-signal-blue: #0b4c72;
+  --color-alarm-red: #cb272f;
+  --color-charcoal: #454745;
+  --color-obsidian: #0e0f0c;
+  --color-pebble: #868685;
+  --color-slate: #6a6c6a;
+  --color-fog: #e8ebe6;
+  --color-paper: #ffffff;
+
+  /* Typography — Fonts */
+  --font-inter: 'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-wise-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+
+  /* Typography — Scale (rem-based) */
+  --text-micro: 0.75rem;
+  --text-caption: 0.875rem;
+  --text-body-sm: 1rem;
+  --text-body: 1.125rem;
+  --text-body-lg: 1.5625rem;
+  --text-subheading: 2.25rem;
+  --text-heading-sm: 2.8125rem;
+  --text-heading: 3.8125rem;
+  --text-heading-lg: 5.5625rem;
+  --text-display: 6.5625rem;
+
+  /* Spacing */
+  --spacing-4: 4px;
+  --spacing-8: 8px;
+  --spacing-12: 12px;
+  --spacing-16: 16px;
+  --spacing-20: 20px;
+  --spacing-24: 24px;
+  --spacing-28: 28px;
+  --spacing-32: 32px;
+  --spacing-40: 40px;
+  --spacing-44: 44px;
+  --spacing-48: 48px;
+  --spacing-56: 56px;
+  --spacing-64: 64px;
+  --spacing-100: 100px;
+  --spacing-124: 124px;
+
+  /* Border radius */
+  --radius-sm: 2px;
+  --radius-lg: 10px;
+  --radius-2xl: 16px;
+  --radius-3xl: 28px;
+  --radius-full: 9999px;
+
+  /* Shadows */
+  --shadow-subtle: rgba(14, 15, 12, 0.12) 0px 0px 0px 1px;
+  --shadow-subtle-inset: rgb(134, 134, 133) 0px 0px 0px 1px inset;
+  --shadow-xl: rgba(0, 0, 0, 0.15) 0px 10px 32px 0px, rgba(0, 0, 0, 0.04) 0px 40px 40px 0px;
+  --shadow-lg: rgba(0, 0, 0, 0.08) 0px 6px 20px 0px;
+}
+
+/* Base */
+:root {
+  color-scheme: light;
+}
+
+html,
+body {
+  background: var(--color-paper);
+  color: var(--color-charcoal);
+  font-family: var(--font-inter);
+  font-feature-settings: 'cv11', 'ss01', 'calt';
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Display headlines — Wise Sans substitute (Inter 900, tight tracking) */
+.font-display {
+  font-family: var(--font-wise-sans);
+  font-weight: 900;
+  letter-spacing: -0.04em;
+  line-height: 0.85;
+}
+
+.text-display {
+  font-family: var(--font-wise-sans);
+  font-weight: 900;
+  letter-spacing: -0.04em;
+  line-height: 0.85;
+}
+
+.text-heading {
+  letter-spacing: -0.015em;
+}
+
+.text-subheading {
+  letter-spacing: -0.011em;
+}
+
+.text-body {
+  letter-spacing: -0.006em;
+}
+
+.text-caption {
+  letter-spacing: -0.005em;
+}
+
+.text-micro {
+  letter-spacing: -0.003em;
+}
+
+/* Custom utilities */
+.bg-paper { background-color: var(--color-paper); }
+.bg-fog { background-color: var(--color-fog); }
+.bg-linen-mist { background-color: var(--color-linen-mist); }
+.bg-lime-voltage { background-color: var(--color-lime-voltage); }
+.bg-forest-ink { background-color: var(--color-forest-ink); }
+.bg-spruce { background-color: var(--color-spruce); }
+
+.text-forest-ink { color: var(--color-forest-ink); }
+.text-lime-voltage { color: var(--color-lime-voltage); }
+.text-charcoal { color: var(--color-charcoal); }
+.text-obsidian { color: var(--color-obsidian); }
+.text-pebble { color: var(--color-pebble); }
+.text-slate { color: var(--color-slate); }
+
+.border-pebble { border-color: var(--color-pebble); }
+.border-forest-ink { border-color: var(--color-forest-ink); }
+.border-lime-voltage { border-color: var(--color-lime-voltage); }
+
+.rounded-pill { border-radius: 9999px; }
+.rounded-card { border-radius: 10px; }
+.rounded-large { border-radius: 28px; }
+.rounded-mask { border-radius: 1000px; }
+
+/* Focus ring (Wise uses hairline inset) */
+:focus-visible {
+  outline: 0;
+  box-shadow: rgb(134, 134, 133) 0px 0px 0px 1px inset;
+}
+
+/* Scrollbar (subtle) */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: var(--color-pebble);
+  border-radius: 9999px;
+  border: 2px solid var(--color-paper);
+}
+::-webkit-scrollbar-thumb:hover { background: var(--color-slate); }
+
+/* Animation: subtle pop for added items */
+@keyframes pop {
+  0% { transform: scale(0.92); opacity: 0; }
+  60% { transform: scale(1.03); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.animate-pop { animation: pop 280ms ease-out both; }
+
+/* Drag-and-drop visuals */
+[data-drag-over] {
+  box-shadow: rgba(159, 232, 112, 0.55) 0px 0px 0px 2px inset;
+}
+
+/* Selection */
+::selection {
+  background: var(--color-lime-voltage);
+  color: var(--color-forest-ink);
+}
