@@ -1,15 +1,13 @@
 import { useMemo, useState } from 'react';
 import { useRouter } from '@/lib/router';
 import { useProfile } from '@/hooks/useProfile';
-import { useExercises } from '@/hooks/useExercises';
+import { EXERCISES } from '@/data/exercises';
 import { ExerciseBank } from '@/components/ExerciseBank';
 import { RoutineBuilder } from '@/components/RoutineBuilder';
 import { ExerciseDetail } from '@/components/ExerciseDetail';
 import { MuscleCloud, computeMuscleSummaries } from '@/components/MuscleCloud';
 import { SegmentedTabs } from '@/components/ui/SegmentedTabs';
 import { Button } from '@/components/ui/Button';
-import { Pill } from '@/components/ui/Pill';
-import { ExerciseBankSkeleton, BannerOffline } from '@/components/Skeleton';
 import { WorkoutGenerator } from '@/components/WorkoutGenerator';
 import type { Exercise, RoutineExercise } from '@/types';
 import { PROFILES } from '@/lib/profiles';
@@ -27,7 +25,7 @@ function createLocalId() {
 export function WorkoutsPage() {
   const router = useRouter();
   const { profile, clearProfile } = useProfile();
-  const { exercises, loading, source, error, reload } = useExercises();
+  const exercises = EXERCISES;
   const [mobileTab, setMobileTab] = useState<MobileTab>('banco');
   const [items, setItems] = useState<DraftRoutineExercise[]>([]);
   const [activeExercise, setActiveExercise] = useState<Exercise | null>(null);
@@ -148,20 +146,13 @@ export function WorkoutsPage() {
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-3">
-          {source === 'fallback' ? (
-            <Pill tone="dark">Modo offline</Pill>
-          ) : source === 'sdk' ? (
-            <Pill tone="lime">WorkoutX · {exercises.length}</Pill>
-          ) : (
-            <Pill tone="mist">Cargando banco…</Pill>
-          )}
           <Button
             variant="outline"
             size="sm"
             onClick={() => setShowGenerator(true)}
             disabled={exercises.length === 0}
           >
-            Generar con IA
+            Armar rutina rápida
           </Button>
           <Button variant="ghost" size="sm" onClick={clearProfile}>
             Cambiar usuario
@@ -169,46 +160,20 @@ export function WorkoutsPage() {
         </div>
       </header>
 
-      {source === 'fallback' ? (
-        <BannerOffline onReload={error ? reload : undefined} />
-      ) : null}
-
-      {loading ? (
-        <ExerciseBankSkeleton />
-      ) : (
-        <>
-          <div className="lg:hidden">
-            <SegmentedTabs
-              items={[
-                { id: 'banco', label: 'Banco', badge: exercises.length },
-                { id: 'rutina', label: 'Mi rutina', badge: items.length },
-              ]}
-              value={mobileTab}
-              onChange={setMobileTab}
-              size="lg"
-            />
-            <div className="mt-5">
-              {mobileTab === 'banco' ? (
-                <ExerciseBank exercises={exercises} onSelect={setActiveExercise} />
-              ) : (
-                <div className="flex flex-col gap-4">
-                  <RoutineBuilder
-                    items={items}
-                    exercisesById={exercisesById}
-                    onReorder={reorder}
-                    onUpdateItem={updateItem}
-                    onRemove={removeItem}
-                    onSelectExercise={setActiveExercise}
-                    onStart={startWorkout}
-                  />
-                  <MuscleCloud summaries={muscleSummary} />
-                </div>
-              )}
-            </div>
-          </div>
-
-          <div className="hidden grid-cols-1 gap-8 lg:grid lg:grid-cols-[1.5fr_1fr]">
+      <div className="lg:hidden">
+        <SegmentedTabs
+          items={[
+            { id: 'banco', label: 'Banco', badge: exercises.length },
+            { id: 'rutina', label: 'Mi rutina', badge: items.length },
+          ]}
+          value={mobileTab}
+          onChange={setMobileTab}
+          size="lg"
+        />
+        <div className="mt-5">
+          {mobileTab === 'banco' ? (
             <ExerciseBank exercises={exercises} onSelect={setActiveExercise} />
+          ) : (
             <div className="flex flex-col gap-4">
               <RoutineBuilder
                 items={items}
@@ -221,9 +186,25 @@ export function WorkoutsPage() {
               />
               <MuscleCloud summaries={muscleSummary} />
             </div>
-          </div>
-        </>
-      )}
+          )}
+        </div>
+      </div>
+
+      <div className="hidden grid-cols-1 gap-8 lg:grid lg:grid-cols-[1.5fr_1fr]">
+        <ExerciseBank exercises={exercises} onSelect={setActiveExercise} />
+        <div className="flex flex-col gap-4">
+          <RoutineBuilder
+            items={items}
+            exercisesById={exercisesById}
+            onReorder={reorder}
+            onUpdateItem={updateItem}
+            onRemove={removeItem}
+            onSelectExercise={setActiveExercise}
+            onStart={startWorkout}
+          />
+          <MuscleCloud summaries={muscleSummary} />
+        </div>
+      </div>
 
       {activeExercise ? (
         <ExerciseDetail

@@ -1,9 +1,5 @@
-
 import { useState } from 'react';
 import { Button } from '@/components/ui/Button';
-import { Pill } from '@/components/ui/Pill';
-import { getWorkoutX } from '@/lib/workoutx';
-import { fetchExercisesFromSdk } from '@/lib/sdk-exercises';
 import type { Exercise, MuscleGroup, RoutineExercise } from '@/types';
 
 interface WorkoutGeneratorProps {
@@ -13,7 +9,6 @@ interface WorkoutGeneratorProps {
 }
 
 type Goal = 'hypertrophy' | 'strength' | 'endurance' | 'general';
-type Level = 'principiante' | 'intermedio' | 'avanzado';
 
 const GOAL_OPTIONS: { id: Goal; label: string; tag: string }[] = [
   { id: 'hypertrophy', label: 'Hipertrofia', tag: 'Volumen · 8-12 reps' },
@@ -22,82 +17,42 @@ const GOAL_OPTIONS: { id: Goal; label: string; tag: string }[] = [
   { id: 'general', label: 'General', tag: 'Mixto' },
 ];
 
-const LEVEL_OPTIONS: { id: Level; label: string }[] = [
-  { id: 'principiante', label: 'Principiante' },
-  { id: 'intermedio', label: 'Intermedio' },
-  { id: 'avanzado', label: 'Avanzado' },
-];
+const TARGET_MUSCLES: MuscleGroup[] = ['pecho', 'espalda', 'hombros', 'cuadriceps', 'femorales', 'core'];
 
-const DAY_OPTIONS = [2, 3, 4, 5, 6];
+const PARAMS_BY_GOAL: Record<Goal, { sets: number; reps: number }> = {
+  hypertrophy: { sets: 4, reps: 10 },
+  strength: { sets: 5, reps: 5 },
+  endurance: { sets: 3, reps: 18 },
+  general: { sets: 3, reps: 12 },
+};
 
-function createLocalId() {
-  return `local-${Math.random().toString(36).slice(2, 11)}`;
+function buildRoutine(
+  exercises: Exercise[],
+  goal: Goal,
+): Array<Omit<RoutineExercise, 'id' | '_local' | 'routineId' | 'position' | 'completedSets'>> {
+  const byMuscle = new Map<string, Exercise>();
+  for (const ex of exercises) {
+    if (!byMuscle.has(ex.primaryMuscle)) byMuscle.set(ex.primaryMuscle, ex);
+  }
+  const params = PARAMS_BY_GOAL[goal];
+  const items: Array<Omit<RoutineExercise, 'id' | '_local' | 'routineId' | 'position' | 'completedSets'>> = [];
+  for (const m of TARGET_MUSCLES) {
+    const ex = byMuscle.get(m);
+    if (!ex) continue;
+    items.push({ exerciseId: ex.id, sets: params.sets, reps: params.reps, weightKg: null });
+  }
+  return items;
 }
 
 export function WorkoutGenerator({ exercises, onAdd, onClose }: WorkoutGeneratorProps) {
   const [goal, setGoal] = useState<Goal>('hypertrophy');
-  const [level, setLevel] = useState<Level>('intermedio');
-  const [days, setDays] = useState<number>(4);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
-  const buildLocally = (): Array<Omit<RoutineExercise, 'id' | '_local' | 'routineId' | 'position' | 'completedSets'>> => {
-    const byMuscle = new Map<string, Exercise>();
-    for (const ex of exercises) {
-      const cur = byMuscle.get(ex.primaryMuscle);
-      if (!cur) byMuscle.set(ex.primaryMuscle, ex);
-    }
-    const muscles: MuscleGroup[] = ['pecho', 'espalda', 'hombros', 'cuadriceps', 'femorales', 'core'];
-    const params =
-      goal === 'strength'
-        ? { sets: 5, reps: 5 }
-        : goal === 'endurance'
-          ? { sets: 3, reps: 18 }
-          : goal === 'general'
-            ? { sets: 3, reps: 12 }
-            : { sets: 4, reps: 10 };
-    const items: Array<Omit<RoutineExercise, 'id' | '_local' | 'routineId' | 'position' | 'completedSets'>> = [];
-    for (const m of muscles) {
-      const ex = byMuscle.get(m);
-      if (!ex) continue;
-      items.push({ exerciseId: ex.id, sets: params.sets, reps: params.reps, weightKg: null });
-    }
-    return items;
+  const handleGenerate = () => {
+    onAdd(buildRoutine(exercises, goal));
+    onClose();
   };
 
-  const handleGenerate = async () => {
-    setLoading(true);
-    setError(null);
-      const wx = getWorkoutX();
-      try {
-      const result = await wx.workout.generate({
-        goal,
-        level,
-        daysPerWeek: days,
-      } as Record<string, unknown>);
-      const items = extractItemsFromSdkResponse(result, exercises);
-      if (items.length === 0) {
-        onAdd(buildLocally());
-      } else {
-        onAdd(items);
-      }
-      onClose();
-    } catch (err) {
-      // plan might not include workoutGenerator; fall back to local builder
-      try {
-        // try a single list refresh in case we have stale data
-        await fetchExercisesFromSdk(60).catch(() => null);
-      } catch {
-        // ignore
-      }
-      const msg = err instanceof Error ? err.message : 'No se pudo generar la rutina';
-      setError(`${msg} · usando selección local`);
-      onAdd(buildLocally());
-      onClose();
-    } finally {
-      setLoading(false);
-    }
-  };
+  const preview = buildRoutine(exercises, goal);
 
   return (
     <div
@@ -125,13 +80,13 @@ export function WorkoutGenerator({ exercises, onAdd, onClose }: WorkoutGenerator
         <div className="flex flex-1 flex-col gap-5 overflow-y-auto px-6 py-6 md:px-10 md:py-8">
           <div>
             <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-pebble">
-              Generador IA
+              Armar rutina rápida
             </p>
             <h2 id="workout-gen-title" className="mt-2 text-[28px] font-black leading-[1] tracking-[-0.02em] text-forest-ink md:text-[36px]">
-              Armá tu rutina con IA
+              Rutina al toque
             </h2>
             <p className="mt-2 text-[14px] leading-[1.55] text-slate">
-              La IA arma una rutina según tu objetivo. La podés editar antes de empezar.
+              Elegí un objetivo y te armo una rutina con un ejercicio por grupo muscular. La podés editar antes de empezar.
             </p>
           </div>
 
@@ -156,102 +111,40 @@ export function WorkoutGenerator({ exercises, onAdd, onClose }: WorkoutGenerator
             </div>
           </div>
 
-          <div className="flex flex-col gap-2">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-pebble">Nivel</p>
-            <div className="flex flex-wrap gap-2">
-              {LEVEL_OPTIONS.map((opt) => (
-                <button
-                  key={opt.id}
-                  type="button"
-                  onClick={() => setLevel(opt.id)}
-                  className={`rounded-pill px-4 h-9 text-[13px] font-medium transition ${
-                    level === opt.id
-                      ? 'bg-lime-voltage text-forest-ink'
-                      : 'bg-fog text-charcoal hover:bg-linen-mist'
-                  }`}
-                >
-                  {opt.label}
-                </button>
-              ))}
-            </div>
+          <div className="rounded-card border border-fog bg-fog/40 p-4">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-pebble">
+              Vista previa · {preview.length} ejercicios
+            </p>
+            <ul className="mt-2 flex flex-col gap-1">
+              {preview.map((it) => {
+                const ex = exercises.find((e) => e.id === it.exerciseId);
+                return (
+                  <li key={it.exerciseId} className="flex items-baseline justify-between gap-3 text-[13px]">
+                    <span className="truncate font-medium text-forest-ink">{ex?.name ?? it.exerciseId}</span>
+                    <span className="text-pebble">
+                      {it.sets} × {it.reps}
+                    </span>
+                  </li>
+                );
+              })}
+              {preview.length === 0 ? (
+                <li className="text-[12px] text-pebble">
+                  Todavía no hay ejercicios en el banco. Subí videos a <code>public/exercises/</code>.
+                </li>
+              ) : null}
+            </ul>
           </div>
-
-          <div className="flex flex-col gap-2">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-pebble">Días por semana</p>
-            <div className="flex flex-wrap gap-2">
-              {DAY_OPTIONS.map((d) => (
-                <button
-                  key={d}
-                  type="button"
-                  onClick={() => setDays(d)}
-                  className={`flex h-10 w-10 items-center justify-center rounded-pill text-[14px] font-bold transition ${
-                    days === d
-                      ? 'bg-forest-ink text-lime-voltage'
-                      : 'bg-fog text-charcoal hover:bg-linen-mist'
-                  }`}
-                >
-                  {d}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {error ? (
-            <Pill tone="dark">{error}</Pill>
-          ) : null}
         </div>
 
         <div className="flex flex-shrink-0 items-center justify-between gap-4 border-t border-fog bg-paper px-6 py-4 md:px-10 md:py-6">
-          <Button variant="outline" onClick={onClose} disabled={loading}>
+          <Button variant="outline" onClick={onClose}>
             Cancelar
           </Button>
-          <Button
-            variant="primary"
-            size="lg"
-            onClick={handleGenerate}
-            disabled={loading}
-          >
-            {loading ? 'Generando…' : 'Generar rutina'}
+          <Button variant="primary" size="lg" onClick={handleGenerate} disabled={preview.length === 0}>
+            Agregar a mi rutina
           </Button>
         </div>
       </div>
     </div>
   );
-}
-
-function extractItemsFromSdkResponse(
-  response: unknown,
-  catalog: Exercise[],
-): Array<Omit<RoutineExercise, 'id' | '_local' | 'routineId' | 'position' | 'completedSets'>> {
-  if (!response || typeof response !== 'object') return [];
-  const obj = response as Record<string, unknown>;
-
-  // Try common shapes
-  const candidateLists: unknown[] = [];
-  for (const k of ['exercises', 'items', 'workout', 'routine', 'data']) {
-    if (Array.isArray(obj[k])) candidateLists.push(obj[k]);
-  }
-  // Also accept { day1: [...], day2: [...] }
-  for (const [k, v] of Object.entries(obj)) {
-    if (Array.isArray(v) && /day|sesion|session/i.test(k)) candidateLists.push(v);
-  }
-  if (candidateLists.length === 0) return [];
-
-  const byId = new Map(catalog.map((e) => [e.id, e]));
-  const items: Array<Omit<RoutineExercise, 'id' | '_local' | 'routineId' | 'position' | 'completedSets'>> = [];
-  for (const list of candidateLists) {
-    for (const raw of list as unknown[]) {
-      if (!raw || typeof raw !== 'object') continue;
-      const r = raw as Record<string, unknown>;
-      const id = (r.exerciseId as string) ?? (r.id as string) ?? (r.exercise_id as string);
-      if (!id) continue;
-      if (!byId.has(id)) continue;
-      const sets = Number((r.sets as number) ?? 3) || 3;
-      const reps = Number((r.reps as number) ?? 10) || 10;
-      const weightKgRaw = r.weightKg ?? r.weight;
-      const weightKg = weightKgRaw == null ? null : Number(weightKgRaw) || null;
-      items.push({ exerciseId: id, sets, reps, weightKg });
-    }
-  }
-  return items;
 }

@@ -39,22 +39,3 @@ export function ExerciseBankSkeleton({ count = 6 }: { count?: number }) {
     </div>
   );
 }
-
-export function BannerOffline({ onReload }: { onReload?: () => void }) {
-  return (
-    <div className="mb-4 flex items-center justify-between gap-3 rounded-card border border-linen-mist bg-linen-mist/40 px-4 py-2 text-[12px] text-forest-ink">
-      <span className="font-medium">
-        Modo sin conexión · mostrando banco local
-      </span>
-      {onReload ? (
-        <button
-          type="button"
-          onClick={onReload}
-          className="rounded-pill bg-forest-ink px-3 py-1 text-[11px] font-semibold uppercase tracking-wider text-lime-voltage transition hover:bg-spruce"
-        >
-          Reintentar
-        </button>
-      ) : null}
-    </div>
-  );
-}

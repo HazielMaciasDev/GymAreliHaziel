@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from '@/lib/router';
-import { FALLBACK_EXERCISES } from '@/data/fallback';
+import { EXERCISES } from '@/data/exercises';
 import { MUSCLES } from '@/lib/muscles';
 import { Button } from '@/components/ui/Button';
 import { Pill } from '@/components/ui/Pill';
+import { ExerciseMedia } from '@/components/ExerciseMedia';
 import { classNames, formatKg } from '@/lib/format';
-import { getStoredExercises } from '@/hooks/useExercises';
 import type { Exercise, ProfileId } from '@/types';
 
 interface SessionItem {
@@ -69,8 +69,7 @@ export function ActiveWorkoutPage() {
 
   const exercisesById = useMemo(() => {
     const map = new Map<string, Exercise>();
-    for (const e of getStoredExercises()) map.set(e.id, e);
-    for (const e of FALLBACK_EXERCISES) if (!map.has(e.id)) map.set(e.id, e);
+    for (const e of EXERCISES) map.set(e.id, e);
     return map;
   }, []);
 
@@ -202,12 +201,13 @@ export function ActiveWorkoutPage() {
             ))}
           </div>
           <div className="relative aspect-[4/3] w-full overflow-hidden bg-fog">
-            <img
+            <ExerciseMedia
               src={exercise.gifPath}
               alt={exercise.name}
               className="h-full w-full object-cover"
+              loading="eager"
               onError={(e) => {
-                (e.currentTarget as HTMLImageElement).style.opacity = '0.15';
+                (e.currentTarget as HTMLElement).style.opacity = '0.15';
               }}
             />
           </div>

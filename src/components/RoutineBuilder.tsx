@@ -22,6 +22,7 @@ import { MUSCLES } from '@/lib/muscles';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Pill } from '@/components/ui/Pill';
+import { ExerciseMedia } from '@/components/ExerciseMedia';
 import { classNames, formatKg } from '@/lib/format';
 
 interface RoutineBuilderProps {
@@ -213,13 +214,13 @@ function SortableRow({ item, index, exercise, onUpdate, onRemove, onSelect }: So
         onClick={() => onSelect(exercise)}
         className="h-12 w-12 flex-shrink-0 overflow-hidden rounded-mask bg-fog transition hover:ring-2 hover:ring-lime-voltage"
       >
-        <img
+        <ExerciseMedia
           src={exercise.gifPath}
           alt=""
           className="h-full w-full object-cover"
           loading="lazy"
           onError={(e) => {
-            (e.currentTarget as HTMLImageElement).style.opacity = '0.2';
+            (e.currentTarget as HTMLElement).style.opacity = '0.2';
           }}
         />
       </button>

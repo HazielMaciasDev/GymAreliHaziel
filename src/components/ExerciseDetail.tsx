@@ -4,6 +4,7 @@ import type { Exercise } from '@/types';
 import { MUSCLES } from '@/lib/muscles';
 import { Button } from '@/components/ui/Button';
 import { Pill } from '@/components/ui/Pill';
+import { ExerciseMedia } from '@/components/ExerciseMedia';
 
 interface ExerciseDetailProps {
   exercise: Exercise;
@@ -68,12 +69,13 @@ export function ExerciseDetail({ exercise, onClose, onAdd }: ExerciseDetailProps
         </button>
 
         <div className="relative h-[260px] flex-shrink-0 overflow-hidden bg-fog md:h-[320px]">
-          <img
+          <ExerciseMedia
             src={exercise.gifPath}
             alt={exercise.name}
             className="h-full w-full object-cover"
+            loading="eager"
             onError={(e) => {
-              (e.currentTarget as HTMLImageElement).style.opacity = '0.15';
+              (e.currentTarget as HTMLElement).style.opacity = '0.15';
             }}
           />
         </div>
