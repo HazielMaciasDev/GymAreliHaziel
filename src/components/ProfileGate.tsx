@@ -1,20 +1,20 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useRouter, usePathname } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { useProfile } from '@/hooks/useProfile';
 
 export function ProfileGate({ children }: { children: React.ReactNode }) {
   const router = useRouter();
-  const pathname = usePathname();
   const { profile, ready } = useProfile();
 
   useEffect(() => {
     if (!ready) return;
-    if (!profile && pathname !== '/') {
+    const pathname = window.location.pathname.replace(/^\/GymAreliHaziel/, '');
+    if (!profile && pathname !== '/' && pathname !== '') {
       router.replace('/');
     }
-  }, [ready, profile, pathname, router]);
+  }, [ready, profile, router]);
 
   return <>{children}</>;
 }

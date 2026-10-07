@@ -5,6 +5,7 @@ import type { Exercise } from '@/types';
 import { MUSCLES } from '@/lib/muscles';
 import { Button } from '@/components/ui/Button';
 import { Pill } from '@/components/ui/Pill';
+import { withBasePath } from '@/lib/paths';
 
 interface ExerciseDetailProps {
   exercise: Exercise;
@@ -70,7 +71,7 @@ export function ExerciseDetail({ exercise, onClose, onAdd }: ExerciseDetailProps
 
         <div className="relative h-[260px] flex-shrink-0 overflow-hidden bg-fog md:h-[320px]">
           <img
-            src={exercise.gifPath}
+            src={withBasePath(exercise.gifPath)}
             alt={exercise.name}
             className="h-full w-full object-cover"
             onError={(e) => {

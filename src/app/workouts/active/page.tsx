@@ -7,6 +7,7 @@ import { MUSCLES } from '@/lib/muscles';
 import { Button } from '@/components/ui/Button';
 import { Pill } from '@/components/ui/Pill';
 import { classNames, formatKg } from '@/lib/format';
+import { withBasePath } from '@/lib/paths';
 import type { Exercise, ProfileId } from '@/types';
 
 interface SessionItem {
@@ -203,7 +204,7 @@ export default function ActiveWorkoutPage() {
           </div>
           <div className="relative aspect-[4/3] w-full overflow-hidden bg-fog">
             <img
-              src={exercise.gifPath}
+              src={withBasePath(exercise.gifPath)}
               alt={exercise.name}
               className="h-full w-full object-cover"
               onError={(e) => {

@@ -24,6 +24,7 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Pill } from '@/components/ui/Pill';
 import { classNames, formatKg } from '@/lib/format';
+import { withBasePath } from '@/lib/paths';
 
 interface RoutineBuilderProps {
   items: RoutineExercise[];
@@ -215,7 +216,7 @@ function SortableRow({ item, index, exercise, onUpdate, onRemove, onSelect }: So
         className="h-12 w-12 flex-shrink-0 overflow-hidden rounded-mask bg-fog transition hover:ring-2 hover:ring-lime-voltage"
       >
         <img
-          src={exercise.gifPath}
+          src={withBasePath(exercise.gifPath)}
           alt=""
           className="h-full w-full object-cover"
           loading="lazy"
