@@ -6,30 +6,30 @@ Diseñada con el sistema visual de `DESIGN.md` (paleta Wise: verde bosque + lime
 
 ## Stack
 
-- Next.js 15 (App Router) + React 19
-- Tailwind CSS v4 con `@theme` mapeado a tokens del DESIGN.md
+- Next.js 14 (App Router) · React 18 · Tailwind v4 con `@theme` mapeado al `DESIGN.md`
+- `@dnd-kit` para drag-and-drop
 - Supabase (Postgres) — banco de ejercicios y rutinas
-- `@dnd-kit` para drag-and-drop de la rutina
 - Sin auth: selector de perfil local (localStorage)
+- Static export a GitHub Pages
 
 ## Estructura
 
 ```
 src/
 ├── app/
-│   ├── layout.tsx              # root layout con ProfileGate
-│   ├── page.tsx                # selector de perfil
-│   ├── workouts/
-│   │   ├── page.tsx            # constructor de rutinas (banco + DnD)
-│   │   └── active/page.tsx     # modo ejecución con checklist
-├── components/                  # UI kit + componentes gym
-├── data/exercises.seed.ts      # ~15 ejercicios iniciales
-├── hooks/                       # useProfile
-├── lib/                        # supabase, muscles, profiles, format
-└── types/                      # tipos compartidos
+│   ├── layout.tsx · globals.css · page.tsx              # selector de perfil
+│   └── workouts/
+│       ├── page.tsx                                     # constructor DnD
+│       └── active/page.tsx                              # modo ejecución
+├── components/                                          # UI kit + gym
+├── data/exercises.seed.ts                               # 15 ejercicios iniciales
+├── hooks/useProfile.ts
+├── lib/                                                 # supabase, muscles, profiles, format
+└── types/index.ts
 
-public/exercises/                # aquí van los GIFs (súbanlos ustedes)
-supabase/migrations/            # 001_init.sql
+public/exercises/                                        # aquí van los GIFs (subanlos ustedes)
+supabase/migrations/001_init.sql                         # schema + RLS
+.github/workflows/deploy.yml                            # build + deploy a GitHub Pages
 ```
 
 ## Setup local
@@ -41,22 +41,43 @@ cp .env.local.example .env.local
 npm run dev
 ```
 
-## Cargar GIFs
-
-1. Sube cada GIF a `public/exercises/<slug>.gif`. El `slug` debe coincidir con el `id` del ejercicio (ver `src/data/exercises.seed.ts`).
-2. La app ya referencia esos paths automáticamente.
-
-## Aplicar migración y sembrar ejercicios
+## Build estático (GitHub Pages)
 
 ```bash
-# Aplica el schema (una vez):
-# Usa el MCP o pega 001_init.sql en SQL Editor de Supabase Studio.
+npm run build       # genera ./out
+```
 
-# Sube el banco inicial a Supabase:
+## Cargar GIFs
+
+1. Sube cada GIF a `public/exercises/<slug>.gif`. El slug debe coincidir con el `id` del ejercicio (ver `src/data/exercises.seed.ts`).
+2. La app ya referencia esos paths automáticamente.
+
+## Aplicar migración y poblar Supabase
+
+```bash
+# 1) Aplica el schema (una vez) desde el SQL Editor de Studio o vía supabase_apply_migration
+# 2) Sube el banco inicial:
 npm run seed
 ```
 
-## Decisiones pendientes
+## Deploy a GitHub Pages
 
-- La persistencia de rutinas aún es **local (sessionStorage) en esta versión**. Migrar a Supabase es trivial: ya están los hooks y tipos listos en `src/lib/supabase.ts`.
-- Cuando agreguen más ejercicios, editen `src/data/exercises.seed.ts` y corran `npm run seed` de nuevo.
+El workflow `.github/workflows/deploy.yml` se dispara en cada push a `main`.
+
+**Setup inicial en el repo:**
+
+1. **Settings → Secrets and variables → Actions**
+   - `Secrets → New repository secret`:
+     - `NEXT_PUBLIC_SUPABASE_ANON_KEY` = (la clave anon legacy JWT)
+   - `Variables → New repository variable`:
+     - `NEXT_PUBLIC_SUPABASE_URL` = `https://fhtormfuavagjahlvgji.supabase.co`
+2. **Settings → Pages**
+   - Source: **GitHub Actions**
+3. Push a `main` (o `Actions → Deploy to GitHub Pages → Run workflow`).
+
+URL resultante: `https://hazielmaciasdev.github.io/GymAreliHaziel/`
+
+## Notas
+
+- Las rutinas se persisten en `sessionStorage` en esta versión (se pierden al cerrar la pestaña). Migrar a Supabase es directo con los hooks en `src/lib/supabase.ts`.
+- Cuando agreguen más ejercicios, editen `src/data/exercises.seed.ts` y corran `npm run seed`.

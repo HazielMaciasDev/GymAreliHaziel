@@ -12,7 +12,8 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: 'Gym Guide',
   description: 'Tu guía personal de gym — Haziel & Areli',
-  manifest: '/manifest.json',
+  manifest: '/GymAreliHaziel/manifest.json',
+  icons: { icon: '/GymAreliHaziel/favicon.svg' },
 };
 
 export const viewport: Viewport = {

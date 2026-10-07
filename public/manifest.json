@@ -1,0 +1,17 @@
+{
+  "name": "Gym Guide",
+  "short_name": "Gym",
+  "description": "Tu guía personal de gym — Haziel & Areli",
+  "start_url": "/GymAreliHaziel/",
+  "scope": "/GymAreliHaziel/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#163300",
+  "icons": [
+    {
+      "src": "/GymAreliHaziel/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}
