@@ -1,7 +1,5 @@
-'use client';
-
 import { useEffect, useMemo, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter } from '@/lib/router';
 import { FALLBACK_EXERCISES } from '@/data/fallback';
 import { MUSCLES } from '@/lib/muscles';
 import { Button } from '@/components/ui/Button';
@@ -47,7 +45,7 @@ function clearSession() {
   window.sessionStorage.removeItem('gym.activeSession');
 }
 
-export default function ActiveWorkoutPage() {
+export function ActiveWorkoutPage() {
   const router = useRouter();
   const [session, setSession] = useState<ActiveSession | null>(null);
   const [elapsed, setElapsed] = useState(0);

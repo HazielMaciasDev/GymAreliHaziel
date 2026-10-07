@@ -1,7 +1,5 @@
-'use client';
-
 import { useEffect, useMemo, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter } from '@/lib/router';
 import { useProfile } from '@/hooks/useProfile';
 import { useExercises } from '@/hooks/useExercises';
 import { ExerciseBank } from '@/components/ExerciseBank';
@@ -26,7 +24,7 @@ function createLocalId() {
   return `local-${Math.random().toString(36).slice(2, 11)}`;
 }
 
-export default function WorkoutsPage() {
+export function WorkoutsPage() {
   const router = useRouter();
   const { profile, clearProfile } = useProfile();
   const { exercises, loading, source, error, reload } = useExercises();

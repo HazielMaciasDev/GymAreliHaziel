@@ -1,4 +1,3 @@
-'use client';
 
 import type { Exercise, MuscleGroup } from '@/types';
 import { MUSCLE_LIST, MUSCLES } from '@/lib/muscles';

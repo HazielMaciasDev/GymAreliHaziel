@@ -1,6 +1,5 @@
-'use client';
 
-import { useRouter } from 'next/navigation';
+import { useRouter } from '@/lib/router';
 import { Button } from '@/components/ui/Button';
 import { PROFILE_LIST } from '@/lib/profiles';
 

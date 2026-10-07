@@ -1,82 +1,76 @@
 # Gym Guide
 
-App web responsive para que **Haziel** y **Areli** armen y ejecuten rutinas de gym a partir de un banco de ejercicios curado (con GIFs que ustedes suben).
+App web responsive para que **Haziel** y **Areli** armen y ejecuten rutinas de gym a partir del banco de ejercicios de [WorkoutX](https://workoutxapp.com).
 
-Diseñada con el sistema visual de `DESIGN.md` (paleta Wise: verde bosque + lime, pills, tipografía display Inter 900).
+SPA hecha con **Vite + React 18 + Tailwind v4** · deploy a GitHub Pages en `https://hazielmaciasdev.github.io/GymAreliHaziel/`.
 
 ## Stack
 
-- Next.js 14 (App Router) · React 18 · Tailwind v4 con `@theme` mapeado al `DESIGN.md`
-- `@dnd-kit` para drag-and-drop
-- Supabase (Postgres) — banco de ejercicios y rutinas
-- Sin auth: selector de perfil local (localStorage)
-- Static export a GitHub Pages
+- Vite 8 (build & dev server)
+- React 18.3 + TypeScript
+- Tailwind v4 con `@theme` mapeado al sistema visual de `DESIGN.md`
+- `@dnd-kit` para reordenar la rutina
+- `@workoutx/sdk` para el banco de ejercicios + GIFs
+- Sin Next.js, sin SSR, sin hidratación = **no hay forma de que tire el error #418/#423**
 
 ## Estructura
 
 ```
 src/
-├── app/
-│   ├── layout.tsx · globals.css · page.tsx              # selector de perfil
-│   └── workouts/
-│       ├── page.tsx                                     # constructor DnD
-│       └── active/page.tsx                              # modo ejecución
-├── components/                                          # UI kit + gym
-├── data/exercises.seed.ts                               # 15 ejercicios iniciales
-├── hooks/useProfile.ts
-├── lib/                                                 # supabase, muscles, profiles, format
+├── main.tsx                   # entry point (Vite)
+├── App.tsx                    # router SPA (basado en pathname)
+├── routes/
+│   ├── WorkoutsPage.tsx       # /workouts (constructor)
+│   └── ActiveWorkoutPage.tsx  # /workouts/active (modo ejecución)
+├── components/                # UI kit + gym
+├── data/fallback.ts           # banco hardcoded de red (si SDK no responde)
+├── hooks/
+│   ├── useProfile.ts          # localStorage: gym.profile
+│   └── useExercises.ts        # SDK + cache sessionStorage (5min TTL)
+├── lib/
+│   ├── workoutx.ts            # cliente singleton
+│   ├── sdk-exercises.ts       # adapter SDK → Exercise type, mapeo músculos/equipment
+│   ├── router.ts              # useRouter / usePathname propio
+│   ├── muscles.ts             # taxonomy 14 músculos
+│   └── profiles.ts            # Haziel / Areli
 └── types/index.ts
-
-public/exercises/                                        # aquí van los GIFs (subanlos ustedes)
-supabase/migrations/001_init.sql                         # schema + RLS
-.github/workflows/deploy.yml                            # build + deploy a GitHub Pages
 ```
 
 ## Setup local
 
 ```bash
 npm install
-cp .env.local.example .env.local
-# Edita .env.local con tu URL y anon key de Supabase
-npm run dev
+npm run dev          # http://localhost:5173/GymAreliHaziel/
 ```
 
-## Build estático (GitHub Pages)
+(Build con `npm run build` → `dist/`.)
 
-```bash
-npm run build       # genera ./out
-```
+## Deploy
 
-## Cargar GIFs
+El workflow `.github/workflows/deploy.yml` corre en cada push a `main`:
 
-1. Sube cada GIF a `public/exercises/<slug>.gif`. El slug debe coincidir con el `id` del ejercicio (ver `src/data/exercises.seed.ts`).
-2. La app ya referencia esos paths automáticamente.
+1. `npm ci`
+2. `npx tsc --noEmit` (typecheck)
+3. `npm run build` (Vite genera `dist/`)
+4. `cp dist/index.html dist/404.html` (fallback SPA para rutas profundas)
+5. `peaceiris/actions-gh-pages@v4` publica `dist/` en la branch `gh-pages`
 
-## Aplicar migración y poblar Supabase
+**Setup en GitHub Pages:**
 
-```bash
-# 1) Aplica el schema (una vez) desde el SQL Editor de Studio o vía supabase_apply_migration
-# 2) Sube el banco inicial:
-npm run seed
-```
+Settings → Pages → Source: **Deploy from a branch** / Branch: **gh-pages** / `/ (root)`.
 
-## Deploy a GitHub Pages
+URL: `https://hazielmaciasdev.github.io/GymAreliHaziel/`
 
-El workflow `.github/workflows/deploy.yml` se dispara en cada push a `main`, compila el static export y lo publica en la branch `gh-pages`.
+## Rutas
 
-**Setup inicial en el repo:**
+- `/GymAreliHaziel/` → selector de perfil
+- `/GymAreliHaziel/workouts/` → constructor de rutina
+- `/GymAreliHaziel/workouts/active/` → modo ejecución
 
-1. **Settings → Pages**
-   - Source: **Deploy from a branch**
-   - Branch: **gh-pages** · `/ (root)`
-2. (Opcional) **Settings → Secrets and variables → Actions** — solo si querés que el build incluya las claves de Supabase:
-   - Variable `NEXT_PUBLIC_SUPABASE_URL` = `https://fhtormfuavagjahlvgji.supabase.co`
-   - Secret `NEXT_PUBLIC_SUPABASE_ANON_KEY` = (clave anon)
-3. Push a `main` (o `Actions → Deploy to GitHub Pages → Run workflow`).
+Como es SPA, navegar directo a una ruta profunda funciona gracias al `404.html` fallback: GitHub Pages devuelve `404.html`, que es el mismo `index.html` de la SPA, que lee `window.location.pathname` y muestra la ruta correcta.
 
-URL resultante: `https://hazielmaciasdev.github.io/GymAreliHaziel/`
+## Persistencia
 
-## Notas
-
-- Las rutinas se persisten en `sessionStorage` en esta versión (se pierden al cerrar la pestaña). Migrar a Supabase es directo con los hooks en `src/lib/supabase.ts`.
-- Cuando agreguen más ejercicios, editen `src/data/exercises.seed.ts` y corran `npm run seed`.
+- **Perfil** (Haziel / Areli): `localStorage.gym.profile`
+- **Catálogo de ejercicios**: `sessionStorage.gym.exercisesCache.v1` (5 min TTL) + fallback local si SDK falla
+- **Sesión activa**: `sessionStorage.gym.activeSession`
