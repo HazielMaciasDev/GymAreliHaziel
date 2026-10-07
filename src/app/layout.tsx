@@ -5,7 +5,6 @@ import { ProfileGate } from '@/components/ProfileGate';
 
 const inter = Inter({
   subsets: ['latin'],
-  variable: '--font-inter-loaded',
   display: 'swap',
 });
 
@@ -25,7 +24,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="es" className={inter.variable}>
+    <html lang="es" className={inter.className}>
       <body className="min-h-dvh bg-paper text-charcoal antialiased">
         <ProfileGate>{children}</ProfileGate>
       </body>

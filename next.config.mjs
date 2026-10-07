@@ -2,7 +2,7 @@
 const repo = 'GymAreliHaziel';
 
 const nextConfig = {
-  reactStrictMode: true,
+  reactStrictMode: false,
   output: 'export',
   basePath: `/${repo}`,
   trailingSlash: true,
