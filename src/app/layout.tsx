@@ -1,12 +1,5 @@
 import type { Metadata, Viewport } from 'next';
-import { Inter } from 'next/font/google';
 import './globals.css';
-import { ProfileGate } from '@/components/ProfileGate';
-
-const inter = Inter({
-  subsets: ['latin'],
-  display: 'swap',
-});
 
 export const metadata: Metadata = {
   title: 'Gym Guide',
@@ -24,9 +17,9 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="es" className={inter.className}>
-      <body className="min-h-dvh bg-paper text-charcoal antialiased">
-        <ProfileGate>{children}</ProfileGate>
+    <html lang="es" suppressHydrationWarning>
+      <body className="min-h-dvh bg-paper text-charcoal antialiased" suppressHydrationWarning>
+        {children}
       </body>
     </html>
   );
