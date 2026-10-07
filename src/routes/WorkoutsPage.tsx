@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useRouter } from '@/lib/router';
 import { useProfile } from '@/hooks/useProfile';
 import { useExercises } from '@/hooks/useExercises';
@@ -33,12 +33,6 @@ export function WorkoutsPage() {
   const [activeExercise, setActiveExercise] = useState<Exercise | null>(null);
   const [showGenerator, setShowGenerator] = useState(false);
 
-  useEffect(() => {
-    if (profile === null) {
-      router.replace('/');
-    }
-  }, [profile, router]);
-
   const exercisesById = useMemo(() => {
     const map = new Map<string, Exercise>();
     for (const e of exercises) map.set(e.id, e);
@@ -55,11 +49,7 @@ export function WorkoutsPage() {
     [items, exercisesById],
   );
 
-  if (!profile) {
-    return null;
-  }
-
-  const profileMeta = PROFILES[profile];
+  const profileMeta = profile ? PROFILES[profile] : PROFILES.haziel;
 
   const addToRoutine = (exercise: Exercise) => {
     setItems((prev) => [
