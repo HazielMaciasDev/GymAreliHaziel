@@ -62,17 +62,16 @@ npm run seed
 
 ## Deploy a GitHub Pages
 
-El workflow `.github/workflows/deploy.yml` se dispara en cada push a `main`.
+El workflow `.github/workflows/deploy.yml` se dispara en cada push a `main`, compila el static export y lo publica en la branch `gh-pages`.
 
 **Setup inicial en el repo:**
 
-1. **Settings → Secrets and variables → Actions**
-   - `Secrets → New repository secret`:
-     - `NEXT_PUBLIC_SUPABASE_ANON_KEY` = (la clave anon legacy JWT)
-   - `Variables → New repository variable`:
-     - `NEXT_PUBLIC_SUPABASE_URL` = `https://fhtormfuavagjahlvgji.supabase.co`
-2. **Settings → Pages**
-   - Source: **GitHub Actions**
+1. **Settings → Pages**
+   - Source: **Deploy from a branch**
+   - Branch: **gh-pages** · `/ (root)`
+2. (Opcional) **Settings → Secrets and variables → Actions** — solo si querés que el build incluya las claves de Supabase:
+   - Variable `NEXT_PUBLIC_SUPABASE_URL` = `https://fhtormfuavagjahlvgji.supabase.co`
+   - Secret `NEXT_PUBLIC_SUPABASE_ANON_KEY` = (clave anon)
 3. Push a `main` (o `Actions → Deploy to GitHub Pages → Run workflow`).
 
 URL resultante: `https://hazielmaciasdev.github.io/GymAreliHaziel/`
