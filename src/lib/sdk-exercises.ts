@@ -85,7 +85,7 @@ export function adaptSdkExercise(sdk: SdkExercise): Exercise | null {
     .filter((m): m is MuscleGroup => Boolean(m) && m !== primary);
 
   const wx = getWorkoutX();
-  const gifPath = sdk.gifUrl ?? (sdk.id ? wx.gifUrl(`${sdk.id}.gif`) : '');
+  const gifPath = sdk.id ? wx.gifUrl(`${sdk.id}.gif`) : '';
 
   return {
     id: sdk.id,
