@@ -15,6 +15,7 @@
     "@dnd-kit/sortable": "^8.0.0",
     "@dnd-kit/utilities": "^3.2.2",
     "@supabase/supabase-js": "^2.45.4",
+    "@workoutx/sdk": "^0.1.0",
     "clsx": "^2.1.1",
     "dotenv": "^16.4.5",
     "next": "14.2.18",

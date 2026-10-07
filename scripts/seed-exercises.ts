@@ -1,6 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import { config } from 'dotenv';
-import { EXERCISES_SEED } from '../src/data/exercises.seed';
+import { FALLBACK_EXERCISES } from '../src/data/fallback';
 
 config({ path: '.env.local' });
 
@@ -16,7 +16,18 @@ async function main() {
 
   const supabase = createClient(url, key, { auth: { persistSession: false } });
 
-  const rows = EXERCISES_SEED.map((ex) => ({
+  const rows = FALLBACK_EXERCISES.map((ex: {
+    id: string;
+    name: string;
+    description: string;
+    primaryMuscle: string;
+    secondaryMuscles: string[];
+    equipment: string;
+    difficulty: string;
+    instructions: string[];
+    tips: string[];
+    gifPath: string;
+  }) => ({
     id: ex.id,
     name: ex.name,
     description: ex.description,
@@ -37,7 +48,7 @@ async function main() {
   console.log(`Upserted ${rows.length} exercises.`);
 }
 
-main().catch((err) => {
+main().catch((err: unknown) => {
   console.error(err);
   process.exit(1);
 });

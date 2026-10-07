@@ -4,7 +4,6 @@ import type { Exercise } from '@/types';
 import { MUSCLES } from '@/lib/muscles';
 import { Pill } from '@/components/ui/Pill';
 import { classNames } from '@/lib/format';
-import { withBasePath } from '@/lib/paths';
 
 interface ExerciseCardProps {
   exercise: Exercise;
@@ -35,7 +34,7 @@ export function ExerciseCard({ exercise, onSelect, variant = 'bank' }: ExerciseC
       >
         <div className="h-12 w-12 flex-shrink-0 overflow-hidden rounded-mask bg-fog">
           <img
-            src={withBasePath(exercise.gifPath)}
+            src={exercise.gifPath}
             alt=""
             className="h-full w-full object-cover"
             loading="lazy"
@@ -62,7 +61,7 @@ export function ExerciseCard({ exercise, onSelect, variant = 'bank' }: ExerciseC
     >
       <div className="relative aspect-[4/3] overflow-hidden bg-fog">
         <img
-          src={withBasePath(exercise.gifPath)}
+          src={exercise.gifPath}
           alt={exercise.name}
           className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
           loading="lazy"

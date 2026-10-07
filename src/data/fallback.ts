@@ -1,6 +1,6 @@
 import type { Exercise } from '@/types';
 
-export const EXERCISES_SEED: Exercise[] = [
+export const FALLBACK_EXERCISES: Exercise[] = [
   {
     id: 'bench-press',
     name: 'Press de banca plano',

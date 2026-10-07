@@ -2,12 +2,12 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { EXERCISES_SEED } from '@/data/exercises.seed';
+import { FALLBACK_EXERCISES } from '@/data/fallback';
 import { MUSCLES } from '@/lib/muscles';
 import { Button } from '@/components/ui/Button';
 import { Pill } from '@/components/ui/Pill';
 import { classNames, formatKg } from '@/lib/format';
-import { withBasePath } from '@/lib/paths';
+import { getStoredExercises } from '@/hooks/useExercises';
 import type { Exercise, ProfileId } from '@/types';
 
 interface SessionItem {
@@ -71,7 +71,8 @@ export default function ActiveWorkoutPage() {
 
   const exercisesById = useMemo(() => {
     const map = new Map<string, Exercise>();
-    for (const e of EXERCISES_SEED) map.set(e.id, e);
+    for (const e of getStoredExercises()) map.set(e.id, e);
+    for (const e of FALLBACK_EXERCISES) if (!map.has(e.id)) map.set(e.id, e);
     return map;
   }, []);
 
@@ -204,7 +205,7 @@ export default function ActiveWorkoutPage() {
           </div>
           <div className="relative aspect-[4/3] w-full overflow-hidden bg-fog">
             <img
-              src={withBasePath(exercise.gifPath)}
+              src={exercise.gifPath}
               alt={exercise.name}
               className="h-full w-full object-cover"
               onError={(e) => {
