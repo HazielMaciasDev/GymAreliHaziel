@@ -12,8 +12,8 @@ function RequireProfile({ children }: { children: React.ReactNode }) {
   const { profile, ready } = useProfile();
   if (!ready) {
     return (
-      <main className="flex min-h-dvh items-center justify-center bg-paper">
-        <span className="block h-2 w-2 animate-pulse bg-fog" />
+      <main className="flex min-h-dvh items-center justify-center bg-[#f5f1e4]">
+        <span className="block h-2 w-2 animate-pulse rounded-full bg-[#2c2e2a]" />
       </main>
     );
   }
@@ -73,15 +73,16 @@ export function App() {
   }
 
   return (
-    <main className="flex min-h-dvh items-center justify-center bg-paper px-6">
+    <main className="flex min-h-dvh items-center justify-center bg-[#f5f1e4] px-6">
       <div className="flex flex-col items-center gap-4 text-center">
-        <h1 className="font-display text-[64px] leading-none text-forest-ink">404</h1>
-        <p className="text-[14px] text-slate">No encontramos esa ruta.</p>
+        <h1 className="t-display text-[120px] leading-[0.9] text-[#2c2e2a]">404</h1>
+        <p className="t-body text-[#80827f]">No encontramos esa ruta.</p>
         <a
           href="/GymAreliHaziel/"
-          className="inline-flex h-11 items-center bg-forest-ink px-5 text-[13px] font-medium text-paper hover:bg-obsidian transition-colors"
+          className="inline-flex h-12 items-center gap-2 rounded-full bg-[#2c2e2a] px-6 text-[14px] font-medium text-[#f5f1e4] transition-colors hover:bg-[#1f211d]"
         >
-          Volver al inicio
+          <span>Volver al inicio</span>
+          <span className="h-2 w-2 rounded-full bg-[#8ed462]" />
         </a>
       </div>
     </main>

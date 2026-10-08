@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from '@/lib/router';
 import { useProfile } from '@/hooks/useProfile';
 import { AppShell } from '@/components/AppShell';
@@ -44,15 +44,15 @@ export function ActiveSessionPage() {
   const [exerciseNotes, setExerciseNotes] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [hasInitialized, setHasInitialized] = useState(false);
+  const initRef = useRef(false);
 
   useEffect(() => {
     if (!profile) {
       router.replace('/');
       return;
     }
-    if (hasInitialized) return;
-    setHasInitialized(true);
+    if (initRef.current) return;
+    initRef.current = true;
 
     let cancelled = false;
     (async () => {
@@ -77,7 +77,7 @@ export function ActiveSessionPage() {
 
         if (plannedList.length === 0) {
           if (!cancelled) {
-            setError('No planificaste ejercicios hoy. Andá a Rutina primero.');
+            setError('No planificaste ejercicios hoy. Ve a Rutina primero.');
             setLoading(false);
           }
           return;
@@ -124,7 +124,7 @@ export function ActiveSessionPage() {
     return () => {
       cancelled = true;
     };
-  }, [profile, router, hasInitialized]);
+  }, [profile, router]);
 
   useEffect(() => {
     if (!session) return;

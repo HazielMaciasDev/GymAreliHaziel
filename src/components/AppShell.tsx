@@ -34,26 +34,11 @@ export function AppShell({ children }: { children: ReactNode }) {
           className="mx-auto flex h-14 max-w-[1200px] items-center gap-2 rounded-full bg-white px-3 md:h-16 md:gap-3 md:px-5"
           aria-label="Principal"
         >
-          <button
-            type="button"
-            onClick={() => router.push('/home')}
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#8ed462] text-[#2c2e2a] transition-transform hover:scale-105 md:h-12 md:w-12"
-            aria-label="Ir a inicio"
-          >
-            <span className="text-[18px] font-semibold leading-none">G</span>
-          </button>
-
-          <span className="hidden text-[15px] font-medium text-[#2c2e2a] md:inline">
-            Gym Guide
-          </span>
-
-          <span className="hidden text-[#80827f] md:inline">·</span>
-
-          <div className="hidden items-center gap-2 md:flex">
+          <div className="flex items-center gap-2.5">
             <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#f5e211] text-[13px] font-semibold text-[#2c2e2a]">
               {profileInitial}
             </span>
-            <span className="text-[14px] font-medium text-[#2c2e2a]">
+            <span className="text-[15px] font-semibold tracking-tight text-[#2c2e2a]">
               {profileMeta?.name ?? '—'}
             </span>
           </div>
@@ -69,7 +54,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                   className={classNames(
                     'inline-flex h-10 items-center rounded-full px-4 text-[14px] font-medium transition-colors',
                     active
-                      ? 'bg-[#2c2e2a] text-white'
+                      ? 'bg-[#2c2e2a] text-[#f5f1e4]'
                       : 'text-[#2c2e2a] hover:bg-[#2c2e2a]/5',
                   )}
                 >
@@ -80,20 +65,17 @@ export function AppShell({ children }: { children: ReactNode }) {
           </div>
 
           <div className="ml-auto flex items-center gap-2 md:ml-0">
-            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#f5e211] text-[12px] font-semibold text-[#2c2e2a] md:hidden">
-              {profileInitial}
-            </span>
             <button
               type="button"
               onClick={() => {
                 clearProfile();
                 router.push('/');
               }}
-              className="inline-flex h-9 items-center gap-1.5 rounded-full bg-[#2c2e2a] px-3 text-[12px] font-medium text-white transition-colors hover:bg-[#1f211d] md:h-10 md:px-4 md:text-[13px]"
+              className="inline-flex h-9 items-center gap-2 rounded-full bg-[#2c2e2a] px-3 text-[12px] font-medium text-[#f5f1e4] transition-colors hover:bg-[#1f211d] md:h-10 md:px-4 md:text-[13px]"
               aria-label="Cambiar de perfil"
             >
-              <Icon.Swap size={13} />
               <span>Cambiar</span>
+              <span className="h-2 w-2 rounded-full bg-[#8ed462]" />
             </button>
           </div>
         </nav>
@@ -122,7 +104,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                   className={classNames(
                     'flex h-full w-full items-center justify-center gap-1.5 rounded-full transition-colors',
                     active
-                      ? 'bg-[#2c2e2a] text-white'
+                      ? 'bg-[#2c2e2a] text-[#f5f1e4]'
                       : 'text-[#2c2e2a] hover:bg-[#2c2e2a]/5',
                   )}
                   aria-current={active ? 'page' : undefined}

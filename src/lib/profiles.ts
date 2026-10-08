@@ -5,7 +5,6 @@ export interface ProfileMeta {
   name: string;
   initials: string;
   tagline: string;
-  accent: 'marigold' | 'coral' | 'sky' | 'mocha';
 }
 
 export const PROFILES: Record<ProfileId, ProfileMeta> = {
@@ -14,14 +13,12 @@ export const PROFILES: Record<ProfileId, ProfileMeta> = {
     name: 'Haziel',
     initials: 'H',
     tagline: 'El día que descanses, tu músculo crece.',
-    accent: 'sky',
   },
   areli: {
     id: 'areli',
     name: 'Areli',
     initials: 'A',
     tagline: 'Más fuerte que tus excusas.',
-    accent: 'marigold',
   },
 };
 
