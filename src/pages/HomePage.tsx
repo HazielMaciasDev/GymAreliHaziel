@@ -119,7 +119,7 @@ export function HomePage() {
           <p className="mt-4 max-w-[44ch] t-body-lg text-[#2c2e2a]">
             {profile === 'areli'
               ? 'Más fuerte que tus excusas. Hoy toca entrenar.'
-              : 'El músculo crece cuando descansás. Pero hoy toca sesión.'}
+              : 'El músculo crece cuando descansas. Pero hoy toca sesión.'}
           </p>
           <div className="absolute -right-2 -top-2 hidden md:block">
             <Illustration variant="leaves" size={80} className="animate-float" />
@@ -139,7 +139,7 @@ export function HomePage() {
               <div className="mt-6">
                 <h2 className="t-heading text-[#2c2e2a]">Día libre</h2>
                 <p className="mt-2 max-w-[36ch] t-body text-[#2c2e2a]/80">
-                  No planificaste ejercicios para hoy. Andá a Rutina para armar tu semana.
+                  No planificaste ejercicios para hoy. Ve a Rutina para armar tu semana.
                 </p>
                 <div className="mt-6">
                   <Button
@@ -213,8 +213,8 @@ export function HomePage() {
             </div>
             <p className="mt-3 t-body text-[#2c2e2a]/80">
               {streak === 0
-                ? 'Hoy podés empezar tu primera racha.'
-                : 'Vas volando, no la dejés caer.'}
+                ? 'Hoy puedes empezar tu primera racha.'
+                : 'Vas volando, no la dejes caer.'}
             </p>
             <div className="absolute -right-3 -top-2 opacity-90">
               <Sparkle size={36} color="#f5e211" />

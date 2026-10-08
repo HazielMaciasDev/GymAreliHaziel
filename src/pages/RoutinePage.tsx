@@ -226,7 +226,7 @@ export function RoutinePage() {
             <span className="t-eyebrow text-[#80827f]">Plantilla semanal</span>
             <h1 className="mt-3 t-display text-[#2c2e2a]">Tu rutina.</h1>
             <p className="mt-3 max-w-[44ch] t-body-lg text-[#2c2e2a]">
-              Tocá un día para sumarle ejercicios. Arrastrá en desktop.
+              Toca un día para sumarle ejercicios. Arrastra en desktop.
             </p>
             <div className="absolute -right-2 top-0 hidden md:block">
               <Sparkle size={32} color="#2ba0ff" className="animate-float" />
@@ -615,7 +615,7 @@ function PalettePanel({
       <div>
         <span className="t-eyebrow text-[#80827f]">Catálogo</span>
         <p className="mt-1 t-body-sm text-[#2c2e2a]">
-          Tocá un ejercicio para sumarlo al día de hoy.
+          Toca un ejercicio para sumarlo al día de hoy.
         </p>
       </div>
       <div className="mt-3">

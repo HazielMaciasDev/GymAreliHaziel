@@ -133,7 +133,7 @@ export function HistoryPage() {
           <span className="t-eyebrow text-[#80827f]">Sesiones pasadas</span>
           <h1 className="mt-3 t-display text-[#2c2e2a]">Historial.</h1>
           <p className="mt-3 max-w-[44ch] t-body-lg text-[#2c2e2a]">
-            Mirá tu adherencia, revisitá sesiones y seguí el progreso de cada ejercicio.
+            Mira tu adherencia, revisa sesiones y sigue el progreso de cada ejercicio.
           </p>
           <div className="absolute right-0 top-0 hidden md:block">
             <Illustration variant="cup" size={80} className="animate-float" />
@@ -249,7 +249,7 @@ export function HistoryPage() {
             ) : (
               <Card padding="lg">
                 <p className="t-body text-[#80827f]">
-                  Seleccioná una sesión para ver el detalle.
+                  Selecciona una sesión para ver el detalle.
                 </p>
               </Card>
             )}
@@ -290,7 +290,7 @@ export function HistoryPage() {
               <ProgressChart data={progress} metric={chartMetric} />
             ) : (
               <p className="t-body text-[#80827f]">
-                Seleccioná un ejercicio para ver su progreso.
+                Selecciona un ejercicio para ver su progreso.
               </p>
             )}
           </Card>

@@ -49,7 +49,7 @@ export function ExerciseBankPage() {
           <span className="t-eyebrow text-[#80827f]">Catálogo · {exercises.length} ejercicios</span>
           <h1 className="mt-3 t-display text-[#2c2e2a]">Banco.</h1>
           <p className="mt-3 max-w-[44ch] t-body-lg text-[#2c2e2a]">
-            Tocá un ejercicio para ver técnica y ángulos. Después armás la rutina en Rutina.
+            Toca un ejercicio para ver técnica y ángulos. Después armas la rutina en Rutina.
           </p>
           <div className="absolute right-0 top-0 hidden md:block">
             <Sparkle size={36} color="#ff705d" className="animate-float" />

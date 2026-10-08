@@ -164,22 +164,3 @@ export function Sparkle({ size = 16, color = '#ff705d', className }: { size?: nu
     </svg>
   );
 }
-
-export function Blob({ className, color = '#8ed462' }: { className?: string; color?: string }) {
-  return (
-    <svg
-      viewBox="0 0 200 200"
-      className={className}
-      aria-hidden
-      preserveAspectRatio="none"
-    >
-      <path
-        d="M40 60 Q20 30 60 20 Q110 10 140 30 Q180 50 170 100 Q160 160 110 170 Q60 180 30 140 Q10 100 40 60"
-        fill={color}
-        stroke="#2c2e2a"
-        strokeWidth="4"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
