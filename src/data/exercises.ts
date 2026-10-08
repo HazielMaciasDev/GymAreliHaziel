@@ -1,4 +1,4 @@
-import type { Exercise } from '@/types';
+import type { Exercise, ProfileId } from '@/types';
 
 export const EXERCISES: Exercise[] = [
   {
@@ -23,6 +23,321 @@ export const EXERCISES: Exercise[] = [
     gifPath: '/GymAreliHaziel/exercises/maquina-empuje-cadera-1.mp4',
     extraMediaPaths: ['/GymAreliHaziel/exercises/maquina-empuje-cadera-2.mp4'],
     muscleImagePath: '/GymAreliHaziel/exercises/maquina-empuje-cadera-muscles.png',
+    profiles: ['areli'],
+  },
+  {
+    id: 'abduccion-cadera-maquina',
+    name: 'Abducción de cadera en máquina',
+    description:
+      'Ejercicio de aislamiento para trabajar los abductores de cadera. Ideal como calentamiento o activación al final del entrenamiento.',
+    primaryMuscle: 'gluteos',
+    secondaryMuscles: ['femorales'],
+    equipment: 'maquina',
+    difficulty: 'principiante',
+    instructions: [
+      'Ajusta la máquina a tu altura. Siéntate con la espalda plana apoyada contra el respaldo y las piernas juntas.',
+      'Empuja lentamente las piernas hacia afuera contra la resistencia. Pausa en el punto máximo.',
+      'Vuelve las piernas lentamente a la posición inicial. Repite las veces que desees.',
+    ],
+    tips: [
+      'Mantén la espalda apoyada contra el respaldo todo el tiempo.',
+      'No uses impulso; controla la vuelta a la posición inicial.',
+      'Pausa 1 segundo arriba para sentir la contracción.',
+    ],
+    gifPath: '/GymAreliHaziel/exercises/abduccion-cadera-maquina-1.mp4',
+    extraMediaPaths: ['/GymAreliHaziel/exercises/abduccion-cadera-maquina-2.mp4'],
+    muscleImagePath: '/GymAreliHaziel/exercises/abduccion-cadera-maquina-muscles.png',
+    profiles: ['areli'],
+  },
+  {
+    id: 'curl-barra-polea',
+    name: 'Curl con barra en polea',
+    description:
+      'Curl de bíceps con barra recta tomado desde la polea baja. Tensión constante durante todo el recorrido gracias al cable.',
+    primaryMuscle: 'biceps',
+    secondaryMuscles: ['antebrazos'],
+    equipment: 'polea',
+    difficulty: 'principiante',
+    instructions: [
+      'Usa un accesorio de barra. Coloca el cable en la posición más baja de la máquina.',
+      'Colócate frente a la máquina de cables.',
+      'Adopta una postura escalonada para tener una base de apoyo más estable. Gira la palma hacia delante. Flexiona el codo y extiéndelo.',
+    ],
+    tips: [
+      'Mantén los codos pegados al cuerpo, no los muevas hacia adelante.',
+      'Aprieta el bíceps arriba, no arquees la espalda.',
+      'Baja el peso a 3 tiempos por lesión.',
+    ],
+    gifPath: '/GymAreliHaziel/exercises/curl-barra-polea-1.mp4',
+    extraMediaPaths: ['/GymAreliHaziel/exercises/curl-barra-polea-2.mp4'],
+    muscleImagePath: '/GymAreliHaziel/exercises/curl-barra-polea-muscles.png',
+    profiles: ['areli'],
+  },
+  {
+    id: 'elevacion-lateral-cable',
+    name: 'Elevación lateral con cable (una mano, polea baja)',
+    description:
+      'Aislamiento de deltoides lateral con cable desde polea baja. La resistencia constante del cable maximiza la activación durante todo el movimiento.',
+    primaryMuscle: 'hombros',
+    secondaryMuscles: ['trapecio'],
+    equipment: 'polea',
+    difficulty: 'principiante',
+    instructions: [
+      'Usa un agarre con la polea en la posición más baja de la máquina.',
+      'Realiza una abducción vertical del hombro, elevando el brazo recto hacia un lado.',
+      'Eleva el brazo hasta que quede paralelo al suelo y vuelve a la posición inicial.',
+    ],
+    tips: [
+      'Mantén el brazo casi recto, sin doblar el codo.',
+      'Detén el movimiento a la altura del hombro, no subas más.',
+      'Baja lento para sentir el estiramiento.',
+    ],
+    gifPath: '/GymAreliHaziel/exercises/elevacion-lateral-cable-1.mp4',
+    extraMediaPaths: ['/GymAreliHaziel/exercises/elevacion-lateral-cable-2.mp4'],
+    muscleImagePath: '/GymAreliHaziel/exercises/elevacion-lateral-cable-muscles.png',
+    profiles: ['areli'],
+  },
+  {
+    id: 'extensiones-triceps-polea',
+    name: 'Extensiones de tríceps en polea con barra en V',
+    description:
+      'Extensión de tríceps en polea con barra en V. Ejercicio de aislamiento con tensión constante gracias al cable.',
+    primaryMuscle: 'triceps',
+    secondaryMuscles: ['antebrazos'],
+    equipment: 'polea',
+    difficulty: 'principiante',
+    instructions: [
+      'Agarra la barra de la polea con las palmas mirando hacia abajo a la anchura de los hombros.',
+      'Mantente erguido con una ligera inclinación hacia adelante. Mantén la parte superior de los brazos pegada al cuerpo y baja la barra de la polea lentamente hasta que los brazos estén completamente extendidos.',
+      'Haz una pausa cuando estés en la posición contraída del movimiento, luego sube lentamente la barra de la polea hasta la posición inicial.',
+    ],
+    tips: [
+      'Mantén los codos pegados al cuerpo, no los dejes abrir.',
+      'Aprieta el tríceps abajo del movimiento, no bloquees los codos con fuerza.',
+      'Sube el peso a 2-3 tiempos para mantener la tensión.',
+    ],
+    gifPath: '/GymAreliHaziel/exercises/extensiones-triceps-polea-1.mp4',
+    extraMediaPaths: ['/GymAreliHaziel/exercises/extensiones-triceps-polea-2.mp4'],
+    muscleImagePath: '/GymAreliHaziel/exercises/extensiones-triceps-polea-muscles.png',
+    profiles: ['areli'],
+  },
+  {
+    id: 'extension-piernas',
+    name: 'Extensión de piernas en máquina',
+    description:
+      'Aislamiento de cuádriceps en máquina. Permite focalizar el trabajo en el cuádriceps sin involucrar otros grupos musculares.',
+    primaryMuscle: 'cuadriceps',
+    secondaryMuscles: [],
+    equipment: 'maquina',
+    difficulty: 'principiante',
+    instructions: [
+      'Siéntate en la máquina con la espalda contra el cojín y ajusta la máquina que estés usando para que tus rodillas formen un ángulo de 90 grados en la posición inicial.',
+      'Eleva el peso extendiendo las rodillas hacia afuera, luego baja la pierna a la posición inicial. Ambos movimientos deben realizarse de forma lenta y controlada.',
+    ],
+    tips: [
+      'Ajusta la máquina para que la articulación de la rodilla quede alineada con el eje de la máquina.',
+      'Aprieta el cuádriceps arriba, mantén una compresión por 1 segundo.',
+      'Baja el peso a 3 tiempos para evitar lesiones.',
+    ],
+    gifPath: '/GymAreliHaziel/exercises/extension-piernas-1.mp4',
+    extraMediaPaths: ['/GymAreliHaziel/exercises/extension-piernas-2.mp4'],
+    muscleImagePath: '/GymAreliHaziel/exercises/extension-piernas-muscles.png',
+    profiles: ['areli'],
+  },
+  {
+    id: 'hack-squat',
+    name: 'Hack squat en máquina',
+    description:
+      'Sentadilla guiada en máquina hack squat. Ejercicio compuesto que enfoca el trabajo en cuádriceps, con menor exigencia de estabilización que la sentadilla libre.',
+    primaryMuscle: 'cuadriceps',
+    secondaryMuscles: ['gluteos', 'femorales', 'core'],
+    equipment: 'maquina',
+    difficulty: 'principiante',
+    instructions: [
+      'Ponte en la máquina hack squat con la espalda apoyada en el respaldo y los hombros por debajo de las almohadillas.',
+      'Coloca los pies a la anchura de los hombros sobre la plataforma. Mantén la espalda recta y baja lentamente hasta la posición de sentadilla.',
+      'Empuja desde los talones para volver a la posición inicial, manteniendo el core activado. Repite el número de repeticiones y series deseadas.',
+    ],
+    tips: [
+      'Baja hasta que los muslos queden paralelos al suelo, sin perder la curva natural de la espalda.',
+      'Empuja desde todo el pie, no solo los dedos.',
+      'No bloquees las rodillas arriba del movimiento.',
+    ],
+    gifPath: '/GymAreliHaziel/exercises/hack-squat-1.mp4',
+    extraMediaPaths: ['/GymAreliHaziel/exercises/hack-squat-2.mp4'],
+    muscleImagePath: '/GymAreliHaziel/exercises/hack-squat-muscles.png',
+    profiles: ['areli'],
+  },
+  {
+    id: 'jalon-cuerda-rostro',
+    name: 'Jalón con cuerda en polea hacia la cara',
+    description:
+      'Face pull con cuerda en polea alta. Trabaja deltoides posterior, trapecio y rotadores externos del hombro.',
+    primaryMuscle: 'hombros',
+    secondaryMuscles: ['trapecio'],
+    equipment: 'polea',
+    difficulty: 'principiante',
+    instructions: [
+      'Ponte frente a la polea, tira del peso hacia ti manteniendo los brazos paralelos al suelo.',
+      'Lleva las manos hacia atrás hasta colocarlas a ambos lados de la cabeza y mantén la posición.',
+      'Baja el peso lentamente hasta la posición inicial. Repite.',
+    ],
+    tips: [
+      'Mantén los codos altos, a la altura de los hombros.',
+      'Aprieta los omóplatos al final del movimiento.',
+      'No uses mucho peso; es un ejercicio de postura y hombros posteriores.',
+    ],
+    gifPath: '/GymAreliHaziel/exercises/jalon-cuerda-rostro-1.mp4',
+    extraMediaPaths: ['/GymAreliHaziel/exercises/jalon-cuerda-rostro-2.mp4'],
+    muscleImagePath: '/GymAreliHaziel/exercises/jalon-cuerda-rostro-muscles.png',
+    profiles: ['areli'],
+  },
+  {
+    id: 'jalon-maquina',
+    name: 'Jalón en máquina',
+    description:
+      'Jalón al pecho en máquina para trabajar la espalda. Variante guiada que facilita el control del recorrido.',
+    primaryMuscle: 'espalda',
+    secondaryMuscles: ['biceps', 'dorsales'],
+    equipment: 'maquina',
+    difficulty: 'principiante',
+    instructions: [
+      'Agarra la barra con las palmas hacia delante; las manos deben estar más separadas que el ancho de los hombros.',
+      'Con ambos brazos extendidos frente a ti sujetando la barra, lleva el torso hacia atrás unos 30 grados mientras sacas el pecho.',
+      'Tira de la barra hacia abajo hasta aproximadamente el nivel del mentón o un poco más abajo con un movimiento suave, mientras juntas los omóplatos.',
+      'Después de contraer durante un segundo, sube la barra lentamente hasta la posición inicial, con los brazos completamente extendidos.',
+    ],
+    tips: [
+      'Lleva el torso ligeramente hacia atrás, no columpies el cuerpo.',
+      'Junta los omóplatos abajo, no tires con los brazos solos.',
+      'Sube el peso a 2 tiempos para sentir el estiramiento de la espalda.',
+    ],
+    gifPath: '/GymAreliHaziel/exercises/jalon-maquina-1.mp4',
+    extraMediaPaths: ['/GymAreliHaziel/exercises/jalon-maquina-2.mp4'],
+    muscleImagePath: '/GymAreliHaziel/exercises/jalon-maquina-muscles.png',
+    profiles: ['areli'],
+  },
+  {
+    id: 'patada-gluteo-polea',
+    name: 'Patada de glúteo en polea de pie',
+    description:
+      'Extensión de cadera de pie con tobillera en máquina de poleas. Aislamiento de glúteo mayor con carga constante del cable.',
+    primaryMuscle: 'gluteos',
+    secondaryMuscles: ['femorales'],
+    equipment: 'polea',
+    difficulty: 'principiante',
+    instructions: [
+      'Usa una tobillera. Coloca el cable a mitad de altura en la máquina de poleas cruzadas.',
+      'Comienza con la rodilla doblada. Empuja el tobillo directamente hacia atrás, extendiendo la cadera. Mantén durante una cuenta cuando sientas la contracción en los glúteos.',
+      'Después, flexiona las caderas hasta volver a tu posición inicial.',
+    ],
+    tips: [
+      'No arquees la zona lumbar; el movimiento sale de la cadera.',
+      'Aprieta el glúteo arriba y mantén 1 segundo.',
+      'Mantén el cuerpo estable, sujétate de la máquina.',
+    ],
+    gifPath: '/GymAreliHaziel/exercises/patada-gluteo-polea-1.mp4',
+    extraMediaPaths: ['/GymAreliHaziel/exercises/patada-gluteo-polea-2.mp4'],
+    muscleImagePath: '/GymAreliHaziel/exercises/patada-gluteo-polea-muscles.png',
+    profiles: ['areli'],
+  },
+  {
+    id: 'peso-muerto-rumano',
+    name: 'Peso muerto rumano con barra',
+    description:
+      'Variante del peso muerto con piernas casi extendidas para enfatizar femorales y glúteos. Trabaja la cadena posterior.',
+    primaryMuscle: 'femorales',
+    secondaryMuscles: ['gluteos', 'espalda'],
+    equipment: 'barra',
+    difficulty: 'intermedio',
+    instructions: [
+      'Coloca las manos a la anchura de los hombros, con agarre prono doble o mixto.',
+      'Empuja las caderas hacia atrás manteniendo las rodillas casi extendidas. Busca un estiramiento en los isquiotibiales.',
+      'Cuando sientas el estiramiento, empuja las caderas hacia adelante hasta volver a la posición de pie.',
+    ],
+    tips: [
+      'Mantén la espalda neutra durante todo el movimiento.',
+      'La barra debe ir cerca de las piernas, no alejada del cuerpo.',
+      'Empuja las caderas hacia atrás, no bajes con la espalda.',
+    ],
+    gifPath: '/GymAreliHaziel/exercises/peso-muerto-rumano-1.mp4',
+    extraMediaPaths: ['/GymAreliHaziel/exercises/peso-muerto-rumano-2.mp4'],
+    muscleImagePath: '/GymAreliHaziel/exercises/peso-muerto-rumano-muscles.png',
+    profiles: ['areli'],
+  },
+  {
+    id: 'prensa-piernas',
+    name: 'Prensa de piernas en máquina',
+    description:
+      'Empuje de piernas en prensa. Ejercicio compuesto para tren inferior con menor exigencia técnica que la sentadilla libre.',
+    primaryMuscle: 'cuadriceps',
+    secondaryMuscles: ['gluteos', 'femorales'],
+    equipment: 'maquina',
+    difficulty: 'principiante',
+    instructions: [
+      'Coloca las piernas sobre la plataforma, con los pies a la anchura de los hombros.',
+      'Suelta el peso y extiende las piernas por completo, sin bloquear las rodillas.',
+      'Baja el peso hasta que tus piernas formen un ángulo de 90° (pero NO permitas que tus glúteos y la parte baja de la espalda se levanten de la almohadilla. Eso colocará la zona lumbar en una posición redondeada, lo cual es muy peligroso.)',
+      'Vuelve a subir el peso a la posición inicial.',
+    ],
+    tips: [
+      'Mantén la espalda baja y glúteos apoyados en el asiento todo el tiempo.',
+      'No bloquees las rodillas arriba; deja una ligera flexión.',
+      'Baja hasta 90°, nunca permitas que la espalda se despegue del asiento.',
+    ],
+    gifPath: '/GymAreliHaziel/exercises/prensa-piernas-1.mp4',
+    extraMediaPaths: ['/GymAreliHaziel/exercises/prensa-piernas-2.mp4'],
+    muscleImagePath: '/GymAreliHaziel/exercises/prensa-piernas-muscles.png',
+    profiles: ['areli'],
+  },
+  {
+    id: 'remo-sentado-polea',
+    name: 'Remo sentado en polea',
+    description:
+      'Remo en polea baja para trabajar la espalda media. Tensión constante del cable permite un buen trabajo de retracción escapular.',
+    primaryMuscle: 'espalda',
+    secondaryMuscles: ['biceps', 'dorsales'],
+    equipment: 'polea',
+    difficulty: 'principiante',
+    instructions: [
+      'Siéntate en la máquina con la espalda recta y agarra las asas.',
+      'Tira de las asas hacia atrás con los brazos. Mantén las piernas y el torso en un ángulo de 90°. Saca el pecho.',
+      'Tira de las asas hacia tu cuerpo hasta que las manos queden a la altura del abdomen.',
+    ],
+    tips: [
+      'Junta los omóplatos al tirar, no uses solo los brazos.',
+      'Mantén el torso estable, no te balancees hacia atrás.',
+      'Aprieta la espalda al final, mantén 1 segundo la contracción.',
+    ],
+    gifPath: '/GymAreliHaziel/exercises/remo-sentado-polea-1.mp4',
+    extraMediaPaths: ['/GymAreliHaziel/exercises/remo-sentado-polea-2.mp4'],
+    muscleImagePath: '/GymAreliHaziel/exercises/remo-sentado-polea-muscles.png',
+    profiles: ['areli'],
+  },
+  {
+    id: 'sentadilla-bulgara',
+    name: 'Sentadilla búlgara con mancuernas',
+    description:
+      'Sentadilla unilateral con pie trasero elevado. Trabaja cuádriceps, glúteos y femorales; además exige equilibrio y estabilidad.',
+    primaryMuscle: 'cuadriceps',
+    secondaryMuscles: ['gluteos', 'femorales', 'core'],
+    equipment: 'mancuerna',
+    difficulty: 'intermedio',
+    instructions: [
+      'Busca un cajón o banco que esté aproximadamente a la altura de la rodilla o unos centímetros más bajo. (Cuanto más bajo esté el cajón, menor será la exigencia de movilidad).',
+      'Puedes apoyar la punta del pie o el dorso del mismo sobre la caja. Apunta el pie delantero hacia adelante o ligeramente girado hacia afuera y flexiona rodillas y caderas a la vez.',
+      'Intenta que la pierna delantera llegue a una profundidad paralela (isquiotibial paralelo al suelo) o por debajo.',
+      'Cuanto más adelantado esté tu pie delantero, mayor será el rango de movimiento en tus caderas. Cuanto más atrás esté tu pie delantero, mayor será el rango de movimiento en tus rodillas.',
+    ],
+    tips: [
+      'Mantén el core activado y el torso erguido.',
+      'La rodilla delantera debe seguir la línea del pie, sin colapsar hacia adentro.',
+      'Empuja con todo el pie delantero, no solo con el talón.',
+    ],
+    gifPath: '/GymAreliHaziel/exercises/sentadilla-bulgara-1.mp4',
+    extraMediaPaths: ['/GymAreliHaziel/exercises/sentadilla-bulgara-2.mp4'],
+    muscleImagePath: '/GymAreliHaziel/exercises/sentadilla-bulgara-muscles.png',
+    profiles: ['areli'],
   },
 ];
 
@@ -35,4 +350,9 @@ export function getExercisesByMuscle(muscle: string): Exercise[] {
   return EXERCISES.filter(
     (e) => e.primaryMuscle === muscle || e.secondaryMuscles.includes(muscle as Exercise['primaryMuscle']),
   );
+}
+
+export function getExercisesForProfile(profile: ProfileId | null): Exercise[] {
+  if (!profile) return EXERCISES;
+  return EXERCISES.filter((e) => !e.profiles || e.profiles.length === 0 || e.profiles.includes(profile));
 }

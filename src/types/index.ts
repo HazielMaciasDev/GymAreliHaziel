@@ -40,6 +40,7 @@ export interface Exercise {
   gifPath: string;
   extraMediaPaths?: string[];
   muscleImagePath?: string;
+  profiles?: ProfileId[];
 }
 
 export interface Routine {

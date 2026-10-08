@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useRouter } from '@/lib/router';
 import { useProfile } from '@/hooks/useProfile';
-import { EXERCISES } from '@/data/exercises';
+import { getExercisesForProfile } from '@/data/exercises';
 import { ExerciseBank } from '@/components/ExerciseBank';
 import { RoutineBuilder } from '@/components/RoutineBuilder';
 import { ExerciseDetail } from '@/components/ExerciseDetail';
@@ -25,7 +25,7 @@ function createLocalId() {
 export function WorkoutsPage() {
   const router = useRouter();
   const { profile, clearProfile } = useProfile();
-  const exercises = EXERCISES;
+  const exercises = getExercisesForProfile(profile);
   const [mobileTab, setMobileTab] = useState<MobileTab>('banco');
   const [items, setItems] = useState<DraftRoutineExercise[]>([]);
   const [activeExercise, setActiveExercise] = useState<Exercise | null>(null);
