@@ -24,32 +24,41 @@ export function AppShell({ children }: { children: ReactNode }) {
   const { profile, clearProfile } = useProfile();
 
   const profileMeta = profile ? PROFILES[profile] : null;
+  const profileInitial = profileMeta?.name.charAt(0).toUpperCase() ?? '?';
 
   return (
-    <div className="min-h-dvh bg-[#f6f5f4] text-black">
-      <header className="sticky top-0 z-30 border-b border-black/[0.06] bg-[#f6f5f4]/90 backdrop-blur-md">
-        <div className="mx-auto flex h-14 max-w-[1200px] items-center justify-between px-4 md:px-6">
+    <div className="min-h-dvh bg-[#f5f1e4] text-[#2c2e2a]">
+      {/* Floating pill nav */}
+      <header className="sticky top-3 z-40 px-3 md:top-5 md:px-5">
+        <nav
+          className="mx-auto flex h-14 max-w-[1200px] items-center gap-2 rounded-full bg-white px-3 md:h-16 md:gap-3 md:px-5"
+          aria-label="Principal"
+        >
           <button
             type="button"
             onClick={() => router.push('/home')}
-            className="flex items-center gap-2 text-left"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#8ed462] text-[#2c2e2a] transition-transform hover:scale-105 md:h-12 md:w-12"
+            aria-label="Ir a inicio"
           >
-            <span className="flex h-7 w-7 items-center justify-center rounded-md bg-black text-white text-[12px] font-bold tracking-tight">
-              G
-            </span>
-            <span className="flex flex-col leading-none">
-              <span className="text-[10px] font-medium tracking-[0.16em] uppercase text-black/50">
-                Gym Guide
-              </span>
-              {profileMeta ? (
-                <span className="mt-0.5 text-[13px] font-medium text-black">
-                  Hola, {profileMeta.name}
-                </span>
-              ) : null}
-            </span>
+            <span className="text-[18px] font-semibold leading-none">G</span>
           </button>
 
-          <nav className="hidden md:flex items-center gap-1" aria-label="Principal">
+          <span className="hidden text-[15px] font-medium text-[#2c2e2a] md:inline">
+            Gym Guide
+          </span>
+
+          <span className="hidden text-[#80827f] md:inline">·</span>
+
+          <div className="hidden items-center gap-2 md:flex">
+            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#f5e211] text-[13px] font-semibold text-[#2c2e2a]">
+              {profileInitial}
+            </span>
+            <span className="text-[14px] font-medium text-[#2c2e2a]">
+              {profileMeta?.name ?? '—'}
+            </span>
+          </div>
+
+          <div className="hidden flex-1 items-center justify-center gap-1 lg:flex">
             {NAV_ITEMS.map((item) => {
               const active = pathname === item.path || pathname.startsWith(`${item.path}/`);
               return (
@@ -58,42 +67,50 @@ export function AppShell({ children }: { children: ReactNode }) {
                   type="button"
                   onClick={() => router.push(item.path)}
                   className={classNames(
-                    'inline-flex h-9 items-center gap-2 rounded-md px-3 text-[13px] font-medium transition-colors',
+                    'inline-flex h-10 items-center rounded-full px-4 text-[14px] font-medium transition-colors',
                     active
-                      ? 'bg-[#e6f3fe] text-[#0075de]'
-                      : 'text-black/60 hover:bg-black/[0.04] hover:text-black',
+                      ? 'bg-[#2c2e2a] text-white'
+                      : 'text-[#2c2e2a] hover:bg-[#2c2e2a]/5',
                   )}
                 >
                   {item.label}
                 </button>
               );
             })}
-          </nav>
+          </div>
 
-          <button
-            type="button"
-            onClick={() => {
-              clearProfile();
-              router.push('/');
-            }}
-            className="inline-flex h-9 items-center gap-1.5 rounded-md px-3 text-[12px] font-medium text-black/60 transition-colors hover:bg-black/[0.04] hover:text-black"
-            aria-label="Cambiar de perfil"
-          >
-            <Icon.Swap size={14} />
-            <span className="hidden sm:inline">Cambiar</span>
-          </button>
-        </div>
+          <div className="ml-auto flex items-center gap-2 md:ml-0">
+            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#f5e211] text-[12px] font-semibold text-[#2c2e2a] md:hidden">
+              {profileInitial}
+            </span>
+            <button
+              type="button"
+              onClick={() => {
+                clearProfile();
+                router.push('/');
+              }}
+              className="inline-flex h-9 items-center gap-1.5 rounded-full bg-[#2c2e2a] px-3 text-[12px] font-medium text-white transition-colors hover:bg-[#1f211d] md:h-10 md:px-4 md:text-[13px]"
+              aria-label="Cambiar de perfil"
+            >
+              <Icon.Swap size={13} />
+              <span>Cambiar</span>
+            </button>
+          </div>
+        </nav>
       </header>
 
-      <main className="pb-24 md:pb-12">
-        <div className="mx-auto max-w-[1200px] px-4 md:px-6">{children}</div>
+      <main className="pb-32 md:pb-12">
+        <div className="mx-auto max-w-[1200px] px-4 pt-6 md:px-6 md:pt-10">
+          {children}
+        </div>
       </main>
 
+      {/* Floating pill bottom tab bar (mobile) */}
       <nav
-        className="fixed bottom-0 left-0 right-0 z-30 border-t border-black/[0.06] bg-[#f6f5f4]/95 backdrop-blur-md md:hidden"
+        className="fixed bottom-3 left-3 right-3 z-30 md:hidden"
         aria-label="Navegación inferior"
       >
-        <ul className="mx-auto flex max-w-[600px]">
+        <ul className="mx-auto flex h-16 max-w-[420px] items-center gap-1 rounded-full bg-white p-1.5">
           {NAV_ITEMS.map((item) => {
             const active = pathname === item.path || pathname.startsWith(`${item.path}/`);
             const IconComp = Icon[item.icon];
@@ -103,13 +120,15 @@ export function AppShell({ children }: { children: ReactNode }) {
                   type="button"
                   onClick={() => router.push(item.path)}
                   className={classNames(
-                    'flex w-full flex-col items-center justify-center gap-1 py-2.5 transition-colors',
-                    active ? 'text-[#0075de]' : 'text-black/50 hover:text-black',
+                    'flex h-full w-full items-center justify-center gap-1.5 rounded-full transition-colors',
+                    active
+                      ? 'bg-[#2c2e2a] text-white'
+                      : 'text-[#2c2e2a] hover:bg-[#2c2e2a]/5',
                   )}
                   aria-current={active ? 'page' : undefined}
                 >
-                  <IconComp size={22} strokeWidth={active ? 2 : 1.5} />
-                  <span className={classNames('text-[10.5px]', active ? 'font-semibold' : 'font-medium')}>
+                  <IconComp size={18} strokeWidth={active ? 2 : 1.7} />
+                  <span className={classNames('text-[12px]', active ? 'font-semibold' : 'font-medium')}>
                     {item.label}
                   </span>
                 </button>

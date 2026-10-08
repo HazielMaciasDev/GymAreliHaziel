@@ -41,26 +41,26 @@ export function ExerciseDetailModal({ exercise, onClose }: ExerciseDetailModalPr
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 backdrop-blur-sm md:items-center md:p-6"
+      className="fixed inset-0 z-50 flex items-end justify-center bg-[#2c2e2a]/40 backdrop-blur-sm md:items-center md:p-6"
       role="dialog"
       aria-modal="true"
       aria-label={exercise.name}
       onClick={onClose}
     >
       <div
-        className="relative flex max-h-[92dvh] w-full flex-col overflow-hidden rounded-t-[12px] bg-white text-black md:max-w-[860px] md:rounded-[12px]"
+        className="relative flex max-h-[92dvh] w-full flex-col overflow-hidden rounded-t-[50px] bg-[#f5f1e4] md:max-w-[860px] md:rounded-[50px]"
         onClick={(e) => e.stopPropagation()}
       >
         <button
           type="button"
           onClick={onClose}
           aria-label="Cerrar"
-          className="absolute right-3 top-3 z-10 inline-flex h-10 w-10 items-center justify-center rounded-full bg-white text-black hover:bg-black/5"
+          className="absolute right-4 top-4 z-10 inline-flex h-11 w-11 items-center justify-center rounded-full bg-white text-[#2c2e2a] hover:bg-[#e0dbce]"
         >
           <Icon.Close size={18} />
         </button>
 
-        <div className="relative h-[240px] flex-shrink-0 overflow-hidden bg-black/[0.04] md:h-[340px]">
+        <div className="relative h-[260px] flex-shrink-0 overflow-hidden bg-white md:h-[340px]">
           <ExerciseMedia
             src={activeMedia}
             alt={exercise.name}
@@ -71,7 +71,7 @@ export function ExerciseDetailModal({ exercise, onClose }: ExerciseDetailModalPr
             }}
           />
           {allMedia.length > 1 ? (
-            <div className="absolute inset-x-3 bottom-3 flex justify-center gap-1.5">
+            <div className="absolute inset-x-3 bottom-4 flex justify-center gap-1.5">
               {allMedia.map((_, idx) => (
                 <button
                   key={idx}
@@ -79,8 +79,8 @@ export function ExerciseDetailModal({ exercise, onClose }: ExerciseDetailModalPr
                   onClick={() => setActiveMediaIndex(idx)}
                   aria-label={`Ver ángulo ${idx + 1}`}
                   className={classNames(
-                    'h-1.5 rounded-full transition-all',
-                    idx === activeMediaIndex ? 'w-6 bg-white' : 'w-1.5 bg-white/60 hover:bg-white/90',
+                    'h-2 rounded-full transition-all',
+                    idx === activeMediaIndex ? 'w-8 bg-[#2c2e2a]' : 'w-2 bg-[#2c2e2a]/30 hover:bg-[#2c2e2a]/50',
                   )}
                 />
               ))}
@@ -88,24 +88,22 @@ export function ExerciseDetailModal({ exercise, onClose }: ExerciseDetailModalPr
           ) : null}
         </div>
 
-        <div className="flex flex-1 flex-col gap-6 overflow-y-auto p-5 md:p-8">
+        <div className="flex flex-1 flex-col gap-6 overflow-y-auto p-6 md:p-8">
           <div>
             <div className="mb-3 flex flex-wrap items-center gap-1.5">
-              <Tag tone="marigold">{primary.label}</Tag>
-              <Tag tone="muted">{EQUIPMENT_LABEL[exercise.equipment]}</Tag>
-              <Tag tone="muted">{exercise.difficulty}</Tag>
+              <Tag tone="grass" size="sm">{primary.label}</Tag>
+              <Tag tone="sandstone" size="sm">{EQUIPMENT_LABEL[exercise.equipment]}</Tag>
+              <Tag tone="sandstone" size="sm">{exercise.difficulty}</Tag>
             </div>
-            <h2 className="text-[32px] font-semibold leading-[1.05] tracking-[-0.02em] text-black md:text-[40px]">
-              {exercise.name}
-            </h2>
-            <p className="mt-3 max-w-[60ch] font-serif text-[18px] leading-[1.56] text-[#615d59]">
+            <h2 className="t-heading text-[#2c2e2a]">{exercise.name}</h2>
+            <p className="mt-3 max-w-[60ch] t-body-lg text-[#2c2e2a]">
               {exercise.description}
             </p>
           </div>
 
           {exercise.muscleImagePath ? (
-            <section className="rounded-[12px] border border-black/[0.08] p-5">
-              <p className="text-eyebrow text-black/50">Músculos trabajados</p>
+            <section className="rounded-[50px] bg-white p-5 md:p-6">
+              <span className="t-eyebrow text-[#80827f]">Músculos trabajados</span>
               <img
                 src={exercise.muscleImagePath}
                 alt={`Músculos trabajados en ${exercise.name}`}
@@ -117,24 +115,24 @@ export function ExerciseDetailModal({ exercise, onClose }: ExerciseDetailModalPr
 
           {exercise.secondaryMuscles.length > 0 ? (
             <section>
-              <p className="text-eyebrow text-black/50">Sinergia</p>
+              <span className="t-eyebrow text-[#80827f]">Sinergia</span>
               <div className="mt-2 flex flex-wrap gap-1.5">
                 {exercise.secondaryMuscles.map((m) => (
-                  <Tag key={m} tone="muted">{MUSCLES[m].label}</Tag>
+                  <Tag key={m} tone="sandstone" size="sm">{MUSCLES[m].label}</Tag>
                 ))}
               </div>
             </section>
           ) : null}
 
           <section>
-            <p className="text-eyebrow text-black/50">Ejecución</p>
+            <span className="t-eyebrow text-[#80827f]">Ejecución</span>
             <ol className="mt-3 flex flex-col gap-2">
               {exercise.instructions.map((step, idx) => (
                 <li
                   key={idx}
-                  className="flex gap-3 rounded-[12px] border border-black/[0.08] p-3.5 text-[15px] leading-[1.5] text-black"
+                  className="flex gap-3 rounded-[25px] bg-white p-4 t-body text-[#2c2e2a]"
                 >
-                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#e6f3fe] text-[12px] font-semibold text-[#0075de]">
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#f5e211] text-[13px] font-semibold text-[#2c2e2a]">
                     {idx + 1}
                   </span>
                   <span>{step}</span>
@@ -144,12 +142,12 @@ export function ExerciseDetailModal({ exercise, onClose }: ExerciseDetailModalPr
           </section>
 
           {exercise.tips.length > 0 ? (
-            <section className="rounded-[12px] bg-[#fff7d6] p-5">
-              <p className="text-eyebrow text-black">Tips clave</p>
+            <section className="rounded-[50px] bg-[#f5e211] p-5 md:p-6">
+              <span className="t-eyebrow text-[#2c2e2a]">Tips clave</span>
               <ul className="mt-3 flex flex-col gap-2.5">
                 {exercise.tips.map((tip, idx) => (
-                  <li key={idx} className="flex gap-2.5 text-[15px] leading-[1.5] text-black">
-                    <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-black" />
+                  <li key={idx} className="flex gap-2.5 t-body text-[#2c2e2a]">
+                    <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-[#2c2e2a]" />
                     {tip}
                   </li>
                 ))}

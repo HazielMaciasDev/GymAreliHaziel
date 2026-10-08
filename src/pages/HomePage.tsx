@@ -5,7 +5,7 @@ import { AppShell } from '@/components/AppShell';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Tag } from '@/components/ui/Tag';
-import { Icon } from '@/components/Icon';
+import { Illustration, Sparkle } from '@/components/Illustration';
 import { fetchWeeklyRoutine } from '@/lib/weekly-routine';
 import { listSessions } from '@/lib/sessions';
 import {
@@ -32,14 +32,12 @@ export function HomePage() {
   const [doneIso, setDoneIso] = useState<Set<string>>(new Set());
   const [streak, setStreak] = useState<number>(0);
   const [loading, setLoading] = useState(true);
-  const [profileName, setProfileName] = useState('');
 
   useEffect(() => {
     if (!profile) {
       router.replace('/');
       return;
     }
-    setProfileName(profile === 'areli' ? 'Areli' : 'Haziel');
     let cancelled = false;
     (async () => {
       setLoading(true);
@@ -100,167 +98,203 @@ export function HomePage() {
 
   const weekDone = weekIso.filter((iso) => doneIso.has(iso)).length;
   const todaysSessionDone = doneIso.has(toIsoDate(new Date()));
+  const exerciseCount = EXERCISES.filter((e) => !e.profiles || e.profiles.includes(profile as ProfileId)).length;
 
   return (
     <AppShell>
       <div className="py-6 md:py-10">
-        <header className="mb-8 md:mb-12">
-          <p className="text-eyebrow text-black/50">
-            {formatDateLong(toIsoDate(new Date()))}
-          </p>
-          <h1 className="mt-3 text-display-sm text-black md:text-display">
-            {todayMeta.long}.
+        {/* Hero block */}
+        <section className="relative">
+          <div className="flex flex-wrap items-center gap-3">
+            <span className="t-eyebrow text-[#80827f]">{formatDateLong(toIsoDate(new Date()))}</span>
+            {todaysSessionDone ? (
+              <Tag tone="grass" icon={<span className="h-1.5 w-1.5 rounded-full bg-[#2c2e2a]" />}>
+                Sesión hecha
+              </Tag>
+            ) : null}
+          </div>
+          <h1 className="mt-4 t-display text-[#2c2e2a]">
+            {todayMeta.long.toLowerCase()}.
           </h1>
-          <p className="mt-4 max-w-[44ch] font-serif text-[18px] leading-[1.56] text-[#615d59]">
-            {profileName === 'Areli'
-              ? 'Más fuerte que tus excusas. Vamos por la semana.'
-              : 'El día que descanses, tu músculo crece. Hacé la sesión.'}
+          <p className="mt-4 max-w-[44ch] t-body-lg text-[#2c2e2a]">
+            {profile === 'areli'
+              ? 'Más fuerte que tus excusas. Hoy toca entrenar.'
+              : 'El músculo crece cuando descansás. Pero hoy toca sesión.'}
           </p>
-        </header>
+          <div className="absolute -right-2 -top-2 hidden md:block">
+            <Illustration variant="leaves" size={80} className="animate-float" />
+          </div>
+        </section>
 
-        <section className="grid gap-4 md:grid-cols-3 md:gap-5">
-          <Card padding="md" className="md:col-span-2 md:row-span-1">
-            <div className="flex items-start justify-between">
-              <p className="text-eyebrow text-black/50">Hoy</p>
-              {todaysSessionDone ? <Tag tone="sky-tint">Hecha</Tag> : null}
+        {/* Today + Streak */}
+        <section className="mt-8 grid grid-cols-1 gap-4 md:mt-12 md:grid-cols-3 md:gap-5">
+          <Card padding="lg" className="md:col-span-2">
+            <div className="flex items-center justify-between">
+              <span className="t-eyebrow text-[#80827f]">Hoy</span>
+              <Illustration variant="dumbbell" size={48} />
             </div>
             {loading ? (
-              <p className="mt-6 text-[14px] text-black/50">Cargando…</p>
+              <p className="mt-8 text-[16px] text-[#80827f]">Cargando…</p>
             ) : todayExercises.length === 0 ? (
               <div className="mt-6">
-                <p className="text-[24px] font-semibold leading-[1.1] text-black">Día libre</p>
-                <p className="mt-2 text-[14px] leading-[1.5] text-[#615d59]">
+                <h2 className="t-heading text-[#2c2e2a]">Día libre</h2>
+                <p className="mt-2 max-w-[36ch] t-body text-[#2c2e2a]/80">
                   No planificaste ejercicios para hoy. Andá a Rutina para armar tu semana.
                 </p>
-                <Button
-                  variant="primary"
-                  size="md"
-                  className="mt-6"
-                  onClick={() => router.push('/routine')}
-                  iconRight={<Icon.ChevronRight size={14} />}
-                >
-                  Planificar semana
-                </Button>
+                <div className="mt-6">
+                  <Button
+                    variant="dark"
+                    size="lg"
+                    onClick={() => router.push('/routine')}
+                    iconRight={
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M5 12h14M13 6l6 6-6 6" />
+                      </svg>
+                    }
+                    dotColor="grass"
+                  >
+                    Planificar semana
+                  </Button>
+                </div>
               </div>
             ) : (
               <div className="mt-6">
-                <p className="text-[14px] text-[#615d59]">
-                  <span className="text-[40px] font-semibold leading-[0.95] tracking-[-0.02em] text-black">
-                    {todayExercises.length}
-                  </span>{' '}
-                  {todayExercises.length === 1 ? 'ejercicio' : 'ejercicios'} programados
+                <p className="t-body-lg text-[#2c2e2a]/80">
+                  <span className="t-display text-[#2c2e2a] align-middle">{todayExercises.length}</span>{' '}
+                  {todayExercises.length === 1 ? 'ejercicio' : 'ejercicios'} hoy
                 </p>
-                <ul className="mt-5 flex flex-col gap-2.5">
+                <ul className="mt-5 flex flex-col gap-2">
                   {todayExercises.slice(0, 3).map((entry) => (
                     <li
                       key={entry.exercise.id}
-                      className="flex items-center justify-between gap-3 border-b border-black/[0.06] pb-2.5 last:border-b-0"
+                      className="flex items-center justify-between gap-3 rounded-full bg-[#f5f1e4] px-4 py-2.5"
                     >
-                      <span className="truncate text-[15px] font-medium text-black">
+                      <span className="truncate text-[15px] font-medium text-[#2c2e2a]">
                         {entry.exercise.name}
                       </span>
-                      <span className="shrink-0 text-[12px] tabular-nums text-black/50">
+                      <span className="shrink-0 rounded-full bg-white px-3 py-1 text-[12px] font-medium tabular-nums text-[#2c2e2a]">
                         {entry.sets} × {entry.reps}
                       </span>
                     </li>
                   ))}
                   {todayExercises.length > 3 ? (
-                    <li className="text-[12px] text-black/50">
-                      + {todayExercises.length - 3} más
-                    </li>
+                    <li className="px-4 text-[13px] text-[#80827f]">+ {todayExercises.length - 3} más</li>
                   ) : null}
                 </ul>
-                <Button
-                  variant="primary"
-                  size="lg"
-                  fullWidth
-                  className="mt-6"
-                  iconRight={<Icon.ChevronRight size={14} />}
-                  onClick={() => router.push('/routine/active')}
-                >
-                  Empezar rutina
-                </Button>
+                <div className="mt-6">
+                  <Button
+                    variant="coral"
+                    size="lg"
+                    fullWidth
+                    onClick={() => router.push('/routine/active')}
+                    dotColor="sunshine"
+                    iconRight={
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+                        <path d="M7 5v14l11-7z" />
+                      </svg>
+                    }
+                  >
+                    Empezar rutina
+                  </Button>
+                </div>
               </div>
             )}
           </Card>
 
-          <div className="grid gap-4 md:gap-5">
-            <Card padding="md" accent="marigold">
-              <p className="text-eyebrow text-black/60">Racha</p>
-              <p className="mt-3 text-[44px] font-semibold leading-[0.95] tracking-[-0.02em] text-black">
+          <Card padding="lg" tone="grass" className="relative overflow-hidden">
+            <span className="t-eyebrow text-[#2c2e2a]/70">Racha</span>
+            <div className="mt-3 flex items-end gap-2">
+              <span className="t-display text-[#2c2e2a] leading-[0.85]">
                 {streak}
-              </p>
-              <p className="mt-2 text-[14px] text-black/70">
-                {streak === 0
-                  ? 'Empezá hoy tu racha.'
-                  : streak === 1
-                    ? 'día seguido. Vamos.'
-                    : 'días seguidos.'}
-              </p>
-            </Card>
+              </span>
+              <span className="mb-2 t-body-lg text-[#2c2e2a]/80">
+                {streak === 1 ? 'día' : 'días'}
+              </span>
+            </div>
+            <p className="mt-3 t-body text-[#2c2e2a]/80">
+              {streak === 0
+                ? 'Hoy podés empezar tu primera racha.'
+                : 'Vas volando, no la dejés caer.'}
+            </p>
+            <div className="absolute -right-3 -top-2 opacity-90">
+              <Sparkle size={36} color="#f5e211" />
+            </div>
+          </Card>
+        </section>
 
-            <Card padding="md">
-              <p className="text-eyebrow text-black/50">Esta semana</p>
-              <p className="mt-3 text-[28px] font-semibold leading-[0.95] tracking-[-0.02em] text-black">
-                {weekDone}
-                <span className="text-[16px] font-normal text-black/40"> / {planned}</span>
-              </p>
-              <ul className="mt-4 flex flex-col gap-1.5">
-                {DAYS_OF_WEEK.map((d) => {
-                  const ws = startOfWeek(new Date());
-                  const dayDate = new Date(ws);
-                  dayDate.setDate(dayDate.getDate() + d.id);
-                  const iso = toIsoDate(dayDate);
-                  const isToday = d.id === todayDow;
-                  const isDone = doneIso.has(iso);
-                  return (
-                    <li key={d.id} className="flex items-center gap-2.5 text-[11px]">
-                      <span
-                        className={classNames(
-                          'w-8 font-medium tracking-[0.12em] uppercase',
-                          isToday ? 'text-[#0075de]' : 'text-black/50',
-                        )}
-                      >
-                        {d.short}
-                      </span>
-                      <span className="h-1.5 flex-1 rounded-full bg-black/[0.06]">
-                        <span
-                          className={classNames(
-                            'block h-full rounded-full transition-all',
-                            isDone ? 'bg-[#0075de]' : isToday ? 'bg-[#0075de]/30' : 'bg-transparent',
-                          )}
-                          style={{ width: isDone ? '100%' : isToday ? '40%' : '0%' }}
-                        />
-                      </span>
-                    </li>
-                  );
-                })}
-              </ul>
-            </Card>
+        {/* Week pills */}
+        <section className="mt-8 md:mt-12">
+          <div className="mb-3 flex items-end justify-between">
+            <span className="t-eyebrow text-[#80827f]">Esta semana</span>
+            <span className="t-eyebrow text-[#2c2e2a]">
+              {weekDone}<span className="text-[#80827f]">/{planned}</span>
+            </span>
+          </div>
+          <div className="grid grid-cols-7 gap-1.5 md:gap-2">
+            {DAYS_OF_WEEK.map((d) => {
+              const ws = startOfWeek(new Date());
+              const dayDate = new Date(ws);
+              dayDate.setDate(dayDate.getDate() + d.id);
+              const iso = toIsoDate(dayDate);
+              const isToday = d.id === todayDow;
+              const isDone = doneIso.has(iso);
+              return (
+                <div
+                  key={d.id}
+                  className={classNames(
+                    'flex flex-col items-center gap-1 rounded-full py-3 transition-colors',
+                    isDone
+                      ? 'bg-[#8ed462] text-[#2c2e2a]'
+                      : isToday
+                        ? 'bg-[#2c2e2a] text-white'
+                        : 'bg-white text-[#2c2e2a]',
+                  )}
+                >
+                  <span className="t-micro">{d.short}</span>
+                  <span className="text-[18px] font-semibold tabular-nums leading-none">
+                    {dayDate.getDate()}
+                  </span>
+                </div>
+              );
+            })}
           </div>
         </section>
 
-        <section className="mt-10">
-          <p className="text-eyebrow text-black/50">Andá a</p>
-          <div className="mt-4 grid gap-3 md:grid-cols-3 md:gap-4">
-            <NavTile
-              label="Rutina"
-              description="Calendario semanal y arrastre de ejercicios"
-              path="/routine"
-              icon="Calendar"
-            />
-            <NavTile
-              label="Banco"
-              description={`${EXERCISES.filter((e) => !e.profiles || e.profiles.includes(profile as ProfileId)).length} ejercicios con video y técnica`}
-              path="/exercises"
-              icon="Library"
-            />
-            <NavTile
-              label="Historial"
-              description="Sesiones pasadas, adherencia y progreso"
-              path="/history"
-              icon="History"
-            />
+        {/* Quick links */}
+        <section className="mt-10 grid grid-cols-1 gap-3 md:mt-14 md:grid-cols-3 md:gap-4">
+          <NavTile
+            title="Rutina"
+            description="Calendario semanal, agregar ejercicios"
+            path="/routine"
+            tone="sky"
+            icon="plate"
+          />
+          <NavTile
+            title="Banco"
+            description={`${exerciseCount} ejercicios con técnica`}
+            path="/exercises"
+            tone="sunshine"
+            icon="leaves"
+          />
+          <NavTile
+            title="Historial"
+            description="Sesiones, adherencia y progreso"
+            path="/history"
+            tone="coral"
+            icon="cup"
+          />
+        </section>
+
+        {/* Bottom yellow band */}
+        <section className="mt-12 rounded-[50px] bg-[#f5e211] px-6 py-6 md:mt-20 md:px-10 md:py-8">
+          <div className="flex flex-col items-start gap-4 md:flex-row md:items-center md:justify-between">
+            <div>
+              <span className="t-eyebrow text-[#2c2e2a]/70">Tip del día</span>
+              <p className="mt-2 t-body-lg text-[#2c2e2a] max-w-[60ch]">
+                La consistencia gana a la intensidad. Mejor tres sesiones tranquilas que una heroica.
+              </p>
+            </div>
+            <Illustration variant="sun" size={64} className="shrink-0" />
           </div>
         </section>
       </div>
@@ -269,31 +303,37 @@ export function HomePage() {
 }
 
 function NavTile({
-  label,
+  title,
   description,
   path,
+  tone,
   icon,
 }: {
-  label: string;
+  title: string;
   description: string;
   path: string;
-  icon: keyof typeof Icon;
+  tone: 'sky' | 'sunshine' | 'coral';
+  icon: 'plate' | 'leaves' | 'cup' | 'kettle' | 'dumbbell' | 'medal' | 'shoe' | 'star' | 'wave' | 'arrow' | 'sun';
 }) {
   const router = useRouter();
-  const IconComp = Icon[icon];
   return (
     <button
       type="button"
       onClick={() => router.push(path)}
-      className="group flex h-full flex-col items-start justify-between gap-6 rounded-[12px] border border-black/[0.08] bg-white p-5 text-left transition-transform duration-200 hover:-translate-y-0.5 hover:border-black/20 md:p-6"
+      className="group flex items-center gap-4 rounded-[50px] border-2 border-[#2c2e2a] bg-white p-4 text-left transition-transform hover:-translate-y-1 md:p-5"
     >
-      <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#e6f3fe] text-[#0075de]">
-        <IconComp size={18} />
+      <span className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full md:h-20 md:w-20">
+        <Illustration variant={icon} size={64} />
       </span>
-      <div className="w-full">
-        <p className="text-[18px] font-semibold leading-[1.1] text-black">{label}</p>
-        <p className="mt-1 text-[13px] leading-[1.45] text-[#615d59]">{description}</p>
+      <div className="min-w-0 flex-1">
+        <p className="t-subheading text-[#2c2e2a]">{title}</p>
+        <p className="mt-1 t-body-sm text-[#80827f]">{description}</p>
       </div>
+      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border-2 border-[#2c2e2a] transition-colors group-hover:bg-[#2c2e2a] group-hover:text-white">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M5 12h14M13 6l6 6-6 6" />
+        </svg>
+      </span>
     </button>
   );
 }

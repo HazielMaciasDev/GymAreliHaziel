@@ -5,34 +5,36 @@ interface InputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'prefix
   suffix?: string;
   prefix?: ReactNode;
   invalid?: boolean;
+  pillSize?: 'md' | 'lg';
 }
 
 export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
-  { suffix, prefix, invalid, className, ...rest },
+  { suffix, prefix, invalid, pillSize = 'md', className, ...rest },
   ref,
 ) {
   return (
     <div
       className={classNames(
-        'flex items-stretch h-11 rounded-[8px] border bg-white overflow-hidden',
+        'flex items-stretch bg-white border overflow-hidden',
+        pillSize === 'lg' ? 'h-14 rounded-full' : 'h-12 rounded-full',
         invalid
-          ? 'border-[#f64932] focus-within:border-[#f64932]'
-          : 'border-black/10 focus-within:border-black/40',
+          ? 'border-[#ff705d]'
+          : 'border-[#2c2e2a]',
         className,
       )}
     >
       {prefix ? (
-        <span className="flex items-center px-3 text-black/60 border-r border-black/5">
+        <span className="flex items-center pl-5 pr-2 text-[#80827f]">
           {prefix}
         </span>
       ) : null}
       <input
         ref={ref}
         {...rest}
-        className="flex-1 min-w-0 px-3 text-[15px] text-black placeholder:text-black/40 outline-none bg-transparent"
+        className="flex-1 min-w-0 bg-transparent px-5 text-[15px] text-[#2c2e2a] placeholder:text-[#80827f] outline-none"
       />
       {suffix ? (
-        <span className="flex items-center px-3 text-[12px] font-medium tracking-[0.04em] uppercase text-black/50 border-l border-black/5 bg-black/[0.02]">
+        <span className="flex items-center px-5 text-[12px] font-medium tracking-[0.04em] uppercase text-[#80827f]">
           {suffix}
         </span>
       ) : null}

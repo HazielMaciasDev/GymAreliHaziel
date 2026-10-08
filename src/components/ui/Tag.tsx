@@ -1,38 +1,31 @@
 import type { HTMLAttributes, ReactNode } from 'react';
 import { classNames } from '@/lib/format';
 
-type Tone =
-  | 'default'
-  | 'muted'
-  | 'invert'
-  | 'sky-tint'
-  | 'marigold'
-  | 'coral'
-  | 'sky'
-  | 'mocha';
+type Tone = 'ink' | 'white' | 'grass' | 'coral' | 'sky' | 'sunshine' | 'sandstone';
 
 interface TagProps extends HTMLAttributes<HTMLSpanElement> {
   tone?: Tone;
   icon?: ReactNode;
+  size?: 'sm' | 'md';
 }
 
 const TONES: Record<Tone, string> = {
-  default: 'bg-white text-black border-black/8',
-  muted: 'bg-black/[0.04] text-black/60 border-transparent',
-  invert: 'bg-[#02093a] text-white border-transparent',
-  'sky-tint': 'bg-[#e6f3fe] text-[#0075de] border-transparent',
-  marigold: 'bg-[#ffb110] text-black border-transparent',
-  coral: 'bg-[#f64932] text-white border-transparent',
-  sky: 'bg-[#62aef0] text-[#02093a] border-transparent',
-  mocha: 'bg-[#b18164] text-white border-transparent',
+  ink: 'bg-[#2c2e2a] text-white',
+  white: 'bg-white text-[#2c2e2a] border border-[#2c2e2a]',
+  grass: 'bg-[#8ed462] text-[#2c2e2a]',
+  coral: 'bg-[#ff705d] text-white',
+  sky: 'bg-[#2ba0ff] text-white',
+  sunshine: 'bg-[#f5e211] text-[#2c2e2a]',
+  sandstone: 'bg-[#e0dbce] text-[#2c2e2a]',
 };
 
-export function Tag({ tone = 'default', icon, className, children, ...rest }: TagProps) {
+export function Tag({ tone = 'ink', icon, size = 'sm', className, children, ...rest }: TagProps) {
   return (
     <span
       {...rest}
       className={classNames(
-        'inline-flex items-center gap-1.5 px-2.5 h-6 text-[11px] font-medium tracking-[0.04em] rounded-full border',
+        'inline-flex items-center gap-1.5 rounded-[10px] font-medium',
+        size === 'sm' ? 'px-3 h-7 text-[12px]' : 'px-4 h-9 text-[13px]',
         TONES[tone],
         className,
       )}

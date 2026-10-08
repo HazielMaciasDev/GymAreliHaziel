@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Tag } from '@/components/ui/Tag';
 import { Icon } from '@/components/Icon';
+import { Illustration, Sparkle } from '@/components/Illustration';
 import { ExerciseMedia } from '@/components/ExerciseMedia';
 import {
   addExerciseLog,
@@ -195,8 +196,8 @@ export function ActiveSessionPage() {
     return (
       <AppShell>
         <div className="flex min-h-[60vh] flex-col items-center justify-center gap-3 py-12 text-center">
-          <span className="block h-2 w-2 animate-pulse rounded-full bg-black/30" />
-          <p className="text-[14px] text-black/50">Cargando sesión…</p>
+          <span className="block h-3 w-3 animate-pulse rounded-full bg-[#2c2e2a]" />
+          <p className="t-body text-[#80827f]">Cargando sesión…</p>
         </div>
       </AppShell>
     );
@@ -205,18 +206,24 @@ export function ActiveSessionPage() {
   if (error && planned.length === 0) {
     return (
       <AppShell>
-        <Card padding="lg" className="mx-auto mt-12 max-w-md text-center">
-          <p className="text-[16px] font-semibold text-black">No hay ejercicios hoy</p>
-          <p className="mt-2 text-[14px] text-[#615d59]">{error}</p>
-          <Button
-            variant="primary"
-            size="md"
-            className="mt-6"
-            onClick={() => router.push('/routine')}
-            iconRight={<Icon.ChevronRight size={14} />}
-          >
-            Ir a Rutina
-          </Button>
+        <Card padding="lg" tone="white" className="mx-auto mt-12 max-w-md text-center">
+          <p className="t-body-lg text-[#2c2e2a]">No hay ejercicios hoy</p>
+          <p className="mt-2 t-body text-[#80827f]">{error}</p>
+          <div className="mt-6">
+            <Button
+              variant="dark"
+              size="lg"
+              onClick={() => router.push('/routine')}
+              iconRight={
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M5 12h14M13 6l6 6-6 6" />
+                </svg>
+              }
+              dotColor="grass"
+            >
+              Ir a Rutina
+            </Button>
+          </div>
         </Card>
       </AppShell>
     );
@@ -228,22 +235,32 @@ export function ActiveSessionPage() {
   if (done) {
     return (
       <AppShell>
-        <div className="flex min-h-[60vh] flex-col items-center justify-center px-6 py-12 text-center">
-          <Tag tone="marigold">Sesión completa</Tag>
-          <h1 className="mt-6 text-display text-black">¡Hecho!</h1>
-          <p className="mt-4 text-[15px] text-[#615d59]">
+        <div className="flex min-h-[70vh] flex-col items-center justify-center px-6 py-12 text-center">
+          <div className="relative">
+            <Illustration variant="medal" size={140} className="animate-pop" />
+          </div>
+          <span className="mt-8 t-eyebrow text-[#80827f]">Sesión completa</span>
+          <h1 className="mt-3 t-display text-[#2c2e2a]">¡Hecho!</h1>
+          <p className="mt-3 t-body-lg text-[#2c2e2a]/80">
             {totalExercises} {totalExercises === 1 ? 'ejercicio' : 'ejercicios'} · {formatDuration(elapsed)}
           </p>
-          <Button variant="primary" size="lg" className="mt-8" onClick={finish}>
-            Terminar y ver historial
-          </Button>
-          <button
-            type="button"
-            onClick={() => router.push('/home')}
-            className="mt-3 text-[13px] text-black/50 hover:text-black"
-          >
-            Volver al inicio
-          </button>
+          <div className="mt-8 flex flex-col items-center gap-3">
+            <Button
+              variant="coral"
+              size="lg"
+              onClick={finish}
+              dotColor="sunshine"
+            >
+              Terminar y ver historial
+            </Button>
+            <button
+              type="button"
+              onClick={() => router.push('/home')}
+              className="text-[14px] text-[#80827f] hover:text-[#2c2e2a]"
+            >
+              Volver al inicio
+            </button>
+          </div>
         </div>
       </AppShell>
     );
@@ -259,20 +276,18 @@ export function ActiveSessionPage() {
           <button
             type="button"
             onClick={() => router.push('/routine')}
-            className="flex h-10 w-10 items-center justify-center rounded-full hover:bg-black/5"
+            className="flex h-11 w-11 items-center justify-center rounded-full bg-white hover:bg-[#e0dbce]"
             aria-label="Volver"
           >
             <Icon.ChevronLeft size={18} />
           </button>
           <div className="flex flex-col items-center">
-            <p className="text-[10px] font-medium tracking-[0.12em] uppercase text-black/50">
-              Sesión
-            </p>
-            <p className="text-[13px] font-medium tabular-nums text-black">
-              {currentIndex + 1} <span className="text-black/40">/ {totalExercises}</span>
+            <span className="t-micro text-[#80827f]">Sesión</span>
+            <p className="t-body text-[#2c2e2a] font-semibold tabular-nums">
+              {currentIndex + 1} <span className="text-[#80827f]">/ {totalExercises}</span>
             </p>
           </div>
-          <div className="inline-flex h-10 items-center gap-1.5 rounded-full bg-black/[0.04] px-3 text-[12px] font-medium text-black">
+          <div className="inline-flex h-11 items-center gap-1.5 rounded-full bg-[#2c2e2a] px-4 text-[13px] font-medium text-white">
             <Icon.Timer size={14} />
             <span className="tabular-nums">{formatDuration(elapsed)}</span>
           </div>
@@ -284,20 +299,20 @@ export function ActiveSessionPage() {
             <span
               key={i}
               className={classNames(
-                'h-1 flex-1 rounded-full transition-colors',
+                'h-1.5 flex-1 rounded-full transition-colors',
                 i < currentIndex
-                  ? 'bg-[#0075de]'
+                  ? 'bg-[#8ed462]'
                   : i === currentIndex
-                    ? 'bg-[#0075de]/40'
-                    : 'bg-black/[0.08]',
+                    ? 'bg-[#2c2e2a]'
+                    : 'bg-[#2c2e2a]/10',
               )}
             />
           ))}
         </div>
 
-        <div className="grid gap-5 md:grid-cols-[1fr_1.1fr] md:gap-8">
+        <div className="grid gap-5 md:grid-cols-[1fr_1.1fr] md:gap-6">
           <div className="order-1">
-            <div className="relative aspect-[4/3] overflow-hidden rounded-[12px] bg-black/[0.04]">
+            <div className="relative aspect-[4/3] overflow-hidden rounded-[50px] bg-white">
               <ExerciseMedia
                 src={currentPlanned.exercise.gifPath}
                 alt={currentPlanned.exercise.name}
@@ -313,24 +328,29 @@ export function ActiveSessionPage() {
           <div className="order-2 flex flex-col gap-5">
             <div>
               <div className="flex flex-wrap items-center gap-1.5">
-                <Tag tone="marigold">{MUSCLES[currentPlanned.exercise.primaryMuscle].label}</Tag>
-                <Tag tone="muted">
+                <Tag tone="grass" size="sm">
+                  {MUSCLES[currentPlanned.exercise.primaryMuscle].label}
+                </Tag>
+                <Tag tone="sandstone" size="sm">
                   {currentPlanned.plannedSets} × {currentPlanned.plannedReps}
                 </Tag>
               </div>
-              <h2 className="mt-3 text-[28px] font-semibold leading-[1.1] tracking-[-0.02em] text-black md:text-[36px]">
+              <h2 className="mt-3 t-heading text-[#2c2e2a]">
                 {currentPlanned.exercise.name}
               </h2>
-              <p className="mt-2 text-[14px] leading-[1.5] text-[#615d59]">
+              <p className="mt-2 t-body text-[#2c2e2a]/80">
                 {currentPlanned.exercise.description}
               </p>
             </div>
 
             <div>
-              <div className="mb-2.5 flex items-end justify-between">
-                <p className="text-eyebrow text-black/50">
+              <div className="mb-3 flex items-center justify-between">
+                <span className="t-eyebrow text-[#80827f]">
                   Sets · {completedSets} / {currentSets.length}
-                </p>
+                </span>
+                {completedAllSets ? (
+                  <Sparkle size={20} color="#8ed462" />
+                ) : null}
               </div>
               <ul className="flex flex-col gap-2">
                 {currentSets.map((set, idx) => (
@@ -345,42 +365,50 @@ export function ActiveSessionPage() {
             </div>
 
             <section>
-              <p className="text-eyebrow text-black/50">Notas del ejercicio</p>
+              <span className="t-eyebrow text-[#80827f]">Notas del ejercicio</span>
               <textarea
                 value={exerciseNotes}
                 onChange={(e) => saveNotes(e.target.value)}
                 onBlur={(e) => saveNotes(e.target.value)}
                 placeholder="Cómo te sentiste, observaciones…"
                 rows={2}
-                className="mt-2.5 w-full rounded-[8px] border border-black/10 bg-white p-3 text-[14px] leading-[1.5] text-black outline-none placeholder:text-black/40 focus:border-black/40"
+                className="mt-2 w-full rounded-[20px] border-2 border-[#2c2e2a] bg-white p-3 text-[14px] leading-[1.5] text-[#2c2e2a] outline-none placeholder:text-[#80827f] focus:bg-[#f5e211]/10"
               />
             </section>
           </div>
         </div>
 
-        <div className="sticky bottom-20 mt-6 flex items-center justify-between gap-3 border-t border-black/[0.06] bg-[#f6f5f4] pt-4 md:bottom-0 md:bg-transparent md:pt-6">
+        <div className="sticky bottom-20 mt-6 flex items-center justify-between gap-3 pt-4 md:bottom-0 md:bg-transparent md:pt-6">
           <Button
             variant="outline"
             size="md"
             onClick={goPrev}
             disabled={currentIndex === 0}
             iconLeft={<Icon.ChevronLeft size={14} />}
+            dotColor="ink"
           >
             Anterior
           </Button>
           <Button
-            variant="primary"
+            variant="coral"
             size="md"
             onClick={goNext}
             disabled={!completedAllSets}
-            iconRight={currentIndex === planned.length - 1 ? <Icon.Check size={14} /> : <Icon.ChevronRight size={14} />}
+            dotColor="sunshine"
+            iconRight={
+              currentIndex === planned.length - 1 ? (
+                <Icon.Check size={14} />
+              ) : (
+                <Icon.ChevronRight size={14} />
+              )
+            }
           >
             {currentIndex === planned.length - 1 ? 'Terminar' : 'Siguiente'}
           </Button>
         </div>
 
         {!completedAllSets ? (
-          <p className="mt-3 text-center text-[12px] text-black/50">
+          <p className="mt-3 text-center text-[12px] text-[#80827f]">
             Te faltan {currentSets.length - completedSets} sets para habilitar el siguiente.
           </p>
         ) : null}
@@ -415,53 +443,55 @@ function SetRow({
   return (
     <li
       className={classNames(
-        'flex items-center gap-2 rounded-[12px] border bg-white p-2.5 transition-colors',
-        set.completed ? 'border-[#0075de] bg-[#e6f3fe]' : 'border-black/10',
+        'flex items-center gap-2 rounded-full border-2 bg-white p-2 transition-colors',
+        set.completed ? 'border-[#8ed462] bg-[#8ed462]/10' : 'border-[#2c2e2a]/10',
       )}
     >
       <span
         className={classNames(
-          'flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[12px] font-semibold',
-          set.completed ? 'bg-[#0075de] text-white' : 'bg-black/[0.04] text-black/60',
+          'flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-[13px] font-semibold',
+          set.completed ? 'bg-[#8ed462] text-[#2c2e2a]' : 'bg-[#f5f1e4] text-[#2c2e2a]',
         )}
       >
         {set.completed ? <Icon.Check size={14} /> : index}
       </span>
 
-      <div className="flex-1">
-        <input
-          type="number"
-          inputMode="decimal"
-          step="0.5"
-          min={0}
-          value={weight}
-          onChange={(e) => setWeight(e.target.value)}
-          onBlur={commit}
-          placeholder="0"
-          className="h-10 w-full rounded-[8px] border border-black/10 bg-white text-center text-[15px] tabular-nums outline-none focus:border-black/40"
-          aria-label="Peso en kilos"
-        />
-        <p className="mt-0.5 text-center text-[9px] tracking-[0.12em] uppercase text-black/50">
-          KG
-        </p>
-      </div>
+      <div className="flex flex-1 items-center gap-1.5">
+        <div className="flex-1">
+          <input
+            type="number"
+            inputMode="decimal"
+            step="0.5"
+            min={0}
+            value={weight}
+            onChange={(e) => setWeight(e.target.value)}
+            onBlur={commit}
+            placeholder="0"
+            className="h-11 w-full rounded-full border-2 border-[#2c2e2a]/10 bg-white text-center text-[15px] tabular-nums outline-none focus:border-[#2c2e2a]"
+            aria-label="Peso en kilos"
+          />
+          <p className="mt-0.5 text-center text-[9px] tracking-[0.12em] uppercase text-[#80827f]">
+            KG
+          </p>
+        </div>
 
-      <div className="flex-1">
-        <input
-          type="number"
-          inputMode="numeric"
-          step="1"
-          min={0}
-          value={reps}
-          onChange={(e) => setReps(e.target.value)}
-          onBlur={commit}
-          placeholder="0"
-          className="h-10 w-full rounded-[8px] border border-black/10 bg-white text-center text-[15px] tabular-nums outline-none focus:border-black/40"
-          aria-label="Repeticiones"
-        />
-        <p className="mt-0.5 text-center text-[9px] tracking-[0.12em] uppercase text-black/50">
-          REPS
-        </p>
+        <div className="flex-1">
+          <input
+            type="number"
+            inputMode="numeric"
+            step="1"
+            min={0}
+            value={reps}
+            onChange={(e) => setReps(e.target.value)}
+            onBlur={commit}
+            placeholder="0"
+            className="h-11 w-full rounded-full border-2 border-[#2c2e2a]/10 bg-white text-center text-[15px] tabular-nums outline-none focus:border-[#2c2e2a]"
+            aria-label="Repeticiones"
+          />
+          <p className="mt-0.5 text-center text-[9px] tracking-[0.12em] uppercase text-[#80827f]">
+            REPS
+          </p>
+        </div>
       </div>
 
       <button
@@ -469,10 +499,10 @@ function SetRow({
         onClick={() => onChange({ completed: !set.completed })}
         aria-label={set.completed ? 'Marcar pendiente' : 'Marcar hecho'}
         className={classNames(
-          'flex h-10 w-10 shrink-0 items-center justify-center rounded-full border transition-colors',
+          'flex h-11 w-11 shrink-0 items-center justify-center rounded-full border-2 transition-colors',
           set.completed
-            ? 'border-[#0075de] bg-[#0075de] text-white'
-            : 'border-black/10 text-black/40 hover:border-black/30 hover:text-black',
+            ? 'border-[#8ed462] bg-[#8ed462] text-[#2c2e2a]'
+            : 'border-[#2c2e2a]/10 text-[#80827f] hover:border-[#2c2e2a] hover:text-[#2c2e2a]',
         )}
       >
         <Icon.Check size={16} />

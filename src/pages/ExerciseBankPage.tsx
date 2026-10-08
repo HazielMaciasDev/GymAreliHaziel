@@ -1,12 +1,14 @@
 import { useMemo, useState } from 'react';
 import { useProfile } from '@/hooks/useProfile';
 import { AppShell } from '@/components/AppShell';
-import { Input } from '@/components/ui/Input';
 import { Card } from '@/components/ui/Card';
 import { Tag } from '@/components/ui/Tag';
+import { Input } from '@/components/ui/Input';
+import { Button } from '@/components/ui/Button';
+import { Icon } from '@/components/Icon';
+import { Illustration, Sparkle } from '@/components/Illustration';
 import { ExerciseMedia } from '@/components/ExerciseMedia';
 import { ExerciseDetailModal } from '@/components/ExerciseDetailModal';
-import { Icon } from '@/components/Icon';
 import { MUSCLES, MUSCLE_LIST } from '@/lib/muscles';
 import { EXERCISES } from '@/data/exercises';
 import type { Exercise, MuscleGroup } from '@/types';
@@ -43,27 +45,29 @@ export function ExerciseBankPage() {
   return (
     <AppShell>
       <div className="py-6 md:py-10">
-        <header className="mb-8 md:mb-10">
-          <p className="text-eyebrow text-black/50">Catálogo</p>
-          <h1 className="mt-2 text-display-sm text-black md:text-display">
-            Banco.
-          </h1>
-          <p className="mt-4 max-w-[44ch] font-serif text-[18px] leading-[1.56] text-[#615d59]">
-            Tocá un ejercicio para ver técnica, ángulos y músculos trabajados. Para planificarlo, andá a Rutina.
+        <section className="relative">
+          <span className="t-eyebrow text-[#80827f]">Catálogo · {exercises.length} ejercicios</span>
+          <h1 className="mt-3 t-display text-[#2c2e2a]">Banco.</h1>
+          <p className="mt-3 max-w-[44ch] t-body-lg text-[#2c2e2a]">
+            Tocá un ejercicio para ver técnica y ángulos. Después armás la rutina en Rutina.
           </p>
-        </header>
+          <div className="absolute right-0 top-0 hidden md:block">
+            <Sparkle size={36} color="#ff705d" className="animate-float" />
+          </div>
+        </section>
 
-        <div className="mb-5">
+        <div className="mt-6 md:mt-8">
           <Input
             placeholder="Buscar ejercicio o músculo…"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            prefix={<Icon.Search size={16} className="text-black/50" />}
+            pillSize="lg"
+            prefix={<Icon.Search size={18} className="text-[#80827f]" />}
           />
         </div>
 
-        <div className="mb-6 -mx-1 overflow-x-auto pb-1">
-          <div className="flex gap-1.5 px-1">
+        <div className="mt-4 -mx-4 overflow-x-auto px-4 pb-1 md:mx-0 md:px-0">
+          <div className="flex gap-1.5">
             <FilterChip
               label="Todos"
               active={muscleFilter === null}
@@ -80,13 +84,11 @@ export function ExerciseBankPage() {
           </div>
         </div>
 
-        <div className="mb-4 flex items-baseline justify-between">
-          <p className="text-[13px] text-[#615d59]">
-            <span className="font-semibold text-black">{filtered.length}</span> de {exercises.length} ejercicios
-          </p>
-        </div>
+        <p className="mt-6 t-body-sm text-[#80827f]">
+          <span className="font-semibold text-[#2c2e2a]">{filtered.length}</span> de {exercises.length} ejercicios
+        </p>
 
-        <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <ul className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {filtered.map((ex) => (
             <BankItem key={ex.id} exercise={ex} onSelect={setSelected} />
           ))}
@@ -94,8 +96,8 @@ export function ExerciseBankPage() {
 
         {filtered.length === 0 ? (
           <Card padding="lg" className="mt-4 text-center">
-            <p className="text-[16px] font-semibold text-black">Sin resultados</p>
-            <p className="mt-1 text-[14px] text-[#615d59]">
+            <p className="t-body-lg font-semibold text-[#2c2e2a]">Sin resultados</p>
+            <p className="mt-1 t-body text-[#80827f]">
               Probá quitar el filtro o ajustar la búsqueda.
             </p>
           </Card>
@@ -123,10 +125,10 @@ function FilterChip({
       type="button"
       onClick={onClick}
       className={classNames(
-        'shrink-0 rounded-full border px-3.5 h-9 text-[13px] font-medium transition-colors',
+        'shrink-0 rounded-full border-2 px-4 h-10 text-[13px] font-medium transition-colors',
         active
-          ? 'bg-black text-white border-black'
-          : 'bg-white text-black/70 border-black/10 hover:border-black/30 hover:text-black',
+          ? 'border-[#2c2e2a] bg-[#2c2e2a] text-white'
+          : 'border-[#2c2e2a]/10 bg-white text-[#2c2e2a] hover:border-[#2c2e2a]/30',
       )}
     >
       {label}
@@ -141,26 +143,24 @@ function BankItem({ exercise, onSelect }: { exercise: Exercise; onSelect: (e: Ex
       <button
         type="button"
         onClick={() => onSelect(exercise)}
-        className="group flex h-full w-full flex-col overflow-hidden rounded-[12px] border border-black/[0.08] bg-white text-left transition-transform duration-200 hover:-translate-y-0.5 hover:border-black/20"
+        className="group flex h-full w-full flex-col overflow-hidden rounded-[50px] border-2 border-[#2c2e2a]/10 bg-white text-left transition-transform hover:-translate-y-1 hover:border-[#2c2e2a]"
       >
-        <div className="relative aspect-[4/3] overflow-hidden bg-black/[0.04]">
+        <div className="relative aspect-[4/3] overflow-hidden bg-[#f5f1e4]">
           <ExerciseMedia
             src={exercise.gifPath}
             alt={exercise.name}
-            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.04]"
+            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
             loading="lazy"
             onError={(e) => {
               (e.currentTarget as HTMLElement).style.opacity = '0.15';
             }}
           />
         </div>
-        <div className="flex flex-1 flex-col gap-2.5 p-4">
-          <h3 className="text-[16px] font-semibold leading-[1.25] text-black">
-            {exercise.name}
-          </h3>
+        <div className="flex flex-1 flex-col gap-3 p-5">
+          <h3 className="t-subheading text-[#2c2e2a]">{exercise.name}</h3>
           <div className="flex flex-wrap items-center gap-1.5">
-            <Tag tone="muted">{primary.label}</Tag>
-            <Tag tone="muted">{exercise.difficulty}</Tag>
+            <Tag tone="grass" size="sm">{primary.label}</Tag>
+            <Tag tone="sandstone" size="sm">{exercise.difficulty}</Tag>
           </div>
         </div>
       </button>

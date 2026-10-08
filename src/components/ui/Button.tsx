@@ -1,7 +1,7 @@
 import type { ButtonHTMLAttributes, ReactNode } from 'react';
 import { classNames } from '@/lib/format';
 
-type Variant = 'primary' | 'secondary' | 'ghost' | 'text' | 'outline' | 'danger';
+type Variant = 'primary' | 'secondary' | 'ghost' | 'outline' | 'coral' | 'dark';
 type Size = 'sm' | 'md' | 'lg';
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
@@ -10,27 +10,36 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   iconLeft?: ReactNode;
   iconRight?: ReactNode;
   fullWidth?: boolean;
+  dotColor?: 'sky' | 'coral' | 'grass' | 'sunshine' | 'ink';
 }
+
+const DOT_BG: Record<NonNullable<ButtonProps['dotColor']>, string> = {
+  sky: 'bg-[#2ba0ff]',
+  coral: 'bg-[#ff705d]',
+  grass: 'bg-[#8ed462]',
+  sunshine: 'bg-[#f5e211]',
+  ink: 'bg-[#2c2e2a]',
+};
 
 const VARIANTS: Record<Variant, string> = {
   primary:
-    'bg-[#0075de] text-white hover:bg-[#0066c5] active:bg-[#005bab] disabled:bg-[#0075de]/40 disabled:text-white/90',
+    'bg-white text-[#2c2e2a] border border-[#2c2e2a] hover:bg-[#2c2e2a] hover:text-white active:bg-[#1f211d] disabled:opacity-50',
   secondary:
-    'bg-[#e6f3fe] text-[#0075de] hover:bg-[#d9ebfd] active:bg-[#cce4fc] disabled:opacity-50',
+    'bg-[#e0dbce] text-[#2c2e2a] hover:bg-[#d3ccba] active:bg-[#c4bda8] disabled:opacity-50',
   ghost:
-    'bg-transparent text-black/90 hover:bg-black/5 active:bg-black/10 disabled:opacity-40',
-  text:
-    'bg-transparent text-black/90 hover:bg-black/5 active:bg-black/10 disabled:opacity-40',
+    'bg-transparent text-[#2c2e2a] hover:bg-[#2c2e2a]/5 active:bg-[#2c2e2a]/10 disabled:opacity-40',
   outline:
-    'bg-transparent text-black/90 border border-black/10 hover:border-black/30 hover:bg-black/[0.02] disabled:opacity-40',
-  danger:
-    'bg-transparent text-[#f64932] hover:bg-[#f64932]/10 disabled:opacity-40',
+    'bg-transparent text-[#2c2e2a] border border-[#2c2e2a] hover:bg-[#2c2e2a] hover:text-white disabled:opacity-50',
+  coral:
+    'bg-[#ff705d] text-white hover:bg-[#ff5a44] active:bg-[#ed4a35] disabled:opacity-50',
+  dark:
+    'bg-[#2c2e2a] text-white hover:bg-[#1f211d] active:bg-[#151714] disabled:opacity-50',
 };
 
 const SIZES: Record<Size, string> = {
-  sm: 'h-8 px-3 text-[13px]',
-  md: 'h-10 px-4 text-[14px]',
-  lg: 'h-12 px-5 text-[15px]',
+  sm: 'h-9 px-4 text-[14px] gap-2',
+  md: 'h-12 px-5 text-[15px] gap-2.5',
+  lg: 'h-14 px-7 text-[16px] gap-3',
 };
 
 export function Button({
@@ -39,6 +48,7 @@ export function Button({
   iconLeft,
   iconRight,
   fullWidth,
+  dotColor = 'ink',
   className,
   children,
   type = 'button',
@@ -49,7 +59,7 @@ export function Button({
       {...rest}
       type={type}
       className={classNames(
-        'inline-flex items-center justify-center gap-2 font-medium rounded-[8px] transition-colors duration-150 select-none',
+        'inline-flex items-center justify-center rounded-full font-medium transition-colors duration-150 select-none',
         VARIANTS[variant],
         SIZES[size],
         fullWidth && 'w-full',
@@ -58,7 +68,16 @@ export function Button({
     >
       {iconLeft ? <span className="flex h-4 w-4 items-center">{iconLeft}</span> : null}
       <span className="whitespace-nowrap">{children}</span>
-      {iconRight ? <span className="flex h-4 w-4 items-center">{iconRight}</span> : null}
+      {iconRight ? (
+        <span className="flex h-4 w-4 items-center">{iconRight}</span>
+      ) : (
+        <span
+          className={classNames(
+            'ml-0.5 h-2.5 w-2.5 shrink-0 rounded-full',
+            DOT_BG[dotColor],
+          )}
+        />
+      )}
     </button>
   );
 }

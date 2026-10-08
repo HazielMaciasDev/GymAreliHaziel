@@ -3,7 +3,7 @@ import { useProfile } from '@/hooks/useProfile';
 import { AppShell } from '@/components/AppShell';
 import { Card } from '@/components/ui/Card';
 import { Tag } from '@/components/ui/Tag';
-import { Icon } from '@/components/Icon';
+import { Illustration, Sparkle } from '@/components/Illustration';
 import { ProgressChart } from '@/components/ProgressChart';
 import {
   fetchAdherenceWeeks,
@@ -129,25 +129,32 @@ export function HistoryPage() {
   return (
     <AppShell>
       <div className="py-6 md:py-10">
-        <header className="mb-8 md:mb-10">
-          <p className="text-eyebrow text-black/50">Sesiones pasadas</p>
-          <h1 className="mt-2 text-display-sm text-black md:text-display">Historial.</h1>
-        </header>
+        <section className="relative">
+          <span className="t-eyebrow text-[#80827f]">Sesiones pasadas</span>
+          <h1 className="mt-3 t-display text-[#2c2e2a]">Historial.</h1>
+          <p className="mt-3 max-w-[44ch] t-body-lg text-[#2c2e2a]">
+            Mirá tu adherencia, revisitá sesiones y seguí el progreso de cada ejercicio.
+          </p>
+          <div className="absolute right-0 top-0 hidden md:block">
+            <Illustration variant="cup" size={80} className="animate-float" />
+          </div>
+        </section>
 
         {error ? (
-          <Card padding="md" className="mb-6 border-[#f64932]">
-            <p className="text-[14px] text-[#f64932]">{error}</p>
+          <Card padding="md" className="mt-6 border-[#ff705d]">
+            <p className="text-[14px] text-[#ff705d]">{error}</p>
           </Card>
         ) : null}
 
-        <section className="mb-8">
+        {/* Adherence */}
+        <section className="mt-8 md:mt-10">
           <div className="mb-3 flex items-end justify-between">
-            <h2 className="text-eyebrow text-black/50">Adherencia</h2>
-            <p className="text-[12px] text-black/50">Últimas 8 semanas</p>
+            <h2 className="t-eyebrow text-[#80827f]">Adherencia</h2>
+            <span className="t-eyebrow text-[#2c2e2a]">8 semanas</span>
           </div>
           {loading ? (
             <Card padding="md">
-              <p className="text-[14px] text-black/50">Cargando…</p>
+              <p className="text-[14px] text-[#80827f]">Cargando…</p>
             </Card>
           ) : (
             <Card padding="md">
@@ -156,18 +163,18 @@ export function HistoryPage() {
                   const pct = w.planned > 0 ? (w.completed / w.planned) * 100 : 0;
                   return (
                     <div key={w.weekStart} className="flex flex-col items-start">
-                      <p className="text-[10px] tracking-[0.08em] uppercase text-black/50">
+                      <span className="t-micro text-[#80827f]">
                         Sem {w.weekStart.slice(5)}
-                      </p>
-                      <p className="mt-1.5 text-[20px] font-semibold leading-none text-black">
+                      </span>
+                      <p className="mt-1.5 text-[20px] font-semibold leading-none text-[#2c2e2a]">
                         {w.completed}
-                        <span className="text-[11px] font-normal text-black/40"> /{w.planned}</span>
+                        <span className="text-[11px] font-normal text-[#80827f]"> /{w.planned}</span>
                       </p>
-                      <span className="mt-2 h-1 w-full rounded-full bg-black/[0.06]">
+                      <span className="mt-2 h-1.5 w-full rounded-full bg-[#2c2e2a]/8">
                         <span
                           className={classNames(
                             'block h-full rounded-full transition-all',
-                            pct >= 100 ? 'bg-[#0075de]' : pct > 0 ? 'bg-[#ffb110]' : 'bg-black/[0.06]',
+                            pct >= 100 ? 'bg-[#8ed462]' : pct > 0 ? 'bg-[#f5e211]' : 'bg-transparent',
                           )}
                           style={{ width: `${pct}%` }}
                         />
@@ -180,17 +187,17 @@ export function HistoryPage() {
           )}
         </section>
 
-        <div className="grid gap-6 md:grid-cols-[1fr_1.2fr]">
+        <div className="mt-8 grid gap-5 md:grid-cols-[1fr_1.2fr] md:gap-6">
           <section>
-            <h2 className="mb-3 text-eyebrow text-black/50">Sesiones</h2>
+            <h2 className="mb-3 t-eyebrow text-[#80827f]">Sesiones</h2>
             {loading ? (
               <Card padding="md">
-                <p className="text-[14px] text-black/50">Cargando…</p>
+                <p className="text-[14px] text-[#80827f]">Cargando…</p>
               </Card>
             ) : sessionsList.length === 0 ? (
               <Card padding="lg">
-                <p className="text-[16px] font-semibold text-black">Sin sesiones registradas</p>
-                <p className="mt-1 text-[14px] text-[#615d59]">
+                <p className="t-body-lg font-semibold text-[#2c2e2a]">Sin sesiones registradas</p>
+                <p className="mt-1 t-body text-[#80827f]">
                   Cuando termines una rutina, va a quedar acá.
                 </p>
               </Card>
@@ -208,23 +215,25 @@ export function HistoryPage() {
                         type="button"
                         onClick={() => openSession(s)}
                         className={classNames(
-                          'flex w-full items-center justify-between gap-3 rounded-[12px] border p-3.5 text-left transition-colors',
+                          'flex w-full items-center justify-between gap-3 rounded-full border-2 p-3 text-left transition-colors',
                           active
-                            ? 'border-[#0075de] bg-[#e6f3fe]'
-                            : 'border-black/[0.08] bg-white hover:border-black/20',
+                            ? 'border-[#2c2e2a] bg-[#2c2e2a] text-white'
+                            : 'border-[#2c2e2a]/10 bg-white text-[#2c2e2a] hover:border-[#2c2e2a]/30',
                         )}
                       >
                         <div className="min-w-0">
-                          <p className="truncate text-[14px] font-semibold text-black">
+                          <p className="truncate text-[14px] font-semibold">
                             {formatDateLong(s.routine_date)}
                           </p>
-                          <p className="mt-0.5 text-[12px] text-black/50">
+                          <p className={classNames('mt-0.5 text-[12px]', active ? 'text-white/70' : 'text-[#80827f]')}>
                             {dow} · {dur}
                           </p>
                         </div>
-                        <Tag tone={s.completed ? 'sky-tint' : 'muted'}>
-                          {s.completed ? 'Hecha' : 'Pendiente'}
-                        </Tag>
+                        {s.completed ? (
+                          <Tag tone={active ? 'sunshine' : 'grass'} size="sm">Hecha</Tag>
+                        ) : (
+                          <Tag tone="sandstone" size="sm">Pendiente</Tag>
+                        )}
                       </button>
                     </li>
                   );
@@ -234,12 +243,12 @@ export function HistoryPage() {
           </section>
 
           <section>
-            <h2 className="mb-3 text-eyebrow text-black/50">Detalle</h2>
+            <h2 className="mb-3 t-eyebrow text-[#80827f]">Detalle</h2>
             {selectedSession ? (
               <SessionDetailCard detail={selectedSession} />
             ) : (
               <Card padding="lg">
-                <p className="text-[14px] text-[#615d59]">
+                <p className="t-body text-[#80827f]">
                   Seleccioná una sesión para ver el detalle.
                 </p>
               </Card>
@@ -248,13 +257,13 @@ export function HistoryPage() {
         </div>
 
         <section className="mt-10">
-          <h2 className="mb-3 text-eyebrow text-black/50">Progreso por ejercicio</h2>
+          <h2 className="mb-3 t-eyebrow text-[#80827f]">Progreso por ejercicio</h2>
           <Card padding="md">
             <div className="mb-5 flex flex-col gap-3">
               <select
                 value={selectedExerciseId}
                 onChange={(e) => setSelectedExerciseId(e.target.value)}
-                className="h-11 w-full rounded-[8px] border border-black/10 bg-white px-3 text-[15px] text-black outline-none focus:border-black/40 md:max-w-xs"
+                className="h-12 w-full rounded-full border-2 border-[#2c2e2a] bg-white px-4 text-[15px] text-[#2c2e2a] outline-none focus:bg-[#f5e211]/10 md:max-w-xs"
               >
                 <option value="">Elegí un ejercicio</option>
                 {profileExercises.map((ex) => (
@@ -280,7 +289,7 @@ export function HistoryPage() {
             {selectedExerciseId ? (
               <ProgressChart data={progress} metric={chartMetric} />
             ) : (
-              <p className="text-[14px] text-[#615d59]">
+              <p className="t-body text-[#80827f]">
                 Seleccioná un ejercicio para ver su progreso.
               </p>
             )}
@@ -297,8 +306,8 @@ function ChartTab({ active, onClick, label }: { active: boolean; onClick: () => 
       type="button"
       onClick={onClick}
       className={classNames(
-        'rounded-full px-3.5 h-9 text-[13px] font-medium transition-colors',
-        active ? 'bg-black text-white' : 'bg-white text-black/70 border border-black/10 hover:border-black/30',
+        'rounded-full px-4 h-10 text-[13px] font-medium transition-colors',
+        active ? 'bg-[#2c2e2a] text-white' : 'bg-white text-[#2c2e2a] border-2 border-[#2c2e2a]/10 hover:border-[#2c2e2a]/30',
       )}
     >
       {label}
@@ -315,17 +324,21 @@ function SessionDetailCard({ detail }: { detail: SessionDetail }) {
 
   return (
     <Card padding="md">
-      <div className="flex items-start justify-between gap-2">
+      <div className="flex items-start justify-between gap-3">
         <div>
-          <p className="text-eyebrow text-black/50">{formatDateLong(detail.session.routine_date)}</p>
-          <p className="mt-1.5 text-[18px] font-semibold leading-[1.1] text-black">
+          <span className="t-eyebrow text-[#80827f]">{formatDateLong(detail.session.routine_date)}</span>
+          <p className="mt-1.5 t-subheading text-[#2c2e2a]">
             {detail.session.completed ? 'Sesión completa' : 'Sesión parcial'}
           </p>
         </div>
-        {detail.session.completed ? <Tag tone="sky-tint">Hecha</Tag> : <Tag tone="muted">Pendiente</Tag>}
+        {detail.session.completed ? (
+          <Tag tone="grass">Hecha</Tag>
+        ) : (
+          <Tag tone="sandstone">Pendiente</Tag>
+        )}
       </div>
 
-      <ul className="mt-5 flex flex-col gap-4">
+      <ul className="mt-5 flex flex-col gap-3">
         {detail.exerciseLogs
           .sort((a, b) => a.position - b.position)
           .map((log) => {
@@ -333,26 +346,29 @@ function SessionDetailCard({ detail }: { detail: SessionDetail }) {
             const sets = (setsByLog.get(log.id) ?? []).sort((a, b) => a.set_number - b.set_number);
             const completedSets = sets.filter((s) => s.completed).length;
             return (
-              <li key={log.id} className="rounded-[12px] border border-black/[0.08] p-3.5">
-                <div className="flex items-start justify-between gap-2">
-                  <p className="text-[15px] font-semibold text-black">{ex?.name ?? log.exercise_id}</p>
-                  <span className="text-[12px] tabular-nums text-black/50">
+              <li key={log.id} className="rounded-[25px] bg-[#f5f1e4] p-4">
+                <div className="flex items-center justify-between gap-2">
+                  <p className="t-body font-semibold text-[#2c2e2a]">{ex?.name ?? log.exercise_id}</p>
+                  <span className="rounded-full bg-white px-2.5 py-0.5 text-[11px] tabular-nums text-[#2c2e2a]">
                     {completedSets}/{sets.length}
                   </span>
                 </div>
-                <ul className="mt-2.5 flex flex-col gap-1.5">
+                <ul className="mt-3 flex flex-col gap-1.5">
                   {sets.map((s) => (
                     <li key={s.id} className="flex items-center gap-2.5 text-[13px]">
                       <span
                         className={classNames(
-                          'flex h-5 w-5 items-center justify-center rounded-full',
-                          s.completed ? 'bg-[#0075de] text-white' : 'bg-black/[0.06] text-black/40',
+                          'flex h-6 w-6 items-center justify-center rounded-full',
+                          s.completed ? 'bg-[#8ed462] text-[#2c2e2a]' : 'bg-white text-[#80827f]',
                         )}
                       >
-                        {s.completed ? <Icon.Check size={11} /> : null}
+                        {s.completed ? (
+                          <IconCheck size={11} />
+                        ) : (
+                          <span className="text-[10px]">#{s.set_number}</span>
+                        )}
                       </span>
-                      <span className="w-6 text-[12px] text-black/50">#{s.set_number}</span>
-                      <span className="flex-1 tabular-nums text-black">
+                      <span className="flex-1 tabular-nums text-[#2c2e2a]">
                         {s.weight_kg != null ? `${s.weight_kg}` : '—'} kg ×{' '}
                         {s.reps ?? '—'} reps
                       </span>
@@ -360,7 +376,7 @@ function SessionDetailCard({ detail }: { detail: SessionDetail }) {
                   ))}
                 </ul>
                 {log.notes ? (
-                  <p className="mt-3 border-t border-black/[0.06] pt-3 text-[13px] leading-[1.5] text-[#615d59]">
+                  <p className="mt-3 rounded-2xl bg-white p-3 text-[13px] leading-[1.5] text-[#2c2e2a]/80">
                     {log.notes}
                   </p>
                 ) : null}
@@ -369,5 +385,13 @@ function SessionDetailCard({ detail }: { detail: SessionDetail }) {
           })}
       </ul>
     </Card>
+  );
+}
+
+function IconCheck({ size = 12 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <path d="M5 12l5 5L20 7" />
+    </svg>
   );
 }
