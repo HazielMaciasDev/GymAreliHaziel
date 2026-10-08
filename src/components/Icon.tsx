@@ -72,9 +72,9 @@ export const Icon = {
       ),
     }),
   Plus: (p: IconProps) =>
-    svg({ ...p, children: <><path d="M12 5v14M5 12h14" /></> }),
+    svg({ ...p, children: <path d="M12 5v14M5 12h14" /> }),
   Close: (p: IconProps) =>
-    svg({ ...p, children: <><path d="M6 6l12 12M18 6l-12 12" /></> }),
+    svg({ ...p, children: <path d="M6 6l12 12M18 6l-12 12" /> }),
   Play: (p: IconProps) => {
     const { size = 18, className } = p;
     return (
@@ -90,12 +90,30 @@ export const Icon = {
       </svg>
     );
   },
+  Pause: (p: IconProps) => {
+    const { size = 18, className } = p;
+    return (
+      <svg
+        width={size}
+        height={size}
+        viewBox="0 0 24 24"
+        fill="currentColor"
+        className={className}
+        aria-hidden
+      >
+        <rect x="6" y="5" width="4" height="14" rx="1" />
+        <rect x="14" y="5" width="4" height="14" rx="1" />
+      </svg>
+    );
+  },
   ChevronRight: (p: IconProps) =>
     svg({ ...p, children: <path d="M9 6l6 6-6 6" /> }),
   ChevronLeft: (p: IconProps) =>
     svg({ ...p, children: <path d="M15 6l-6 6 6 6" /> }),
   ChevronDown: (p: IconProps) =>
     svg({ ...p, children: <path d="M6 9l6 6 6-6" /> }),
+  ChevronUp: (p: IconProps) =>
+    svg({ ...p, children: <path d="M6 15l6-6 6 6" /> }),
   Trash: (p: IconProps) =>
     svg({
       ...p,
@@ -186,6 +204,58 @@ export const Icon = {
           <path d="M5 3h11l3 3v15H5z" />
           <path d="M9 3v6h7" />
           <path d="M9 13h6M9 17h4" />
+        </>
+      ),
+    }),
+  Flame: (p: IconProps) =>
+    svg({
+      ...p,
+      children: (
+        <>
+          <path d="M12 2c2 4-2 4 0 8 1 2-1 3-2 3s-3-1-3-4 3-4 5-7z" />
+          <path d="M9 17a3 3 0 0 0 6 0c0-2-3-3-3-5 0 0-3 2-3 5z" />
+        </>
+      ),
+    }),
+  Trend: (p: IconProps) =>
+    svg({
+      ...p,
+      children: (
+        <>
+          <path d="M3 17l6-6 4 4 8-8" />
+          <path d="M14 7h7v7" />
+        </>
+      ),
+    }),
+  CalendarCheck: (p: IconProps) =>
+    svg({
+      ...p,
+      children: (
+        <>
+          <rect x="3" y="5" width="18" height="16" rx="2" />
+          <path d="M3 9h18" />
+          <path d="M8 3v4M16 3v4" />
+          <path d="M8 14l2 2 4-4" />
+        </>
+      ),
+    }),
+  Dumbbell: (p: IconProps) =>
+    svg({
+      ...p,
+      children: (
+        <>
+          <path d="M6 6v12M18 6v12" />
+          <path d="M3 9v6M21 9v6" />
+          <path d="M6 12h12" />
+        </>
+      ),
+    }),
+  Sparkle: (p: IconProps) =>
+    svg({
+      ...p,
+      children: (
+        <>
+          <path d="M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5z" />
         </>
       ),
     }),

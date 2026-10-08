@@ -3,25 +3,25 @@ import type { ProfileId } from '@/types';
 export interface ProfileMeta {
   id: ProfileId;
   name: string;
-  emoji: string;
   initials: string;
   tagline: string;
+  accent: 'marigold' | 'coral' | 'sky' | 'mocha';
 }
 
 export const PROFILES: Record<ProfileId, ProfileMeta> = {
   haziel: {
     id: 'haziel',
     name: 'Haziel',
-    emoji: '💪',
     initials: 'H',
     tagline: 'El día que descanses, tu músculo crece.',
+    accent: 'sky',
   },
   areli: {
     id: 'areli',
     name: 'Areli',
-    emoji: '🔥',
     initials: 'A',
     tagline: 'Más fuerte que tus excusas.',
+    accent: 'marigold',
   },
 };
 

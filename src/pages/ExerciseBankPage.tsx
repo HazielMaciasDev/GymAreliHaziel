@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { useProfile } from '@/hooks/useProfile';
 import { AppShell } from '@/components/AppShell';
 import { Input } from '@/components/ui/Input';
+import { Card } from '@/components/ui/Card';
 import { Tag } from '@/components/ui/Tag';
 import { ExerciseMedia } from '@/components/ExerciseMedia';
 import { ExerciseDetailModal } from '@/components/ExerciseDetailModal';
@@ -41,71 +42,63 @@ export function ExerciseBankPage() {
 
   return (
     <AppShell>
-      <div className="mx-auto max-w-[1200px] px-4 py-6 md:px-8 md:py-10">
+      <div className="py-6 md:py-10">
         <header className="mb-8 md:mb-10">
-          <p className="text-[10px] font-medium tracking-[0.18em] uppercase text-pebble">Catálogo</p>
-          <h1 className="mt-2 font-display text-[clamp(40px,5vw,60px)] leading-[0.95] text-forest-ink">
-            BANCO
+          <p className="text-eyebrow text-black/50">Catálogo</p>
+          <h1 className="mt-2 text-display-sm text-black md:text-display">
+            Banco.
           </h1>
-          <p className="mt-3 max-w-[44ch] text-[14px] leading-[1.5] text-slate">
-            Tocá un ejercicio para ver el detalle. Para planificarlo en tu semana, andá a Rutina y arrastralo al día correspondiente.
+          <p className="mt-4 max-w-[44ch] font-serif text-[18px] leading-[1.56] text-[#615d59]">
+            Tocá un ejercicio para ver técnica, ángulos y músculos trabajados. Para planificarlo, andá a Rutina.
           </p>
         </header>
 
-        <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-          <div className="md:w-[360px]">
-            <Input
-              placeholder="Buscar ejercicio o músculo…"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-            />
-          </div>
-          <div className="flex flex-wrap gap-1.5">
-            <button
-              type="button"
+        <div className="mb-5">
+          <Input
+            placeholder="Buscar ejercicio o músculo…"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            prefix={<Icon.Search size={16} className="text-black/50" />}
+          />
+        </div>
+
+        <div className="mb-6 -mx-1 overflow-x-auto pb-1">
+          <div className="flex gap-1.5 px-1">
+            <FilterChip
+              label="Todos"
+              active={muscleFilter === null}
               onClick={() => setMuscleFilter(null)}
-              className={classNames(
-                'h-8 px-3 text-[10px] font-medium tracking-[0.12em] uppercase transition-colors',
-                muscleFilter === null
-                  ? 'bg-forest-ink text-paper'
-                  : 'border border-fog text-slate hover:border-forest-ink hover:text-forest-ink',
-              )}
-            >
-              Todos
-            </button>
+            />
             {MUSCLE_LIST.map((m) => (
-              <button
+              <FilterChip
                 key={m.id}
-                type="button"
+                label={m.label}
+                active={muscleFilter === m.id}
                 onClick={() => setMuscleFilter(muscleFilter === m.id ? null : m.id)}
-                className={classNames(
-                  'h-8 px-3 text-[10px] font-medium tracking-[0.12em] uppercase transition-colors',
-                  muscleFilter === m.id
-                    ? 'bg-forest-ink text-paper'
-                    : 'border border-fog text-slate hover:border-forest-ink hover:text-forest-ink',
-                )}
-              >
-                {m.label}
-              </button>
+              />
             ))}
           </div>
         </div>
 
-        <p className="mb-4 text-[12px] tracking-[0.08em] uppercase text-pebble">
-          {filtered.length} de {exercises.length} ejercicios
-        </p>
+        <div className="mb-4 flex items-baseline justify-between">
+          <p className="text-[13px] text-[#615d59]">
+            <span className="font-semibold text-black">{filtered.length}</span> de {exercises.length} ejercicios
+          </p>
+        </div>
 
-        <ul className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
+        <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {filtered.map((ex) => (
             <BankItem key={ex.id} exercise={ex} onSelect={setSelected} />
           ))}
         </ul>
 
         {filtered.length === 0 ? (
-          <div className="border border-dashed border-fog py-12 text-center">
-            <p className="text-[14px] text-charcoal">Sin resultados</p>
-            <p className="mt-1 text-[12px] text-pebble">Probá quitar el filtro o ajustar la búsqueda.</p>
-          </div>
+          <Card padding="lg" className="mt-4 text-center">
+            <p className="text-[16px] font-semibold text-black">Sin resultados</p>
+            <p className="mt-1 text-[14px] text-[#615d59]">
+              Probá quitar el filtro o ajustar la búsqueda.
+            </p>
+          </Card>
         ) : null}
       </div>
 
@@ -116,6 +109,31 @@ export function ExerciseBankPage() {
   );
 }
 
+function FilterChip({
+  label,
+  active,
+  onClick,
+}: {
+  label: string;
+  active: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={classNames(
+        'shrink-0 rounded-full border px-3.5 h-9 text-[13px] font-medium transition-colors',
+        active
+          ? 'bg-black text-white border-black'
+          : 'bg-white text-black/70 border-black/10 hover:border-black/30 hover:text-black',
+      )}
+    >
+      {label}
+    </button>
+  );
+}
+
 function BankItem({ exercise, onSelect }: { exercise: Exercise; onSelect: (e: Exercise) => void }) {
   const primary = MUSCLES[exercise.primaryMuscle];
   return (
@@ -123,29 +141,26 @@ function BankItem({ exercise, onSelect }: { exercise: Exercise; onSelect: (e: Ex
       <button
         type="button"
         onClick={() => onSelect(exercise)}
-        className="group flex w-full flex-col overflow-hidden border border-fog bg-paper text-left transition-colors hover:border-forest-ink"
+        className="group flex h-full w-full flex-col overflow-hidden rounded-[12px] border border-black/[0.08] bg-white text-left transition-transform duration-200 hover:-translate-y-0.5 hover:border-black/20"
       >
-        <div className="relative aspect-[4/3] overflow-hidden bg-fog">
+        <div className="relative aspect-[4/3] overflow-hidden bg-black/[0.04]">
           <ExerciseMedia
             src={exercise.gifPath}
             alt={exercise.name}
-            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
+            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.04]"
             loading="lazy"
             onError={(e) => {
               (e.currentTarget as HTMLElement).style.opacity = '0.15';
             }}
           />
         </div>
-        <div className="flex flex-1 flex-col gap-2 p-4">
-          <div className="flex items-start justify-between gap-2">
-            <h3 className="text-[15px] font-semibold leading-[1.25] text-forest-ink">
-              {exercise.name}
-            </h3>
-            <Icon.ChevronRight size={14} className="mt-1 shrink-0 text-pebble" />
-          </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <Tag tone="default">{primary.label}</Tag>
-            <Tag tone="muted">{exercise.difficulty.toUpperCase()}</Tag>
+        <div className="flex flex-1 flex-col gap-2.5 p-4">
+          <h3 className="text-[16px] font-semibold leading-[1.25] text-black">
+            {exercise.name}
+          </h3>
+          <div className="flex flex-wrap items-center gap-1.5">
+            <Tag tone="muted">{primary.label}</Tag>
+            <Tag tone="muted">{exercise.difficulty}</Tag>
           </div>
         </div>
       </button>

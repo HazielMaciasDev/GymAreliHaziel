@@ -1,6 +1,17 @@
 import { useRouter } from '@/lib/router';
 import { useProfile } from '@/hooks/useProfile';
 import { PROFILE_LIST } from '@/lib/profiles';
+import { Icon } from '@/components/Icon';
+
+const ACCENT_BG: Record<string, string> = {
+  sky: 'bg-[#62aef0]',
+  marigold: 'bg-[#ffb110]',
+};
+
+const ACCENT_TEXT: Record<string, string> = {
+  sky: 'text-[#02093a]',
+  marigold: 'text-black',
+};
 
 export function ProfileSelectorPage() {
   const router = useRouter();
@@ -12,56 +23,80 @@ export function ProfileSelectorPage() {
   };
 
   return (
-    <main className="mx-auto flex min-h-dvh max-w-[1200px] flex-col px-6 py-12 md:px-10 md:py-16">
-      <header className="mb-12 md:mb-20">
-        <span className="text-[10px] font-medium tracking-[0.18em] uppercase text-pebble">
-          Gym Guide
-        </span>
-        <h1 className="mt-6 font-display text-[clamp(56px,11vw,140px)] text-forest-ink leading-[0.85]">
-          QUIÉN<br />ENTRENA<br />HOY
-        </h1>
-        <p className="mt-6 max-w-[44ch] text-[15px] leading-[1.5] text-slate">
-          Cada perfil tiene su rutina semanal y su historial propio. Elegí uno para empezar.
-        </p>
-      </header>
+    <main className="min-h-dvh bg-[#f6f5f4]">
+      <div className="mx-auto flex min-h-dvh max-w-[1100px] flex-col px-5 py-8 md:px-10 md:py-14">
+        <header className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="flex h-7 w-7 items-center justify-center rounded-md bg-black text-white text-[12px] font-bold tracking-tight">
+              G
+            </span>
+            <span className="text-[10px] font-medium tracking-[0.16em] uppercase text-black/50">
+              Gym Guide · v2
+            </span>
+          </div>
+          <span className="hidden text-[12px] text-black/50 sm:block">
+            Areli &amp; Haziel
+          </span>
+        </header>
 
-      <section className="grid flex-1 grid-cols-1 gap-4 md:grid-cols-2 md:gap-6">
-        {PROFILE_LIST.map((profile) => (
-          <button
-            key={profile.id}
-            type="button"
-            onClick={() => handleSelect(profile.id)}
-            className="group flex flex-col items-start justify-between gap-8 border border-fog bg-paper p-7 text-left transition-colors hover:border-forest-ink md:p-10 min-h-[280px]"
-          >
-            <div>
-                <p className="text-[10px] font-medium tracking-[0.18em] uppercase text-pebble">
-                  Perfil
-                </p>
-                <h2 className="mt-3 font-display text-[clamp(48px,6vw,80px)] leading-[0.9] text-forest-ink">
-                  {profile.name}
-                </h2>
-                <p className="mt-4 max-w-[36ch] text-[14px] leading-[1.5] text-slate">
+        <section className="my-10 md:my-16">
+          <span className="text-eyebrow text-black/50">Bienvenido de vuelta</span>
+          <h1 className="mt-4 text-display text-black">
+            Quién <span className="inline-block bg-[#f6d5b8] px-3 py-1 rounded-full text-black">entrena</span> hoy.
+          </h1>
+          <p className="mt-5 max-w-[44ch] font-serif text-[18px] leading-[1.56] text-[#615d59]">
+            Cada perfil tiene su rutina semanal y su historial propio. Elegí uno para empezar.
+          </p>
+        </section>
+
+        <section className="grid flex-1 grid-cols-1 gap-4 md:grid-cols-2 md:gap-6">
+          {PROFILE_LIST.map((profile) => (
+            <button
+              key={profile.id}
+              type="button"
+              onClick={() => handleSelect(profile.id)}
+              className="group relative flex flex-col items-stretch overflow-hidden rounded-[12px] border border-black/[0.08] bg-white text-left transition-transform duration-200 hover:-translate-y-0.5"
+            >
+              <div className={`relative h-32 md:h-40 ${ACCENT_BG[profile.accent]} ${ACCENT_TEXT[profile.accent]} flex items-end p-6`}>
+                <div className="flex w-full items-end justify-between">
+                  <span className="text-[64px] md:text-[80px] font-semibold leading-none">
+                    {profile.initials}
+                  </span>
+                  <span className="text-[11px] font-medium tracking-[0.16em] uppercase opacity-70">
+                    Perfil
+                  </span>
+                </div>
+              </div>
+
+              <div className="flex flex-1 flex-col gap-4 p-6 md:p-8">
+                <div>
+                  <p className="text-eyebrow text-black/50">Atleta</p>
+                  <h2 className="mt-2 text-[40px] font-semibold leading-[0.95] tracking-[-0.02em] text-black">
+                    {profile.name}
+                  </h2>
+                </div>
+                <p className="font-serif text-[18px] leading-[1.56] text-[#615d59]">
                   {profile.tagline}
                 </p>
-              </div>
-            <div className="flex w-full items-center justify-between border-t border-fog pt-5">
-              <span className="text-[10px] font-medium tracking-[0.18em] uppercase text-pebble">
-                Empezar
-              </span>
-              <span className="flex h-10 w-10 items-center justify-center border border-forest-ink text-forest-ink transition-colors group-hover:bg-forest-ink group-hover:text-paper">
-                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M5 12h14M13 6l6 6-6 6" />
-                </svg>
-              </span>
-            </div>
-          </button>
-        ))}
-      </section>
 
-      <footer className="mt-12 border-t border-fog pt-6 flex items-center justify-between text-[10px] tracking-[0.18em] uppercase text-pebble">
-        <span>Gym Guide · Areli & Haziel</span>
-        <span>v2.0</span>
-      </footer>
+                <div className="mt-auto flex items-center justify-between border-t border-black/[0.06] pt-5">
+                  <span className="text-[11px] font-medium tracking-[0.16em] uppercase text-black/50">
+                    Empezar
+                  </span>
+                  <span className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-black/10 transition-colors group-hover:bg-black group-hover:text-white group-hover:border-black">
+                    <Icon.ChevronRight size={14} />
+                  </span>
+                </div>
+              </div>
+            </button>
+          ))}
+        </section>
+
+        <footer className="mt-12 flex items-center justify-between text-[11px] tracking-[0.16em] uppercase text-black/40">
+          <span>Gym Guide</span>
+          <span>Hecho con tiempo y series</span>
+        </footer>
+      </div>
     </main>
   );
 }

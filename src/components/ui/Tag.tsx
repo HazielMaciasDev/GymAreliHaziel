@@ -1,7 +1,15 @@
 import type { HTMLAttributes, ReactNode } from 'react';
 import { classNames } from '@/lib/format';
 
-type Tone = 'default' | 'muted' | 'invert' | 'accent';
+type Tone =
+  | 'default'
+  | 'muted'
+  | 'invert'
+  | 'sky-tint'
+  | 'marigold'
+  | 'coral'
+  | 'sky'
+  | 'mocha';
 
 interface TagProps extends HTMLAttributes<HTMLSpanElement> {
   tone?: Tone;
@@ -9,10 +17,14 @@ interface TagProps extends HTMLAttributes<HTMLSpanElement> {
 }
 
 const TONES: Record<Tone, string> = {
-  default: 'bg-paper text-forest-ink border border-fog',
-  muted: 'bg-fog text-slate border border-transparent',
-  invert: 'bg-forest-ink text-paper border border-forest-ink',
-  accent: 'bg-lime-voltage text-forest-ink border border-lime-voltage',
+  default: 'bg-white text-black border-black/8',
+  muted: 'bg-black/[0.04] text-black/60 border-transparent',
+  invert: 'bg-[#02093a] text-white border-transparent',
+  'sky-tint': 'bg-[#e6f3fe] text-[#0075de] border-transparent',
+  marigold: 'bg-[#ffb110] text-black border-transparent',
+  coral: 'bg-[#f64932] text-white border-transparent',
+  sky: 'bg-[#62aef0] text-[#02093a] border-transparent',
+  mocha: 'bg-[#b18164] text-white border-transparent',
 };
 
 export function Tag({ tone = 'default', icon, className, children, ...rest }: TagProps) {
@@ -20,7 +32,7 @@ export function Tag({ tone = 'default', icon, className, children, ...rest }: Ta
     <span
       {...rest}
       className={classNames(
-        'inline-flex items-center gap-1.5 px-2.5 h-6 text-[10.5px] font-medium tracking-[0.08em] uppercase',
+        'inline-flex items-center gap-1.5 px-2.5 h-6 text-[11px] font-medium tracking-[0.04em] rounded-full border',
         TONES[tone],
         className,
       )}

@@ -3,7 +3,8 @@ import { useRouter } from '@/lib/router';
 import { useProfile } from '@/hooks/useProfile';
 import { AppShell } from '@/components/AppShell';
 import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
+import { Card } from '@/components/ui/Card';
+import { Tag } from '@/components/ui/Tag';
 import { Icon } from '@/components/Icon';
 import { ExerciseMedia } from '@/components/ExerciseMedia';
 import {
@@ -20,6 +21,7 @@ import {
 } from '@/lib/sessions';
 import { fetchWeeklyRoutine } from '@/lib/weekly-routine';
 import { EXERCISES } from '@/data/exercises';
+import { MUSCLES } from '@/lib/muscles';
 import type { Exercise } from '@/types';
 import { classNames, dayOfWeekFromDate, formatDuration, toIsoDate } from '@/lib/format';
 
@@ -74,7 +76,7 @@ export function ActiveSessionPage() {
 
         if (plannedList.length === 0) {
           if (!cancelled) {
-            setError('No planificaste ejercicios hoy. Andá a planificar primero.');
+            setError('No planificaste ejercicios hoy. Andá a Rutina primero.');
             setLoading(false);
           }
           return;
@@ -151,7 +153,6 @@ export function ActiveSessionPage() {
       await updateSetLog(setId, patch);
     } catch (err) {
       console.error(err);
-      setError('No se pudo guardar el set.');
     }
   };
 
@@ -193,8 +194,9 @@ export function ActiveSessionPage() {
   if (loading) {
     return (
       <AppShell>
-        <div className="flex h-[60vh] items-center justify-center text-[14px] text-pebble">
-          Cargando sesión…
+        <div className="flex min-h-[60vh] flex-col items-center justify-center gap-3 py-12 text-center">
+          <span className="block h-2 w-2 animate-pulse rounded-full bg-black/30" />
+          <p className="text-[14px] text-black/50">Cargando sesión…</p>
         </div>
       </AppShell>
     );
@@ -203,96 +205,133 @@ export function ActiveSessionPage() {
   if (error && planned.length === 0) {
     return (
       <AppShell>
-        <div className="mx-auto max-w-md px-6 py-12 text-center">
-          <p className="text-[14px] text-slate">{error}</p>
+        <Card padding="lg" className="mx-auto mt-12 max-w-md text-center">
+          <p className="text-[16px] font-semibold text-black">No hay ejercicios hoy</p>
+          <p className="mt-2 text-[14px] text-[#615d59]">{error}</p>
           <Button
             variant="primary"
             size="md"
             className="mt-6"
             onClick={() => router.push('/routine')}
+            iconRight={<Icon.ChevronRight size={14} />}
           >
             Ir a Rutina
           </Button>
-        </div>
+        </Card>
       </AppShell>
     );
   }
 
-  const completedSets = currentSets.filter((s) => s.completed).length;
   const totalExercises = planned.length;
   const done = currentIndex >= totalExercises;
 
   if (done) {
     return (
       <AppShell>
-        <div className="flex min-h-[60vh] flex-col items-center justify-center px-6 text-center">
-          <p className="text-[10px] font-medium tracking-[0.18em] uppercase text-pebble">Sesión completa</p>
-          <h1 className="mt-3 font-display text-[clamp(56px,8vw,96px)] leading-[0.9] text-forest-ink">HECHO</h1>
-          <p className="mt-4 text-[14px] text-slate">
-            {totalExercises} ejercicios · {formatDuration(elapsed)}
+        <div className="flex min-h-[60vh] flex-col items-center justify-center px-6 py-12 text-center">
+          <Tag tone="marigold">Sesión completa</Tag>
+          <h1 className="mt-6 text-display text-black">¡Hecho!</h1>
+          <p className="mt-4 text-[15px] text-[#615d59]">
+            {totalExercises} {totalExercises === 1 ? 'ejercicio' : 'ejercicios'} · {formatDuration(elapsed)}
           </p>
           <Button variant="primary" size="lg" className="mt-8" onClick={finish}>
             Terminar y ver historial
           </Button>
+          <button
+            type="button"
+            onClick={() => router.push('/home')}
+            className="mt-3 text-[13px] text-black/50 hover:text-black"
+          >
+            Volver al inicio
+          </button>
         </div>
       </AppShell>
     );
   }
 
+  const completedSets = currentSets.filter((s) => s.completed).length;
   const completedAllSets = completedSets === currentSets.length;
 
   return (
     <AppShell>
-      <div className="mx-auto max-w-[900px] px-4 py-6 md:px-6 md:py-10">
-        <header className="mb-6 flex items-center justify-between border-b border-fog pb-4">
-          <div>
-            <p className="text-[10px] font-medium tracking-[0.18em] uppercase text-pebble">Ejercicio</p>
-            <p className="mt-1 text-[24px] font-semibold leading-none text-forest-ink md:text-[28px]">
-              {currentIndex + 1} <span className="text-pebble">/ {totalExercises}</span>
+      <div className="py-4 md:py-8">
+        <header className="mb-4 flex items-center justify-between">
+          <button
+            type="button"
+            onClick={() => router.push('/routine')}
+            className="flex h-10 w-10 items-center justify-center rounded-full hover:bg-black/5"
+            aria-label="Volver"
+          >
+            <Icon.ChevronLeft size={18} />
+          </button>
+          <div className="flex flex-col items-center">
+            <p className="text-[10px] font-medium tracking-[0.12em] uppercase text-black/50">
+              Sesión
+            </p>
+            <p className="text-[13px] font-medium tabular-nums text-black">
+              {currentIndex + 1} <span className="text-black/40">/ {totalExercises}</span>
             </p>
           </div>
-          <div className="flex items-center gap-2 border border-fog px-3 py-2 text-[12px] text-forest-ink">
+          <div className="inline-flex h-10 items-center gap-1.5 rounded-full bg-black/[0.04] px-3 text-[12px] font-medium text-black">
             <Icon.Timer size={14} />
-            <span className="font-medium tabular-nums">{formatDuration(elapsed)}</span>
+            <span className="tabular-nums">{formatDuration(elapsed)}</span>
           </div>
         </header>
 
-        <div className="grid gap-6 md:grid-cols-[1.1fr_1fr]">
-          <div className="relative aspect-[4/3] overflow-hidden bg-fog">
-            <ExerciseMedia
-              src={currentPlanned.exercise.gifPath}
-              alt={currentPlanned.exercise.name}
-              className="h-full w-full object-cover"
-              loading="eager"
-              onError={(e) => {
-                (e.currentTarget as HTMLElement).style.opacity = '0.15';
-              }}
+        {/* Progress bar */}
+        <div className="mb-5 flex gap-1">
+          {Array.from({ length: totalExercises }).map((_, i) => (
+            <span
+              key={i}
+              className={classNames(
+                'h-1 flex-1 rounded-full transition-colors',
+                i < currentIndex
+                  ? 'bg-[#0075de]'
+                  : i === currentIndex
+                    ? 'bg-[#0075de]/40'
+                    : 'bg-black/[0.08]',
+              )}
             />
+          ))}
+        </div>
+
+        <div className="grid gap-5 md:grid-cols-[1fr_1.1fr] md:gap-8">
+          <div className="order-1">
+            <div className="relative aspect-[4/3] overflow-hidden rounded-[12px] bg-black/[0.04]">
+              <ExerciseMedia
+                src={currentPlanned.exercise.gifPath}
+                alt={currentPlanned.exercise.name}
+                className="h-full w-full object-cover"
+                loading="eager"
+                onError={(e) => {
+                  (e.currentTarget as HTMLElement).style.opacity = '0.15';
+                }}
+              />
+            </div>
           </div>
 
-          <div className="flex flex-col gap-5">
+          <div className="order-2 flex flex-col gap-5">
             <div>
-              <p className="text-[10px] font-medium tracking-[0.18em] uppercase text-pebble">
-                {currentPlanned.exercise.primaryMuscle.toUpperCase()}
-              </p>
-              <h2 className="mt-2 text-[28px] font-semibold leading-[1.1] tracking-[-0.02em] text-forest-ink md:text-[32px]">
+              <div className="flex flex-wrap items-center gap-1.5">
+                <Tag tone="marigold">{MUSCLES[currentPlanned.exercise.primaryMuscle].label}</Tag>
+                <Tag tone="muted">
+                  {currentPlanned.plannedSets} × {currentPlanned.plannedReps}
+                </Tag>
+              </div>
+              <h2 className="mt-3 text-[28px] font-semibold leading-[1.1] tracking-[-0.02em] text-black md:text-[36px]">
                 {currentPlanned.exercise.name}
               </h2>
-              <p className="mt-2 text-[13px] leading-[1.5] text-slate">
+              <p className="mt-2 text-[14px] leading-[1.5] text-[#615d59]">
                 {currentPlanned.exercise.description}
               </p>
             </div>
 
-            <div className="border-t border-fog pt-5">
-              <div className="mb-3 flex items-end justify-between">
-                <p className="text-[10px] font-medium tracking-[0.18em] uppercase text-pebble">
+            <div>
+              <div className="mb-2.5 flex items-end justify-between">
+                <p className="text-eyebrow text-black/50">
                   Sets · {completedSets} / {currentSets.length}
                 </p>
-                <p className="text-[10px] tracking-[0.08em] uppercase text-pebble">
-                  Objetivo {currentPlanned.plannedSets} × {currentPlanned.plannedReps}
-                </p>
               </div>
-
               <ul className="flex flex-col gap-2">
                 {currentSets.map((set, idx) => (
                   <SetRow
@@ -305,41 +344,46 @@ export function ActiveSessionPage() {
               </ul>
             </div>
 
-            <section className="border-t border-fog">
-              <p className="mt-5 text-[10px] font-medium tracking-[0.18em] uppercase text-pebble">Notas del ejercicio</p>
+            <section>
+              <p className="text-eyebrow text-black/50">Notas del ejercicio</p>
               <textarea
                 value={exerciseNotes}
                 onChange={(e) => saveNotes(e.target.value)}
                 onBlur={(e) => saveNotes(e.target.value)}
                 placeholder="Cómo te sentiste, observaciones…"
-                rows={3}
-                className="mt-3 w-full border border-fog bg-paper p-3 text-[14px] leading-[1.5] text-forest-ink outline-none placeholder:text-pebble focus:border-forest-ink"
+                rows={2}
+                className="mt-2.5 w-full rounded-[8px] border border-black/10 bg-white p-3 text-[14px] leading-[1.5] text-black outline-none placeholder:text-black/40 focus:border-black/40"
               />
             </section>
           </div>
         </div>
 
-        <div className="mt-8 flex items-center justify-between gap-3">
-          <Button variant="ghost" size="md" onClick={goPrev} disabled={currentIndex === 0}>
-            <Icon.ChevronLeft size={14} />
+        <div className="sticky bottom-20 mt-6 flex items-center justify-between gap-3 border-t border-black/[0.06] bg-[#f6f5f4] pt-4 md:bottom-0 md:bg-transparent md:pt-6">
+          <Button
+            variant="outline"
+            size="md"
+            onClick={goPrev}
+            disabled={currentIndex === 0}
+            iconLeft={<Icon.ChevronLeft size={14} />}
+          >
             Anterior
           </Button>
           <Button
             variant="primary"
-            size="lg"
+            size="md"
             onClick={goNext}
             disabled={!completedAllSets}
-            iconRight={<Icon.ChevronRight size={14} />}
+            iconRight={currentIndex === planned.length - 1 ? <Icon.Check size={14} /> : <Icon.ChevronRight size={14} />}
           >
             {currentIndex === planned.length - 1 ? 'Terminar' : 'Siguiente'}
           </Button>
         </div>
 
-        <p className="mt-4 text-center text-[12px] text-pebble">
-          {completedAllSets
-              ? 'Listo para continuar'
-              : `Te faltan ${currentSets.length - completedSets} sets para habilitar el siguiente ejercicio`}
-        </p>
+        {!completedAllSets ? (
+          <p className="mt-3 text-center text-[12px] text-black/50">
+            Te faltan {currentSets.length - completedSets} sets para habilitar el siguiente.
+          </p>
+        ) : null}
       </div>
     </AppShell>
   );
@@ -371,16 +415,21 @@ function SetRow({
   return (
     <li
       className={classNames(
-        'flex items-center gap-2 border bg-paper p-2 transition-colors md:gap-3',
-        set.completed ? 'border-forest-ink bg-linen-mist' : 'border-fog',
+        'flex items-center gap-2 rounded-[12px] border bg-white p-2.5 transition-colors',
+        set.completed ? 'border-[#0075de] bg-[#e6f3fe]' : 'border-black/10',
       )}
     >
-      <span className="flex h-9 w-9 shrink-0 items-center justify-center bg-forest-ink text-[12px] font-semibold text-paper">
-        {index}
+      <span
+        className={classNames(
+          'flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[12px] font-semibold',
+          set.completed ? 'bg-[#0075de] text-white' : 'bg-black/[0.04] text-black/60',
+        )}
+      >
+        {set.completed ? <Icon.Check size={14} /> : index}
       </span>
 
       <div className="flex-1">
-        <Input
+        <input
           type="number"
           inputMode="decimal"
           step="0.5"
@@ -388,15 +437,17 @@ function SetRow({
           value={weight}
           onChange={(e) => setWeight(e.target.value)}
           onBlur={commit}
-          placeholder="Peso"
-          className="h-10 text-center"
-          aria-label="Peso"
+          placeholder="0"
+          className="h-10 w-full rounded-[8px] border border-black/10 bg-white text-center text-[15px] tabular-nums outline-none focus:border-black/40"
+          aria-label="Peso en kilos"
         />
-        <p className="mt-0.5 text-center text-[9px] tracking-[0.12em] uppercase text-pebble">KG</p>
+        <p className="mt-0.5 text-center text-[9px] tracking-[0.12em] uppercase text-black/50">
+          KG
+        </p>
       </div>
 
       <div className="flex-1">
-        <Input
+        <input
           type="number"
           inputMode="numeric"
           step="1"
@@ -404,11 +455,13 @@ function SetRow({
           value={reps}
           onChange={(e) => setReps(e.target.value)}
           onBlur={commit}
-          placeholder="Reps"
-          className="h-10 text-center"
+          placeholder="0"
+          className="h-10 w-full rounded-[8px] border border-black/10 bg-white text-center text-[15px] tabular-nums outline-none focus:border-black/40"
           aria-label="Repeticiones"
         />
-        <p className="mt-0.5 text-center text-[9px] tracking-[0.12em] uppercase text-pebble">REPS</p>
+        <p className="mt-0.5 text-center text-[9px] tracking-[0.12em] uppercase text-black/50">
+          REPS
+        </p>
       </div>
 
       <button
@@ -416,10 +469,10 @@ function SetRow({
         onClick={() => onChange({ completed: !set.completed })}
         aria-label={set.completed ? 'Marcar pendiente' : 'Marcar hecho'}
         className={classNames(
-          'flex h-10 w-10 shrink-0 items-center justify-center border transition-colors',
+          'flex h-10 w-10 shrink-0 items-center justify-center rounded-full border transition-colors',
           set.completed
-            ? 'border-forest-ink bg-forest-ink text-paper'
-            : 'border-fog text-pebble hover:border-forest-ink hover:text-forest-ink',
+            ? 'border-[#0075de] bg-[#0075de] text-white'
+            : 'border-black/10 text-black/40 hover:border-black/30 hover:text-black',
         )}
       >
         <Icon.Check size={16} />
