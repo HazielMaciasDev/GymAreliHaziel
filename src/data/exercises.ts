@@ -35,7 +35,7 @@ export const EXERCISES: Exercise[] = [
     equipment: 'barra',
     difficulty: 'intermedio',
     instructions: [
-      'Acuéstate en el banco y apoya los pies firmes en el suelo.',
+      'Acuéstates en el banco y apoya los pies firmes en el suelo.',
       'Agarra la barra con las manos ligeramente más abiertas que el ancho de los hombros.',
       'Desciende la barra de forma controlada hasta rozar el pecho.',
       'Empuja la barra hacia arriba en línea recta hasta extender los codos sin bloquear.',
@@ -46,6 +46,29 @@ export const EXERCISES: Exercise[] = [
       'Mantené los glúteos en contacto con el banco.',
     ],
     gifPath: '/GymAreliHaziel/exercises/press-banca.mp4',
+  },
+  {
+    id: 'maquina-empuje-cadera',
+    name: 'Máquina de empuje de cadera con carga de discos',
+    description:
+      'Ejercicio compuesto de empuje en máquina, ideal para principiantes. Trabaja glúteos de forma intensa con femorales y core como estabilizadores.',
+    primaryMuscle: 'gluteos',
+    secondaryMuscles: ['femorales', 'core'],
+    equipment: 'maquina',
+    difficulty: 'principiante',
+    instructions: [
+      'Ajusta la máquina a tu altura, siéntate con la espalda contra el respaldo, rodillas flexionadas y pies apoyados planos sobre la plataforma.',
+      'Activa el core, empuja con los talones y eleva las caderas, levantando el peso mientras aprietas los glúteos.',
+      'Baja el peso lentamente hasta la posición inicial, manteniendo el movimiento bajo control; repite las repeticiones y series deseadas.',
+    ],
+    tips: [
+      'Aprieta los glúteos arriba del movimiento, no hiperextiendas la espalda baja.',
+      'Empuja con todo el pie, no solo con la punta.',
+      'Mantén el core activado durante toda la repetición.',
+    ],
+    gifPath: '/GymAreliHaziel/exercises/maquina-empuje-cadera-1.mp4',
+    extraMediaPaths: ['/GymAreliHaziel/exercises/maquina-empuje-cadera-2.mp4'],
+    muscleImagePath: '/GymAreliHaziel/exercises/maquina-empuje-cadera-muscles.png',
   },
 ];
 

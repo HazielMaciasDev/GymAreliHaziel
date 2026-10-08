@@ -1,5 +1,5 @@
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import type { Exercise } from '@/types';
 import { MUSCLES } from '@/lib/muscles';
 import { Button } from '@/components/ui/Button';
@@ -23,6 +23,10 @@ const EQUIPMENT_LABEL: Record<Exercise['equipment'], string> = {
 };
 
 export function ExerciseDetail({ exercise, onClose, onAdd }: ExerciseDetailProps) {
+  const allMedia = [exercise.gifPath, ...(exercise.extraMediaPaths ?? [])];
+  const [activeMediaIndex, setActiveMediaIndex] = useState(0);
+  const activeMedia = allMedia[activeMediaIndex];
+
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
@@ -70,7 +74,7 @@ export function ExerciseDetail({ exercise, onClose, onAdd }: ExerciseDetailProps
 
         <div className="relative h-[260px] flex-shrink-0 overflow-hidden bg-fog md:h-[320px]">
           <ExerciseMedia
-            src={exercise.gifPath}
+            src={activeMedia}
             alt={exercise.name}
             className="h-full w-full object-cover"
             loading="eager"
@@ -78,6 +82,24 @@ export function ExerciseDetail({ exercise, onClose, onAdd }: ExerciseDetailProps
               (e.currentTarget as HTMLElement).style.opacity = '0.15';
             }}
           />
+          {allMedia.length > 1 ? (
+            <div className="absolute inset-x-3 bottom-3 flex justify-center gap-2">
+              {allMedia.map((src, idx) => (
+                <button
+                  key={src}
+                  type="button"
+                  onClick={() => setActiveMediaIndex(idx)}
+                  aria-label={`Ver ángulo ${idx + 1}`}
+                  aria-current={idx === activeMediaIndex}
+                  className={
+                    idx === activeMediaIndex
+                      ? 'h-2.5 w-2.5 rounded-pill bg-lime-voltage shadow-md'
+                      : 'h-2.5 w-2.5 rounded-pill bg-paper/70 transition hover:bg-paper'
+                  }
+                />
+              ))}
+            </div>
+          ) : null}
         </div>
 
         <div className="flex flex-1 flex-col gap-5 overflow-y-auto px-6 py-6 md:px-10 md:py-8">
@@ -102,6 +124,21 @@ export function ExerciseDetail({ exercise, onClose, onAdd }: ExerciseDetailProps
               {exercise.description}
             </p>
           </div>
+
+          {exercise.muscleImagePath ? (
+            <div className="rounded-card border border-fog bg-paper p-4">
+              <h3 className="mb-3 text-[12px] font-bold uppercase tracking-[0.16em] text-pebble">
+                Músculos trabajados
+              </h3>
+              <img
+                src={exercise.muscleImagePath}
+                alt={`Músculos trabajados en ${exercise.name}`}
+                className="mx-auto h-auto max-h-[260px] w-full max-w-[420px] object-contain"
+                loading="lazy"
+                decoding="async"
+              />
+            </div>
+          ) : null}
 
           <div>
             <h3 className="mb-2 text-[12px] font-bold uppercase tracking-[0.16em] text-pebble">

@@ -38,6 +38,8 @@ export interface Exercise {
   instructions: string[];
   tips: string[];
   gifPath: string;
+  extraMediaPaths?: string[];
+  muscleImagePath?: string;
 }
 
 export interface Routine {
