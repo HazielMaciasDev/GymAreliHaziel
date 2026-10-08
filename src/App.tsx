@@ -1,34 +1,19 @@
 import { useEffect } from 'react';
 import { usePathname } from '@/lib/router';
 import { useProfile } from '@/hooks/useProfile';
-import { ProfileSelector } from '@/components/ProfileSelector';
-import { WorkoutsPage } from '@/routes/WorkoutsPage';
-import { ActiveWorkoutPage } from '@/routes/ActiveWorkoutPage';
-
-function NotFound({ onNavigate }: { onNavigate: () => void }) {
-  return (
-    <main className="flex min-h-dvh items-center justify-center bg-paper px-6">
-      <div className="flex flex-col items-center gap-4 text-center">
-        <h1 className="text-[64px] font-black text-forest-ink">404</h1>
-        <p className="text-[16px] text-slate">No encontramos esa ruta.</p>
-        <button
-          type="button"
-          onClick={onNavigate}
-          className="rounded-pill bg-lime-voltage px-5 py-2 text-[14px] font-semibold text-forest-ink transition hover:brightness-95"
-        >
-          Volver al inicio
-        </button>
-      </div>
-    </main>
-  );
-}
+import { ProfileSelectorPage } from '@/pages/ProfileSelectorPage';
+import { HomePage } from '@/pages/HomePage';
+import { RoutinePage } from '@/pages/RoutinePage';
+import { ExerciseBankPage } from '@/pages/ExerciseBankPage';
+import { HistoryPage } from '@/pages/HistoryPage';
+import { ActiveSessionPage } from '@/pages/ActiveSessionPage';
 
 function RequireProfile({ children }: { children: React.ReactNode }) {
   const { profile, ready } = useProfile();
   if (!ready) {
     return (
       <main className="flex min-h-dvh items-center justify-center bg-paper">
-        <div className="h-2 w-2 animate-pulse rounded-pill bg-fog" />
+        <span className="block h-2 w-2 animate-pulse bg-fog" />
       </main>
     );
   }
@@ -49,21 +34,56 @@ export function App() {
   }, [pathname]);
 
   if (pathname === '/' || pathname === '') {
-    return <ProfileSelector />;
+    return <ProfileSelectorPage />;
   }
-  if (pathname === '/workouts' || pathname === '/workouts/') {
+  if (pathname === '/home' || pathname === '/home/') {
     return (
       <RequireProfile>
-        <WorkoutsPage />
+        <HomePage />
       </RequireProfile>
     );
   }
-  if (pathname === '/workouts/active' || pathname === '/workouts/active/') {
+  if (pathname === '/routine' || pathname === '/routine/') {
     return (
       <RequireProfile>
-        <ActiveWorkoutPage />
+        <RoutinePage />
       </RequireProfile>
     );
   }
-  return <NotFound onNavigate={() => { window.location.href = '/GymAreliHaziel/'; }} />;
+  if (pathname === '/routine/active' || pathname === '/routine/active/') {
+    return (
+      <RequireProfile>
+        <ActiveSessionPage />
+      </RequireProfile>
+    );
+  }
+  if (pathname === '/exercises' || pathname === '/exercises/') {
+    return (
+      <RequireProfile>
+        <ExerciseBankPage />
+      </RequireProfile>
+    );
+  }
+  if (pathname === '/history' || pathname === '/history/') {
+    return (
+      <RequireProfile>
+        <HistoryPage />
+      </RequireProfile>
+    );
+  }
+
+  return (
+    <main className="flex min-h-dvh items-center justify-center bg-paper px-6">
+      <div className="flex flex-col items-center gap-4 text-center">
+        <h1 className="font-display text-[64px] leading-none text-forest-ink">404</h1>
+        <p className="text-[14px] text-slate">No encontramos esa ruta.</p>
+        <a
+          href="/GymAreliHaziel/"
+          className="inline-flex h-11 items-center bg-forest-ink px-5 text-[13px] font-medium text-paper hover:bg-obsidian transition-colors"
+        >
+          Volver al inicio
+        </a>
+      </div>
+    </main>
+  );
 }

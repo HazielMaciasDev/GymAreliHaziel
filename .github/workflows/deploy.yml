@@ -15,6 +15,9 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      VITE_SUPABASE_URL: https://fhtormfuavagjahlvgji.supabase.co
+      VITE_SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZodG9ybWZ1YXZhZ2phaGx2Z2ppIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTEyNjAyNDQsImV4cCI6MjEwNjgzNjI0NH0.XqDDaJPisZ604J2aMQ_G69ns3PfjNoc4SWbUDJXUZho
     steps:
       - name: Checkout
         uses: actions/checkout@v4

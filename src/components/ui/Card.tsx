@@ -2,22 +2,29 @@ import type { HTMLAttributes, ReactNode } from 'react';
 import { classNames } from '@/lib/format';
 
 interface CardProps extends HTMLAttributes<HTMLDivElement> {
-  size?: 'card' | 'large';
-  dark?: boolean;
   children: ReactNode;
+  padding?: 'none' | 'sm' | 'md' | 'lg';
+  as?: 'div' | 'section' | 'article';
 }
 
-export function Card({ size = 'card', dark, className, children, ...rest }: CardProps) {
+const PAD: Record<NonNullable<CardProps['padding']>, string> = {
+  none: '',
+  sm: 'p-3',
+  md: 'p-5',
+  lg: 'p-7',
+};
+
+export function Card({ children, padding = 'md', as: Tag = 'div', className, ...attrs }: CardProps) {
   return (
-    <div
-      {...rest}
+    <Tag
+      {...attrs}
       className={classNames(
-        size === 'large' ? 'rounded-large p-8 md:p-10' : 'rounded-card p-6',
-        dark ? 'bg-forest-ink text-paper' : 'bg-paper text-charcoal border border-fog',
+        'rounded-large bg-paper border border-fog',
+        PAD[padding],
         className,
       )}
     >
       {children}
-    </div>
+    </Tag>
   );
 }
