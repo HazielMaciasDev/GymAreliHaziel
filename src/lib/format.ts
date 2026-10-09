@@ -29,6 +29,15 @@ export const DAYS_OF_WEEK: { id: number; long: string; short: string }[] = [
   { id: 6, long: 'Domingo', short: 'DOM' },
 ];
 
+export const REST_DAYS: ReadonlySet<number> = new Set([5, 6]);
+export const ACTIVE_DAYS: ReadonlyArray<{ id: number; long: string; short: string }> = DAYS_OF_WEEK.filter(
+  (d) => !REST_DAYS.has(d.id),
+);
+
+export function isRestDay(dayId: number): boolean {
+  return REST_DAYS.has(dayId);
+}
+
 export function dayOfWeekFromDate(d: Date): number {
   const js = d.getDay();
   return (js + 6) % 7;

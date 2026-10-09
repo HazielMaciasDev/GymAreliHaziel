@@ -8,13 +8,13 @@ import { Tag } from '@/components/ui/Tag';
 import { Icon } from '@/components/Icon';
 import { Illustration, Sparkle } from '@/components/Illustration';
 import { ExerciseMedia } from '@/components/ExerciseMedia';
+import { ExerciseDetailModal } from '@/components/ExerciseDetailModal';
 import {
   addExerciseLog,
   fetchSessionLogs,
   finishSession,
   startSession,
   updateSetLog,
-  updateExerciseNotes,
   getSessionByDate,
   type ExerciseLogRecord,
   type SetLogRecord,
@@ -24,13 +24,24 @@ import { fetchWeeklyRoutine } from '@/lib/weekly-routine';
 import { EXERCISES } from '@/data/exercises';
 import { MUSCLES } from '@/lib/muscles';
 import type { Exercise } from '@/types';
-import { classNames, dayOfWeekFromDate, formatDuration, toIsoDate } from '@/lib/format';
+import {
+  classNames,
+  dayOfWeekFromDate,
+  formatDuration,
+  isRestDay,
+  toIsoDate,
+} from '@/lib/format';
 
 interface PlannedExercise {
   exercise: Exercise;
   plannedSets: number;
   plannedReps: number;
 }
+
+const REST_COPY: Record<string, string> = {
+  areli: 'Recuperá el cuerpo: caminata, hidratación y un buen sueño.',
+  haziel: 'Mantené el ritmo suave. Estiramientos, agua y descanso.',
+};
 
 export function ActiveSessionPage() {
   const router = useRouter();
@@ -40,15 +51,25 @@ export function ActiveSessionPage() {
   const [exerciseLogs, setExerciseLogs] = useState<ExerciseLogRecord[]>([]);
   const [setLogs, setSetLogs] = useState<SetLogRecord[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [elapsed, setElapsed] = useState(0);
-  const [exerciseNotes, setExerciseNotes] = useState('');
+  const [currentRound, setCurrentRound] = useState(0);
+  const [exerciseElapsed, setExerciseElapsed] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [roundJustCompleted, setRoundJustCompleted] = useState(false);
+  const [showDetails, setShowDetails] = useState(false);
   const initRef = useRef(false);
+
+  const today = useMemo(() => new Date(), []);
+  const todayDow = useMemo(() => dayOfWeekFromDate(today), [today]);
+  const isTodayRest = isRestDay(todayDow);
 
   useEffect(() => {
     if (!profile) {
       router.replace('/');
+      return;
+    }
+    if (isTodayRest) {
+      setLoading(false);
       return;
     }
     if (initRef.current) return;
@@ -58,10 +79,7 @@ export function ActiveSessionPage() {
     (async () => {
       setLoading(true);
       try {
-        const today = new Date();
-        const todayDow = dayOfWeekFromDate(today);
         const dateIso = toIsoDate(today);
-
         const routine = await fetchWeeklyRoutine(profile);
         const dayExercises = routine
           .filter((r) => r.day_of_week === todayDow)
@@ -111,8 +129,40 @@ export function ActiveSessionPage() {
         setExerciseLogs(logs.exerciseLogs);
         setSetLogs(logs.setLogs);
 
-        const currentLog = logs.exerciseLogs[currentIndex];
-        if (currentLog) setExerciseNotes(currentLog.notes ?? '');
+        const totalRounds = plannedList[0]?.plannedSets ?? 1;
+
+        let resumeRound = 0;
+        for (let r = 0; r < totalRounds; r++) {
+          const allDoneInRound = plannedList.every((_, exIdx) => {
+            const log = logs.exerciseLogs[exIdx];
+            if (!log) return false;
+            const setForRound = logs.setLogs.find(
+              (s) => s.exercise_log_id === log.id && s.set_number === r + 1,
+            );
+            return setForRound?.completed ?? false;
+          });
+          if (!allDoneInRound) {
+            resumeRound = r;
+            break;
+          }
+          resumeRound = r + 1;
+        }
+        if (cancelled) return;
+        if (resumeRound >= totalRounds) {
+          setCurrentRound(totalRounds - 1);
+          setCurrentIndex(plannedList.length);
+        } else {
+          setCurrentRound(resumeRound);
+          const firstPending = plannedList.findIndex((_, exIdx) => {
+            const log = logs.exerciseLogs[exIdx];
+            if (!log) return true;
+            const setForRound = logs.setLogs.find(
+              (s) => s.exercise_log_id === log.id && s.set_number === resumeRound + 1,
+            );
+            return !(setForRound?.completed ?? false);
+          });
+          setCurrentIndex(firstPending === -1 ? 0 : firstPending);
+        }
       } catch (err) {
         console.error(err);
         if (!cancelled) setError('No se pudo iniciar la sesión.');
@@ -124,73 +174,78 @@ export function ActiveSessionPage() {
     return () => {
       cancelled = true;
     };
-  }, [profile, router]);
-
-  useEffect(() => {
-    if (!session) return;
-    const interval = window.setInterval(() => {
-      const started = new Date(session.started_at).getTime();
-      setElapsed(Math.floor((Date.now() - started) / 1000));
-    }, 1000);
-    return () => window.clearInterval(interval);
-  }, [session]);
+  }, [profile, router, today, todayDow, isTodayRest]);
 
   const currentPlanned = planned[currentIndex];
   const currentLog = exerciseLogs[currentIndex];
-  const currentSets = useMemo(() => {
-    if (!currentLog) return [];
-    return setLogs
-      .filter((s) => s.exercise_log_id === currentLog.id)
-      .sort((a, b) => a.set_number - b.set_number);
-  }, [currentLog, setLogs]);
+  const totalRounds = planned[0]?.plannedSets ?? 1;
+
+  const currentRoundSet = useMemo(() => {
+    if (!currentLog) return null;
+    return setLogs.find(
+      (s) => s.exercise_log_id === currentLog.id && s.set_number === currentRound + 1,
+    ) ?? null;
+  }, [currentLog, setLogs, currentRound]);
+
+  const roundStatus = useMemo(() => {
+    return exerciseLogs.map((log) => {
+      const set = setLogs.find(
+        (s) => s.exercise_log_id === log.id && s.set_number === currentRound + 1,
+      );
+      return {
+        logId: log.id,
+        exerciseId: log.exercise_id,
+        completed: set?.completed ?? false,
+        setId: set?.id ?? null,
+      };
+    });
+  }, [exerciseLogs, setLogs, currentRound]);
 
   useEffect(() => {
-    if (currentLog) setExerciseNotes(currentLog.notes ?? '');
-  }, [currentLog]);
-
-  const onChangeSet = async (setId: string, patch: Partial<SetLogRecord>) => {
-    setSetLogs((prev) => prev.map((s) => (s.id === setId ? { ...s, ...patch } : s)));
-    try {
-      await updateSetLog(setId, patch);
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
-  const saveNotes = async (notes: string) => {
-    if (!currentLog) return;
-    setExerciseNotes(notes);
-    setExerciseLogs((prev) =>
-      prev.map((l) => (l.id === currentLog.id ? { ...l, notes } : l)),
-    );
-    try {
-      await updateExerciseNotes(currentLog.id, notes);
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
-  const goNext = () => {
-    if (currentIndex < planned.length - 1) {
-      setCurrentIndex(currentIndex + 1);
-    }
-  };
-
-  const goPrev = () => {
-    if (currentIndex > 0) setCurrentIndex(currentIndex - 1);
-  };
-
-  const finish = async () => {
-    if (!session) return;
-    try {
-      await finishSession(session.id, true);
-    } catch (err) {
-      console.error(err);
-    }
-    router.push('/history');
-  };
+    if (!session || !currentPlanned) return;
+    const startedAt = Date.now();
+    setExerciseElapsed(0);
+    const interval = window.setInterval(() => {
+      setExerciseElapsed(Math.floor((Date.now() - startedAt) / 1000));
+    }, 1000);
+    return () => window.clearInterval(interval);
+  }, [session, currentIndex, currentRound, currentPlanned]);
 
   if (!profile) return null;
+
+  if (isTodayRest) {
+    return (
+      <AppShell>
+        <div className="flex min-h-[70vh] flex-col items-center justify-center px-6 py-12 text-center">
+          <div className="relative">
+            <Illustration variant="medal" size={140} className="animate-pop" />
+          </div>
+          <span className="mt-8 t-eyebrow text-[#80827f]">Día de descanso</span>
+          <h1 className="mt-3 t-display text-[#2c2e2a]">Descanso.</h1>
+          <p className="mt-3 max-w-[40ch] t-body-lg text-[#2c2e2a]/80">
+            {REST_COPY[profile] ?? 'Recuperá el cuerpo. Mañana vuelve el circuito.'}
+          </p>
+          <div className="mt-8 flex flex-col items-center gap-3">
+            <Button
+              variant="coral"
+              size="lg"
+              onClick={() => router.push('/routine')}
+              dotColor="sunshine"
+            >
+              Ver la semana
+            </Button>
+            <button
+              type="button"
+              onClick={() => router.push('/home')}
+              className="text-[14px] text-[#80827f] hover:text-[#2c2e2a]"
+            >
+              Volver al inicio
+            </button>
+          </div>
+        </div>
+      </AppShell>
+    );
+  }
 
   if (loading) {
     return (
@@ -214,11 +269,7 @@ export function ActiveSessionPage() {
               variant="dark"
               size="lg"
               onClick={() => router.push('/routine')}
-              iconRight={
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M5 12h14M13 6l6 6-6 6" />
-                </svg>
-              }
+              iconRight={<Icon.ChevronRight size={14} />}
               dotColor="grass"
             >
               Ir a Rutina
@@ -229,10 +280,9 @@ export function ActiveSessionPage() {
     );
   }
 
-  const totalExercises = planned.length;
-  const done = currentIndex >= totalExercises;
+  const allRoundsDone = roundStatus.every((s) => s.completed) && currentRound >= totalRounds - 1;
 
-  if (done) {
+  if (allRoundsDone && currentIndex >= planned.length) {
     return (
       <AppShell>
         <div className="flex min-h-[70vh] flex-col items-center justify-center px-6 py-12 text-center">
@@ -242,13 +292,21 @@ export function ActiveSessionPage() {
           <span className="mt-8 t-eyebrow text-[#80827f]">Sesión completa</span>
           <h1 className="mt-3 t-display text-[#2c2e2a]">¡Hecho!</h1>
           <p className="mt-3 t-body-lg text-[#2c2e2a]/80">
-            {totalExercises} {totalExercises === 1 ? 'ejercicio' : 'ejercicios'} · {formatDuration(elapsed)}
+            {totalRounds} {totalRounds === 1 ? 'ronda' : 'rondas'} · {planned.length} ejercicios
           </p>
           <div className="mt-8 flex flex-col items-center gap-3">
             <Button
               variant="coral"
               size="lg"
-              onClick={finish}
+              onClick={async () => {
+                if (!session) return;
+                try {
+                  await finishSession(session.id, true);
+                } catch (err) {
+                  console.error(err);
+                }
+                router.push('/history');
+              }}
               dotColor="sunshine"
             >
               Terminar y ver historial
@@ -266,8 +324,10 @@ export function ActiveSessionPage() {
     );
   }
 
-  const completedSets = currentSets.filter((s) => s.completed).length;
-  const completedAllSets = completedSets === currentSets.length;
+  const currentSet = currentRoundSet;
+  const isCurrentSetDone = currentSet?.completed ?? false;
+  const isLastExerciseInRound = currentIndex >= planned.length - 1;
+  const isLastRound = currentRound >= totalRounds - 1;
 
   return (
     <AppShell>
@@ -282,27 +342,27 @@ export function ActiveSessionPage() {
             <Icon.ChevronLeft size={18} />
           </button>
           <div className="flex flex-col items-center">
-            <span className="t-micro text-[#80827f]">Sesión</span>
+            <span className="t-micro text-[#80827f]">Ronda</span>
             <p className="t-body text-[#2c2e2a] font-semibold tabular-nums">
-              {currentIndex + 1} <span className="text-[#80827f]">/ {totalExercises}</span>
+              {currentRound + 1} <span className="text-[#80827f]">/ {totalRounds}</span>
             </p>
           </div>
-          <div className="inline-flex h-11 items-center gap-1.5 rounded-full bg-[#2c2e2a] px-4 text-[13px] font-medium text-white">
+          <div className="inline-flex h-11 items-center gap-1.5 rounded-full bg-[#2c2e2a] px-4 text-[13px] font-medium text-[#f5f1e4]">
             <Icon.Timer size={14} />
-            <span className="tabular-nums">{formatDuration(elapsed)}</span>
+            <span className="tabular-nums">{formatDuration(exerciseElapsed)}</span>
           </div>
         </header>
 
-        {/* Progress bar */}
-        <div className="mb-5 flex gap-1">
-          {Array.from({ length: totalExercises }).map((_, i) => (
+        {/* Round progress pills */}
+        <div className="mb-4 flex gap-1">
+          {Array.from({ length: totalRounds }).map((_, i) => (
             <span
               key={i}
               className={classNames(
                 'h-1.5 flex-1 rounded-full transition-colors',
-                i < currentIndex
+                i < currentRound
                   ? 'bg-[#8ed462]'
-                  : i === currentIndex
+                  : i === currentRound
                     ? 'bg-[#2c2e2a]'
                     : 'bg-[#2c2e2a]/10',
               )}
@@ -310,203 +370,302 @@ export function ActiveSessionPage() {
           ))}
         </div>
 
-        <div className="grid gap-5 md:grid-cols-[1fr_1.1fr] md:gap-6">
-          <div className="order-1">
-            <div className="relative aspect-[4/3] overflow-hidden rounded-[50px] bg-white">
-              <ExerciseMedia
-                src={currentPlanned.exercise.gifPath}
-                alt={currentPlanned.exercise.name}
-                className="h-full w-full object-cover"
-                loading="eager"
-                onError={(e) => {
-                  (e.currentTarget as HTMLElement).style.opacity = '0.15';
-                }}
-              />
-            </div>
-          </div>
-
-          <div className="order-2 flex flex-col gap-5">
-            <div>
-              <div className="flex flex-wrap items-center gap-1.5">
-                <Tag tone="grass" size="sm">
-                  {MUSCLES[currentPlanned.exercise.primaryMuscle].label}
-                </Tag>
-                <Tag tone="sandstone" size="sm">
-                  {currentPlanned.plannedSets} × {currentPlanned.plannedReps}
-                </Tag>
-              </div>
-              <h2 className="mt-3 t-heading text-[#2c2e2a]">
-                {currentPlanned.exercise.name}
-              </h2>
-              <p className="mt-2 t-body text-[#2c2e2a]/80">
-                {currentPlanned.exercise.description}
-              </p>
-            </div>
-
-            <div>
-              <div className="mb-3 flex items-center justify-between">
-                <span className="t-eyebrow text-[#80827f]">
-                  Sets · {completedSets} / {currentSets.length}
+        {/* Exercise pills (within the round) */}
+        <div className="mb-5 flex flex-wrap gap-1.5">
+          {planned.map((p, i) => {
+            const status = roundStatus[i];
+            const isCurrent = i === currentIndex;
+            return (
+              <button
+                key={p.exercise.id}
+                type="button"
+                onClick={() => setCurrentIndex(i)}
+                className={classNames(
+                  'flex items-center gap-2 rounded-full border-2 px-3 h-9 text-[12px] font-medium transition-colors',
+                  status?.completed
+                    ? 'border-[#8ed462] bg-[#8ed462]/15 text-[#2c2e2a]'
+                    : isCurrent
+                      ? 'border-[#2c2e2a] bg-[#2c2e2a] text-[#f5f1e4]'
+                      : 'border-[#2c2e2a]/15 bg-white text-[#2c2e2a]',
+                )}
+              >
+                <span
+                  className={classNames(
+                    'flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-semibold',
+                    status?.completed
+                      ? 'bg-[#8ed462] text-[#2c2e2a]'
+                      : isCurrent
+                        ? 'bg-[#f5e211] text-[#2c2e2a]'
+                        : 'bg-[#f5f1e4] text-[#2c2e2a]',
+                  )}
+                >
+                  {status?.completed ? <Icon.Check size={11} /> : i + 1}
                 </span>
-                {completedAllSets ? (
-                  <Sparkle size={20} color="#8ed462" />
-                ) : null}
-              </div>
-              <ul className="flex flex-col gap-2">
-                {currentSets.map((set, idx) => (
-                  <SetRow
-                    key={set.id}
-                    index={idx + 1}
-                    set={set}
-                    onChange={(patch) => onChangeSet(set.id, patch)}
-                  />
-                ))}
-              </ul>
-            </div>
-
-            <section>
-              <span className="t-eyebrow text-[#80827f]">Notas del ejercicio</span>
-              <textarea
-                value={exerciseNotes}
-                onChange={(e) => saveNotes(e.target.value)}
-                onBlur={(e) => saveNotes(e.target.value)}
-                placeholder="Cómo te sentiste, observaciones…"
-                rows={2}
-                className="mt-2 w-full rounded-[20px] border-2 border-[#2c2e2a] bg-white p-3 text-[14px] leading-[1.5] text-[#2c2e2a] outline-none placeholder:text-[#80827f] focus:bg-[#f5e211]/10"
-              />
-            </section>
-          </div>
+                <span className="truncate max-w-[120px]">{p.exercise.name}</span>
+              </button>
+            );
+          })}
         </div>
 
-        <div className="sticky bottom-20 mt-6 flex items-center justify-between gap-3 pt-4 md:bottom-0 md:bg-transparent md:pt-6">
-          <Button
-            variant="outline"
-            size="md"
-            onClick={goPrev}
-            disabled={currentIndex === 0}
-            iconLeft={<Icon.ChevronLeft size={14} />}
-            dotColor="ink"
-          >
-            Anterior
-          </Button>
-          <Button
-            variant="coral"
-            size="md"
-            onClick={goNext}
-            disabled={!completedAllSets}
-            dotColor="sunshine"
-            iconRight={
-              currentIndex === planned.length - 1 ? (
-                <Icon.Check size={14} />
-              ) : (
-                <Icon.ChevronRight size={14} />
-              )
-            }
-          >
-            {currentIndex === planned.length - 1 ? 'Terminar' : 'Siguiente'}
-          </Button>
-        </div>
+        {roundJustCompleted ? (
+          <Card padding="lg" tone="grass" className="mb-5 animate-pop text-center">
+            <Sparkle size={28} color="#2c2e2a" className="mx-auto" />
+            <p className="mt-3 t-heading text-[#2c2e2a]">
+              ¡Ronda {currentRound + 1} completa!
+            </p>
+            {!isLastRound ? (
+              <p className="mt-1 t-body text-[#2c2e2a]/80">
+                Ahora vamos a la ronda {currentRound + 2}.
+              </p>
+            ) : null}
+          </Card>
+        ) : null}
 
-        {!completedAllSets ? (
-          <p className="mt-3 text-center text-[12px] text-[#80827f]">
-            Te faltan {currentSets.length - completedSets} sets para habilitar el siguiente.
-          </p>
+        {currentPlanned ? (
+          <ActiveExercisePanel
+            planned={currentPlanned}
+            currentRound={currentRound}
+            totalRounds={totalRounds}
+            currentSet={currentSet}
+            isCurrentSetDone={isCurrentSetDone}
+            currentIndex={currentIndex}
+            plannedCount={planned.length}
+            onOpenDetails={() => setShowDetails(true)}
+            onCommit={(patch) => {
+              if (!currentSet) return;
+              setSetLogs((prev) =>
+                prev.map((s) => (s.id === currentSet.id ? { ...s, ...patch } : s)),
+              );
+              updateSetLog(currentSet.id, patch).catch((err) => console.error(err));
+            }}
+            onMarkDone={() => {
+              if (!currentSet) return;
+              setSetLogs((prev) =>
+                prev.map((s) => (s.id === currentSet.id ? { ...s, completed: true } : s)),
+              );
+              updateSetLog(currentSet.id, { completed: true }).catch((err) =>
+                console.error(err),
+              );
+              if (isLastExerciseInRound) {
+                setRoundJustCompleted(true);
+                setTimeout(() => {
+                  setRoundJustCompleted(false);
+                  if (isLastRound) {
+                    setCurrentIndex(planned.length);
+                  } else {
+                    setCurrentRound(currentRound + 1);
+                    setCurrentIndex(0);
+                  }
+                }, 1500);
+              } else {
+                setCurrentIndex(currentIndex + 1);
+              }
+            }}
+          />
         ) : null}
       </div>
+
+      {showDetails && currentPlanned ? (
+        <ExerciseDetailModal
+          exercise={currentPlanned.exercise}
+          onClose={() => setShowDetails(false)}
+        />
+      ) : null}
     </AppShell>
   );
 }
 
-function SetRow({
-  index,
-  set,
-  onChange,
-}: {
-  index: number;
-  set: SetLogRecord;
-  onChange: (patch: Partial<SetLogRecord>) => void;
-}) {
-  const [weight, setWeight] = useState<string>(set.weight_kg?.toString() ?? '');
-  const [reps, setReps] = useState<string>(set.reps?.toString() ?? '');
+interface ActiveExercisePanelProps {
+  planned: PlannedExercise;
+  currentRound: number;
+  totalRounds: number;
+  currentSet: SetLogRecord | null;
+  isCurrentSetDone: boolean;
+  currentIndex: number;
+  plannedCount: number;
+  onOpenDetails: () => void;
+  onCommit: (patch: Partial<SetLogRecord>) => void;
+  onMarkDone: () => void;
+}
+
+function ActiveExercisePanel({
+  planned,
+  currentRound,
+  totalRounds,
+  currentSet,
+  isCurrentSetDone,
+  currentIndex,
+  plannedCount,
+  onOpenDetails,
+  onCommit,
+  onMarkDone,
+}: ActiveExercisePanelProps) {
+  const { exercise, plannedReps } = planned;
+  const allMedia = useMemo(
+    () => [exercise.gifPath, ...(exercise.extraMediaPaths ?? [])],
+    [exercise],
+  );
+  const [mediaIndex, setMediaIndex] = useState(0);
+  const activeMedia = allMedia[mediaIndex] ?? exercise.gifPath;
+  const primary = MUSCLES[exercise.primaryMuscle];
+
+  const [weight, setWeight] = useState<string>(currentSet?.weight_kg?.toString() ?? '');
+  const [reps, setReps] = useState<string>(currentSet?.reps?.toString() ?? '');
 
   useEffect(() => {
-    setWeight(set.weight_kg?.toString() ?? '');
-    setReps(set.reps?.toString() ?? '');
-  }, [set.weight_kg, set.reps]);
+    setWeight(currentSet?.weight_kg?.toString() ?? '');
+    setReps(currentSet?.reps?.toString() ?? '');
+    setMediaIndex(0);
+  }, [currentSet?.id, exercise.id]);
 
-  const commit = () => {
-    const w = weight === '' ? null : Number(weight);
-    const r = reps === '' ? null : Number(reps);
-    onChange({ weight_kg: w, reps: r });
+  const commitField = (field: 'weight_kg' | 'reps', value: string) => {
+    const num = value === '' ? null : Number(value);
+    onCommit({ [field]: num } as Partial<SetLogRecord>);
   };
 
   return (
-    <li
-      className={classNames(
-        'flex items-center gap-2 rounded-full border-2 bg-white p-2 transition-colors',
-        set.completed ? 'border-[#8ed462] bg-[#8ed462]/10' : 'border-[#2c2e2a]/10',
-      )}
-    >
-      <span
-        className={classNames(
-          'flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-[13px] font-semibold',
-          set.completed ? 'bg-[#8ed462] text-[#2c2e2a]' : 'bg-[#f5f1e4] text-[#2c2e2a]',
-        )}
-      >
-        {set.completed ? <Icon.Check size={14} /> : index}
-      </span>
-
-      <div className="flex flex-1 items-center gap-1.5">
-        <div className="flex-1">
-          <input
-            type="number"
-            inputMode="decimal"
-            step="0.5"
-            min={0}
-            value={weight}
-            onChange={(e) => setWeight(e.target.value)}
-            onBlur={commit}
-            placeholder="0"
-            className="h-11 w-full rounded-full border-2 border-[#2c2e2a]/10 bg-white text-center text-[15px] tabular-nums outline-none focus:border-[#2c2e2a]"
-            aria-label="Peso en kilos"
+    <div className="grid gap-5 md:grid-cols-[1.1fr_1fr] md:gap-6">
+      <div className="order-1">
+        <div className="relative aspect-[4/3] overflow-hidden rounded-[50px] bg-white">
+          <ExerciseMedia
+            src={activeMedia}
+            alt={exercise.name}
+            className="h-full w-full object-cover"
+            loading="eager"
+            onError={(e) => {
+              (e.currentTarget as HTMLElement).style.opacity = '0.15';
+            }}
           />
-          <p className="mt-0.5 text-center text-[9px] tracking-[0.12em] uppercase text-[#80827f]">
-            KG
-          </p>
         </div>
+        {allMedia.length > 1 ? (
+          <div className="mt-3 flex items-center justify-center gap-1.5">
+            {allMedia.map((_, idx) => (
+              <button
+                key={idx}
+                type="button"
+                onClick={() => setMediaIndex(idx)}
+                aria-label={`Ver ángulo ${idx + 1}`}
+                className={classNames(
+                  'h-2 rounded-full transition-all',
+                  idx === mediaIndex ? 'w-8 bg-[#2c2e2a]' : 'w-2 bg-[#2c2e2a]/30 hover:bg-[#2c2e2a]/60',
+                )}
+              />
+            ))}
+          </div>
+        ) : null}
 
-        <div className="flex-1">
-          <input
-            type="number"
-            inputMode="numeric"
-            step="1"
-            min={0}
-            value={reps}
-            onChange={(e) => setReps(e.target.value)}
-            onBlur={commit}
-            placeholder="0"
-            className="h-11 w-full rounded-full border-2 border-[#2c2e2a]/10 bg-white text-center text-[15px] tabular-nums outline-none focus:border-[#2c2e2a]"
-            aria-label="Repeticiones"
-          />
-          <p className="mt-0.5 text-center text-[9px] tracking-[0.12em] uppercase text-[#80827f]">
-            REPS
-          </p>
+        <div className="mt-4 rounded-[32px] bg-white p-4">
+          <div className="flex items-start gap-3">
+            {exercise.muscleImagePath ? (
+              <img
+                src={exercise.muscleImagePath}
+                alt={`Músculos trabajados en ${exercise.name}`}
+                className="h-14 w-14 shrink-0 rounded-full bg-[#f5f1e4] object-contain"
+                loading="lazy"
+              />
+            ) : (
+              <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-[#f5e211] text-[12px] font-semibold text-[#2c2e2a]">
+                {primary.label.charAt(0)}
+              </span>
+            )}
+            <div className="min-w-0 flex-1">
+              <span className="t-eyebrow text-[#80827f]">Tips</span>
+              <ul className="mt-1.5 flex flex-col gap-1">
+                {exercise.tips.slice(0, 2).map((tip, idx) => (
+                  <li key={idx} className="text-[13px] leading-[1.4] text-[#2c2e2a]/85">
+                    · {tip}
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              onClick={onOpenDetails}
+              dotColor="ink"
+            >
+              Detalles
+            </Button>
+          </div>
         </div>
       </div>
 
-      <button
-        type="button"
-        onClick={() => onChange({ completed: !set.completed })}
-        aria-label={set.completed ? 'Marcar pendiente' : 'Marcar hecho'}
-        className={classNames(
-          'flex h-11 w-11 shrink-0 items-center justify-center rounded-full border-2 transition-colors',
-          set.completed
-            ? 'border-[#8ed462] bg-[#8ed462] text-[#2c2e2a]'
-            : 'border-[#2c2e2a]/10 text-[#80827f] hover:border-[#2c2e2a] hover:text-[#2c2e2a]',
-        )}
-      >
-        <Icon.Check size={16} />
-      </button>
-    </li>
+      <div className="order-2 flex flex-col gap-5">
+        <div>
+          <div className="flex flex-wrap items-center gap-1.5">
+            <Tag tone="grass" size="sm">{primary.label}</Tag>
+            <Tag tone="sandstone" size="sm">Ronda {currentRound + 1}/{totalRounds}</Tag>
+            <Tag tone="sandstone" size="sm">{plannedReps} reps</Tag>
+          </div>
+          <h2 className="mt-3 t-heading text-[#2c2e2a]">{exercise.name}</h2>
+        </div>
+
+        <div>
+          <span className="t-eyebrow text-[#80827f]">
+            Peso y reps de la ronda {currentRound + 1}
+          </span>
+          <div className="mt-2 flex items-center gap-2">
+            <div className="flex-1">
+              <input
+                type="number"
+                inputMode="decimal"
+                step="0.5"
+                min={0}
+                value={weight}
+                onChange={(e) => {
+                  setWeight(e.target.value);
+                  commitField('weight_kg', e.target.value);
+                }}
+                placeholder="0"
+                className="h-14 w-full rounded-full border-2 border-[#2c2e2a]/15 bg-white px-4 text-center text-[18px] font-medium tabular-nums text-[#2c2e2a] outline-none transition-colors focus:border-[#2c2e2a] disabled:opacity-50"
+                aria-label="Peso en kilos"
+                disabled={isCurrentSetDone}
+              />
+              <p className="mt-1 text-center text-[10px] tracking-[0.16em] uppercase text-[#80827f]">
+                KG
+              </p>
+            </div>
+            <div className="flex-1">
+              <input
+                type="number"
+                inputMode="numeric"
+                step="1"
+                min={0}
+                value={reps}
+                onChange={(e) => {
+                  setReps(e.target.value);
+                  commitField('reps', e.target.value);
+                }}
+                placeholder={String(plannedReps)}
+                className="h-14 w-full rounded-full border-2 border-[#2c2e2a]/15 bg-white px-4 text-center text-[18px] font-medium tabular-nums text-[#2c2e2a] outline-none transition-colors focus:border-[#2c2e2a] disabled:opacity-50"
+                aria-label="Repeticiones"
+                disabled={isCurrentSetDone}
+              />
+              <p className="mt-1 text-center text-[10px] tracking-[0.16em] uppercase text-[#80827f]">
+                REPS
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <Button
+          type="button"
+          variant={isCurrentSetDone ? 'dark' : 'coral'}
+          size="lg"
+          fullWidth
+          onClick={onMarkDone}
+          disabled={isCurrentSetDone}
+          dotColor={isCurrentSetDone ? 'grass' : 'sunshine'}
+          iconRight={isCurrentSetDone ? undefined : <Icon.Check size={14} />}
+        >
+          {isCurrentSetDone ? 'Listo en esta ronda' : 'Marcar listo'}
+        </Button>
+
+        <div className="text-center text-[12px] text-[#80827f]">
+          Ronda {currentRound + 1} de {totalRounds} · Ejercicio {currentIndex + 1} de {plannedCount}
+        </div>
+      </div>
+    </div>
   );
 }

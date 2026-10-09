@@ -29,6 +29,7 @@ import {
   DAYS_OF_WEEK,
   classNames,
   dayOfWeekFromDate,
+  isRestDay,
 } from '@/lib/format';
 import { MUSCLES, MUSCLE_LIST } from '@/lib/muscles';
 
@@ -102,6 +103,11 @@ export function RoutinePage() {
       const exerciseId = activeData.exerciseId;
       if (!exerciseId || overData?.type !== 'day' || typeof overData.dayOfWeek !== 'number') return;
       const day = overData.dayOfWeek;
+      if (isRestDay(day)) {
+        setError('Sábado y domingo son de descanso.');
+        setTimeout(() => setError(null), 2400);
+        return;
+      }
       if (takenByDay.get(day)?.has(exerciseId)) {
         setError('Ese ejercicio ya está en este día.');
         setTimeout(() => setError(null), 2400);
@@ -190,6 +196,11 @@ export function RoutinePage() {
 
   const onAddFromPalette = async (day: number, exerciseId: string) => {
     if (!profile) return;
+    if (isRestDay(day)) {
+      setError('Sábado y domingo son de descanso.');
+      setTimeout(() => setError(null), 2400);
+      return;
+    }
     if (takenByDay.get(day)?.has(exerciseId)) {
       setError('Ese ejercicio ya está en este día.');
       setTimeout(() => setError(null), 2400);
@@ -206,6 +217,8 @@ export function RoutinePage() {
   };
 
   if (!profile) return null;
+
+  const isTodayRest = isRestDay(todayIndex);
 
   const todayPlanned = entries
     .filter((e) => e.day_of_week === todayIndex)
@@ -226,7 +239,7 @@ export function RoutinePage() {
             <span className="t-eyebrow text-[#80827f]">Plantilla semanal</span>
             <h1 className="mt-3 t-display text-[#2c2e2a]">Tu rutina.</h1>
             <p className="mt-3 max-w-[44ch] t-body-lg text-[#2c2e2a]">
-              Toca un día para sumarle ejercicios. Arrastra en desktop.
+              Circuito de 4 ejercicios. Toca un día activo para sumarle ejercicios. Arrastra en desktop.
             </p>
             <div className="absolute -right-2 top-0 hidden md:block">
               <Sparkle size={32} color="#2ba0ff" className="animate-float" />
@@ -234,16 +247,24 @@ export function RoutinePage() {
           </section>
 
           <div className="mt-6 md:mt-8">
-            {hasAnyToday ? (
+            {isTodayRest ? (
+              <div className="flex items-center gap-3 rounded-full bg-white p-3 pr-5">
+                <span className="flex h-12 w-12 items-center justify-center rounded-full bg-[#f5e211] text-[14px] font-semibold text-[#2c2e2a]">
+                  {todayMeta.short.charAt(0)}
+                </span>
+                <div>
+                  <p className="text-[15px] font-semibold text-[#2c2e2a]">
+                    Hoy es {todayMeta.long.toLowerCase()}.
+                  </p>
+                  <p className="t-eyebrow text-[#80827f]">Día de descanso</p>
+                </div>
+              </div>
+            ) : hasAnyToday ? (
               <Button
                 variant="coral"
                 size="lg"
                 onClick={() => router.push('/routine/active')}
-                iconRight={
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
-                    <path d="M7 5v14l11-7z" />
-                  </svg>
-                }
+                iconRight={<Icon.Play size={14} />}
                 dotColor="sunshine"
               >
                 Iniciar {todayMeta.long}
@@ -280,11 +301,13 @@ export function RoutinePage() {
                     .filter((e) => e.day_of_week === d.id)
                     .sort((a, b) => a.position - b.position);
                   const isToday = d.id === todayIndex;
+                  const isRest = isRestDay(d.id);
                   return (
                     <DayCardMobile
                       key={d.id}
                       day={d}
                       isToday={isToday}
+                      isRest={isRest}
                       entries={dayEntries}
                       onAdd={() => setPaletteOpen(d.id)}
                       onRemove={onRemoveEntry}
@@ -305,7 +328,7 @@ export function RoutinePage() {
                 <Card padding="lg" className="overflow-hidden">
                   <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
                     <h2 className="t-heading-sm text-[#2c2e2a]">Semana</h2>
-                    <span className="t-eyebrow text-[#80827f]">Arrastrá entre días</span>
+                    <span className="t-eyebrow text-[#80827f]">Arrastra entre días</span>
                   </div>
                   <div className="grid grid-cols-7 gap-2">
                     {DAYS_OF_WEEK.map((d) => {
@@ -313,22 +336,28 @@ export function RoutinePage() {
                         .filter((e) => e.day_of_week === d.id)
                         .sort((a, b) => a.position - b.position);
                       const isToday = d.id === todayIndex;
+                      const isRest = isRestDay(d.id);
                       return (
                         <div key={d.id} className="flex flex-col gap-2">
                           <div
                             className={classNames(
                               'flex flex-col items-center justify-center rounded-full py-2.5',
-                              isToday ? 'bg-[#2c2e2a] text-white' : 'bg-[#f5f1e4] text-[#2c2e2a]',
+                              isRest
+                                ? 'bg-[#f5f1e4] text-[#80827f] border-2 border-dashed border-[#2c2e2a]/15'
+                                : isToday
+                                  ? 'bg-[#2c2e2a] text-white'
+                                  : 'bg-[#f5f1e4] text-[#2c2e2a]',
                             )}
                           >
                             <span className="t-micro">{d.short}</span>
                             <span className="mt-0.5 text-[14px] font-semibold">
-                              {dayEntries.length}
+                              {isRest ? '–' : dayEntries.length}
                             </span>
                           </div>
                           <DesktopDayColumn
                             dayId={d.id}
                             isToday={isToday}
+                            isRest={isRest}
                             entries={dayEntries}
                             onRemove={onRemoveEntry}
                             onSelectExercise={setSelectedExercise}
@@ -375,6 +404,7 @@ export function RoutinePage() {
 function DayCardMobile({
   day,
   isToday,
+  isRest,
   entries,
   onAdd,
   onRemove,
@@ -382,11 +412,34 @@ function DayCardMobile({
 }: {
   day: { id: number; long: string; short: string };
   isToday: boolean;
+  isRest: boolean;
   entries: WeeklyRoutineEntry[];
   onAdd: () => void;
   onRemove: (id: string) => void;
   onSelectExercise: (ex: Exercise) => void;
 }) {
+  if (isRest) {
+    return (
+      <div className="rounded-[50px] border-2 border-dashed border-[#2c2e2a]/15 bg-white p-5">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#f5f1e4] text-[14px] font-semibold text-[#80827f]">
+              {day.short.charAt(0)}
+            </span>
+            <div>
+              <p className="text-[16px] font-semibold leading-tight text-[#2c2e2a]">{day.long}</p>
+              <p className="t-eyebrow text-[#80827f]">Descanso</p>
+            </div>
+          </div>
+          <Tag tone="sandstone" size="sm">Recuperá</Tag>
+        </div>
+        <p className="mt-4 t-body text-[#80827f]">
+          Caminata, hidratación, estiramientos. Mañana vuelve el circuito.
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div
       className={classNames(
@@ -477,12 +530,14 @@ function DayCardMobile({
 function DesktopDayColumn({
   dayId,
   isToday,
+  isRest,
   entries,
   onRemove,
   onSelectExercise,
 }: {
   dayId: number;
   isToday: boolean;
+  isRest: boolean;
   entries: WeeklyRoutineEntry[];
   onRemove: (id: string) => void;
   onSelectExercise: (ex: Exercise) => void;
@@ -490,7 +545,17 @@ function DesktopDayColumn({
   const { setNodeRef, isOver } = useDroppable({
     id: `day-${dayId}`,
     data: { type: 'day', dayOfWeek: dayId },
+    disabled: isRest,
   });
+
+  if (isRest) {
+    return (
+      <div className="flex min-h-[360px] flex-col items-center justify-center gap-1.5 rounded-[25px] border-2 border-dashed border-[#2c2e2a]/10 bg-white/40 p-3 text-center">
+        <span className="t-eyebrow text-[#80827f]">Descanso</span>
+        <span className="text-[11px] text-[#80827f]/70">Recuperá el cuerpo</span>
+      </div>
+    );
+  }
 
   return (
     <div
@@ -519,7 +584,7 @@ function DesktopDayColumn({
         })}
         {entries.length === 0 ? (
           <li className="flex flex-1 items-center justify-center rounded-[20px] px-1 text-center text-[10px] uppercase tracking-[0.12em] text-[#80827f]">
-            Arrastrá
+            Arrastra
           </li>
         ) : null}
       </ul>

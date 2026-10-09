@@ -13,6 +13,7 @@ import {
   DAYS_OF_WEEK,
   classNames,
   dayOfWeekFromDate,
+  isRestDay,
   toIsoDate,
 } from '@/lib/format';
 import { EXERCISES } from '@/data/exercises';
@@ -103,11 +104,14 @@ export function HomePage() {
   const exerciseCount = EXERCISES.filter((e) => !e.profiles || e.profiles.includes(profile as ProfileId)).length;
   const dayNumber = today.getDate();
   const totalReps = todayExercises.reduce((acc, e) => acc + e.sets * e.reps, 0);
-  const greeting = todayExercises.length === 0
-    ? 'Descansa hoy.'
-    : profile === 'areli'
-      ? 'A por ello.'
-      : 'Toca entrenar.';
+  const isRest = isRestDay(todayDow);
+  const greeting = isRest
+    ? 'Recuperá el cuerpo.'
+    : todayExercises.length === 0
+      ? 'Descansa hoy.'
+      : profile === 'areli'
+        ? 'A por ello.'
+        : 'Toca entrenar.';
 
   return (
     <AppShell>
@@ -115,22 +119,30 @@ export function HomePage() {
         {/* Hero — editorial-data */}
         <section className="relative">
           <h1 className="t-display text-[#2c2e2a]">
-            {todayMeta.long.toLowerCase()}.
+            {isRest ? 'descanso.' : `${todayMeta.long.toLowerCase()}.`}
           </h1>
-          <div className="mt-5 flex flex-wrap items-baseline gap-x-3 gap-y-1">
-            <span className="t-heading text-[#2c2e2a] tabular-nums">
-              {todayExercises.length}{' '}
-              <span className="text-[#80827f] text-[20px] font-normal">
-                {todayExercises.length === 1 ? 'ejercicio' : 'ejercicios'}
+          {!isRest ? (
+            <div className="mt-5 flex flex-wrap items-baseline gap-x-3 gap-y-1">
+              <span className="t-heading text-[#2c2e2a] tabular-nums">
+                {todayExercises.length}{' '}
+                <span className="text-[#80827f] text-[20px] font-normal">
+                  {todayExercises.length === 1 ? 'ejercicio' : 'ejercicios'}
+                </span>
               </span>
-            </span>
-            <span className="text-[#80827f]">·</span>
-            <span className="t-body text-[#2c2e2a] tabular-nums">
-              {totalReps} reps
-            </span>
-            <span className="text-[#80827f]">·</span>
-            <span className="t-body text-[#2c2e2a]">{greeting}</span>
-          </div>
+              <span className="text-[#80827f]">·</span>
+              <span className="t-body text-[#2c2e2a] tabular-nums">
+                {totalReps} reps
+              </span>
+              <span className="text-[#80827f]">·</span>
+              <span className="t-body text-[#2c2e2a]">{greeting}</span>
+            </div>
+          ) : (
+            <p className="mt-5 max-w-[44ch] t-body-lg text-[#2c2e2a]">
+              {profile === 'areli'
+                ? 'Caminata, hidratación, estiramientos. Mañana vuelve el circuito.'
+                : 'Estiramientos, agua y descanso. El circuito vuelve mañana.'}
+            </p>
+          )}
           <div className="absolute right-2 top-1 hidden md:block">
             <span className="t-display text-[#8ed462]/30 leading-none tabular-nums">
               {dayNumber.toString().padStart(2, '0')}
@@ -157,6 +169,18 @@ export function HomePage() {
 
             {loading ? (
               <p className="mt-8 text-[16px] text-[#80827f]">Cargando…</p>
+            ) : isRest ? (
+              <div className="mt-6">
+                <h2 className="t-heading text-[#2c2e2a]">Recuperá el cuerpo</h2>
+                <p className="mt-2 max-w-[40ch] t-body text-[#2c2e2a]/80">
+                  Caminata, hidratación y estiramientos. Mañana el circuito vuelve con todo.
+                </p>
+                <div className="mt-6 flex flex-wrap gap-2">
+                  <Tag tone="sandstone" size="sm">Caminata</Tag>
+                  <Tag tone="sandstone" size="sm">Hidratación</Tag>
+                  <Tag tone="sandstone" size="sm">Estiramientos</Tag>
+                </div>
+              </div>
             ) : todayExercises.length === 0 ? (
               <div className="mt-6">
                 <h2 className="t-heading text-[#2c2e2a]">Día libre</h2>
@@ -251,21 +275,24 @@ export function HomePage() {
               const iso = toIsoDate(dayDate);
               const isToday = d.id === todayDow;
               const isDone = doneIso.has(iso);
+              const isRest = isRestDay(d.id);
               return (
                 <div
                   key={d.id}
                   className={classNames(
                     'relative flex flex-col items-center gap-1 rounded-full py-3 transition-colors',
-                    isDone
-                      ? 'bg-[#8ed462] text-[#2c2e2a]'
-                      : isToday
-                        ? 'bg-[#2c2e2a] text-[#f5f1e4]'
-                        : 'bg-white text-[#2c2e2a]',
+                    isRest
+                      ? 'bg-white/60 text-[#80827f] border-2 border-dashed border-[#2c2e2a]/10'
+                      : isDone
+                        ? 'bg-[#8ed462] text-[#2c2e2a]'
+                        : isToday
+                          ? 'bg-[#2c2e2a] text-[#f5f1e4]'
+                          : 'bg-white text-[#2c2e2a]',
                   )}
                 >
                   <span className="t-micro">{d.short}</span>
                   <span className="text-[18px] font-semibold tabular-nums leading-none">
-                    {dayDate.getDate()}
+                    {isRest ? '–' : dayDate.getDate()}
                   </span>
                   {isToday ? (
                     <span className="absolute -bottom-1.5 h-1 w-6 rounded-full bg-[#f5e211]" />
