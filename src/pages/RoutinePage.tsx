@@ -789,8 +789,9 @@ function PalettePanel({
                             <div className="group flex items-center gap-1 rounded-full hover:bg-[#2c2e2a]/5">
                               <button
                                 type="button"
-                                onClick={() => onPick(ex.id)}
+                                onClick={() => onPreview(ex)}
                                 className="flex min-w-0 flex-1 items-center gap-2.5 rounded-full px-3 py-2 text-left"
+                                aria-label={`Ver vista previa de ${ex.name}`}
                               >
                                 <span className="relative h-7 w-7 shrink-0 overflow-hidden rounded-[10px] bg-[#f5f1e4]">
                                   <ExerciseMedia
@@ -931,8 +932,9 @@ function PaletteSheet({
                           <div className="flex items-center gap-2 rounded-full bg-white p-1 pl-4">
                             <button
                               type="button"
-                              onClick={() => onPick(ex.id)}
+                              onClick={() => onPreview(ex)}
                               className="min-w-0 flex-1 py-2 text-left"
+                              aria-label={`Ver vista previa de ${ex.name}`}
                             >
                               <p className="truncate text-[15px] font-medium text-[#2c2e2a]">
                                 {ex.name}

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useProfile } from '@/hooks/useProfile';
 import { AppShell } from '@/components/AppShell';
 import { Card } from '@/components/ui/Card';
@@ -47,10 +47,12 @@ export function HistoryPage() {
   const [error, setError] = useState<string | null>(null);
   const [expandedSessionId, setExpandedSessionId] = useState<string | null>(null);
   const [sessionDetails, setSessionDetails] = useState<Map<string, SessionDetail>>(new Map());
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [calendarMonth, setCalendarMonth] = useState<{ year: number; month: number }>(() => {
     const now = new Date();
     return { year: now.getFullYear(), month: now.getMonth() };
   });
+  const sessionRefs = useRef<Map<string, HTMLLIElement>>(new Map());
 
   const profileExercises = useMemo(
     () => (profile ? EXERCISES.filter((e) => !e.profiles || e.profiles.includes(profile)) : []),
@@ -70,32 +72,6 @@ export function HistoryPage() {
         if (cancelled) return;
         setSessionsList(sessions);
         setAdherence(weeks);
-
-        if (sessions.length > 0) {
-          const last = sessions[0];
-          setExpandedSessionId(last.id);
-          const detail = await fetchSessionLogs(last.id);
-          if (cancelled) return;
-          const newMap = new Map<string, SessionDetail>();
-          newMap.set(last.id, {
-            session: last,
-            exerciseLogs: detail.exerciseLogs.map((l) => ({
-              id: l.id,
-              exercise_id: l.exercise_id,
-              position: l.position,
-              notes: l.notes,
-            })),
-            setLogs: detail.setLogs.map((s) => ({
-              id: s.id,
-              exercise_log_id: s.exercise_log_id,
-              set_number: s.set_number,
-              weight_kg: s.weight_kg,
-              reps: s.reps,
-              completed: s.completed,
-            })),
-          });
-          setSessionDetails(newMap);
-        }
       } catch (err) {
         console.error(err);
         setError('No se pudo cargar el historial.');
@@ -107,6 +83,57 @@ export function HistoryPage() {
       cancelled = true;
     };
   }, [profile]);
+
+  useEffect(() => {
+    if (!selectedDate) return;
+    const session = sessionsList.find((s) => s.routine_date === selectedDate);
+    if (!session) return;
+    setExpandedSessionId(session.id);
+    if (!sessionDetails.has(session.id)) {
+      (async () => {
+        const detail = await fetchSessionLogs(session.id);
+        const next = new Map(sessionDetails);
+        next.set(session.id, {
+          session,
+          exerciseLogs: detail.exerciseLogs.map((l) => ({
+            id: l.id,
+            exercise_id: l.exercise_id,
+            position: l.position,
+            notes: l.notes,
+          })),
+          setLogs: detail.setLogs.map((s) => ({
+            id: s.id,
+            exercise_log_id: s.exercise_log_id,
+            set_number: s.set_number,
+            weight_kg: s.weight_kg,
+            reps: s.reps,
+            completed: s.completed,
+          })),
+        });
+        setSessionDetails(next);
+      })();
+    }
+    const el = sessionRefs.current.get(session.id);
+    if (el) {
+      setTimeout(() => {
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 60);
+    }
+  }, [selectedDate, sessionsList, sessionDetails]);
+
+  const onDayClick = (cell: { date: string; isCurrentMonth: boolean; hasSession: boolean; isToday: boolean; isRest: boolean }) => {
+    if (!cell.isCurrentMonth || !cell.date) return;
+    if (selectedDate === cell.date) {
+      setSelectedDate(null);
+      setExpandedSessionId(null);
+      return;
+    }
+    setSelectedDate(cell.date);
+  };
+
+  const selectedDayHasSession = selectedDate
+    ? sessionsList.some((s) => s.routine_date === selectedDate)
+    : true;
 
   const toggleSession = async (s: SessionRecord) => {
     if (expandedSessionId === s.id) {
@@ -254,11 +281,16 @@ export function HistoryPage() {
                 if (!cell.isCurrentMonth) {
                   return <div key={idx} className="aspect-square" />;
                 }
+                const isSelected = selectedDate === cell.date;
                 return (
-                  <div
+                  <button
                     key={idx}
+                    type="button"
+                    onClick={() => onDayClick(cell)}
+                    aria-label={`Ver día ${cell.day}`}
                     className={classNames(
-                      'relative flex aspect-square items-center justify-center rounded-full text-[12px] font-medium tabular-nums transition-colors',
+                      'relative flex aspect-square items-center justify-center rounded-full text-[12px] font-medium tabular-nums transition-all',
+                      'hover:scale-110 active:scale-95 cursor-pointer',
                       cell.isRest && !cell.hasSession
                         ? 'border-2 border-dashed border-[#2c2e2a]/10 bg-transparent text-[#80827f]'
                         : cell.sessionCompleted
@@ -266,14 +298,15 @@ export function HistoryPage() {
                           : cell.hasSession
                             ? 'bg-[#f5e211] text-[#2c2e2a]'
                             : 'bg-[#f5f1e4] text-[#2c2e2a]',
-                      cell.isToday && 'ring-2 ring-[#2c2e2a] ring-offset-1 ring-offset-white',
+                      cell.isToday && !isSelected && 'ring-2 ring-[#2c2e2a] ring-offset-1 ring-offset-white',
+                      isSelected && 'ring-[3px] ring-[#2c2e2a] ring-offset-2 ring-offset-white',
                     )}
                   >
                     {cell.day}
                     {cell.sessionCompleted ? (
                       <Icon.Check size={9} className="absolute bottom-0.5 right-0.5" />
                     ) : null}
-                  </div>
+                  </button>
                 );
               })}
             </div>
@@ -300,7 +333,34 @@ export function HistoryPage() {
 
         {/* Sessions list */}
         <section className="mt-10">
-          <h2 className="mb-4 t-eyebrow text-[#80827f]">Sesiones</h2>
+          <div className="mb-4 flex items-center justify-between gap-3">
+            <h2 className="t-eyebrow text-[#80827f]">Sesiones</h2>
+            {selectedDate ? (
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectedDate(null);
+                  setExpandedSessionId(null);
+                }}
+                className="inline-flex items-center gap-1.5 rounded-full bg-[#2c2e2a] px-3 h-8 text-[12px] font-semibold text-[#f5f1e4] hover:bg-[#1f211d]"
+              >
+                Ver todas
+                <Icon.Close size={12} />
+              </button>
+            ) : null}
+          </div>
+
+          {selectedDate && !selectedDayHasSession ? (
+            <Card padding="md" className="mb-4 border-dashed">
+              <p className="text-[14px] text-[#2c2e2a]">
+                {new Date(selectedDate + 'T00:00:00').toLocaleDateString('es', { weekday: 'long', day: 'numeric', month: 'long' })}
+              </p>
+              <p className="mt-1 text-[13px] text-[#80827f]">
+                Ese día no tiene sesión registrada.
+              </p>
+            </Card>
+          ) : null}
+
           {loading ? (
             <Card padding="md">
               <p className="text-[14px] text-[#80827f]">Cargando…</p>
@@ -327,7 +387,13 @@ export function HistoryPage() {
                   ? detail.setLogs.filter((set) => set.completed).reduce((acc, set) => acc + (set.reps ?? 0), 0)
                   : 0;
                 return (
-                  <li key={s.id}>
+                  <li
+                    key={s.id}
+                    ref={(el) => {
+                      if (el) sessionRefs.current.set(s.id, el);
+                      else sessionRefs.current.delete(s.id);
+                    }}
+                  >
                     <div
                       className={classNames(
                         'overflow-hidden rounded-[32px] border-2 transition-colors',
