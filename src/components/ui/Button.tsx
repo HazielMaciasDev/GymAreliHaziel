@@ -23,17 +23,17 @@ const DOT_BG: Record<NonNullable<ButtonProps['dotColor']>, string> = {
 
 const VARIANTS: Record<Variant, string> = {
   primary:
-    'bg-white text-[#2c2e2a] border border-[#2c2e2a] hover:bg-[#2c2e2a] hover:text-white active:bg-[#1f211d] disabled:opacity-50',
+    'bg-white text-[#2c2e2a] border-2 border-[#2c2e2a] hover:bg-[#f5e211] active:bg-[#f5d900] disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white',
   secondary:
-    'bg-[#e0dbce] text-[#2c2e2a] hover:bg-[#d3ccba] active:bg-[#c4bda8] disabled:opacity-50',
+    'bg-[#e0dbce] text-[#2c2e2a] hover:bg-[#d3ccba] active:bg-[#c4bda8] disabled:opacity-40 disabled:cursor-not-allowed',
   ghost:
-    'bg-transparent text-[#2c2e2a] hover:bg-[#2c2e2a]/5 active:bg-[#2c2e2a]/10 disabled:opacity-40',
+    'bg-transparent text-[#2c2e2a] hover:bg-[#2c2e2a]/8 active:bg-[#2c2e2a]/15 disabled:opacity-30 disabled:cursor-not-allowed',
   outline:
-    'bg-transparent text-[#2c2e2a] border border-[#2c2e2a] hover:bg-[#2c2e2a] hover:text-white disabled:opacity-50',
+    'bg-transparent text-[#2c2e2a] border-2 border-[#2c2e2a]/30 hover:border-[#2c2e2a] hover:bg-[#f5f1e4] active:bg-[#e0dbce] disabled:opacity-40 disabled:cursor-not-allowed',
   coral:
-    'bg-[#ff705d] text-white hover:bg-[#ff5a44] active:bg-[#ed4a35] disabled:opacity-50',
+    'bg-[#ff705d] text-white hover:bg-[#ff5a44] active:bg-[#ed4a35] disabled:opacity-40 disabled:cursor-not-allowed',
   dark:
-    'bg-[#2c2e2a] text-white hover:bg-[#1f211d] active:bg-[#151714] disabled:opacity-50',
+    'bg-[#2c2e2a] text-white hover:bg-[#1f211d] active:bg-[#151714] disabled:opacity-40 disabled:cursor-not-allowed',
 };
 
 const SIZES: Record<Size, string> = {
@@ -59,7 +59,7 @@ export function Button({
       {...rest}
       type={type}
       className={classNames(
-        'inline-flex items-center justify-center rounded-full font-medium transition-colors duration-150 select-none',
+        'inline-flex items-center justify-center rounded-full font-medium transition-colors duration-150 active:scale-[0.98] select-none disabled:active:scale-100',
         VARIANTS[variant],
         SIZES[size],
         fullWidth && 'w-full',

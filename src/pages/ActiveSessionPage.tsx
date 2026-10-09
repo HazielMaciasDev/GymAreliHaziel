@@ -53,11 +53,13 @@ export function ActiveSessionPage() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [currentRound, setCurrentRound] = useState(0);
   const [exerciseElapsed, setExerciseElapsed] = useState(0);
+  const [totalElapsed, setTotalElapsed] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [roundJustCompleted, setRoundJustCompleted] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
   const initRef = useRef(false);
+  const sessionStartedAtRef = useRef<number>(Date.now());
 
   const today = useMemo(() => new Date(), []);
   const todayDow = useMemo(() => dayOfWeekFromDate(today), [today]);
@@ -104,7 +106,10 @@ export function ActiveSessionPage() {
         const existing = await getSessionByDate(profile, dateIso);
         const sess = existing ?? (await startSession(profile, dateIso, todayDow));
         if (!sess) return;
-        if (!cancelled) setSession(sess);
+        if (!cancelled) {
+          setSession(sess);
+          sessionStartedAtRef.current = new Date(sess.started_at).getTime();
+        }
 
         let logs = await fetchSessionLogs(sess.id);
         if (logs.exerciseLogs.length === 0) {
@@ -210,7 +215,9 @@ export function ActiveSessionPage() {
     const startedAt = Date.now();
     setExerciseElapsed(0);
     const interval = window.setInterval(() => {
-      setExerciseElapsed(Math.floor((Date.now() - startedAt) / 1000));
+      const now = Date.now();
+      setExerciseElapsed(Math.floor((now - startedAt) / 1000));
+      setTotalElapsed(Math.floor((now - sessionStartedAtRef.current) / 1000));
     }, 1000);
     return () => window.clearInterval(interval);
   }, [session, currentIndex, currentRound, currentPlanned]);
@@ -287,21 +294,120 @@ export function ActiveSessionPage() {
   const allRoundsDone = roundStatus.every((s) => s.completed) && currentRound >= totalRounds - 1;
 
   if (allRoundsDone && currentIndex >= planned.length) {
+    // Compute session stats
+    const completedSets = setLogs.filter((s) => s.completed);
+    const totalReps = completedSets.reduce((acc, s) => acc + (s.reps ?? 0), 0);
+    const topSet = completedSets.reduce<{ weight: number; exercise: string | null; reps: number }>(
+      (best, s) => ((s.weight_kg ?? 0) > best.weight
+        ? { weight: s.weight_kg ?? 0, exercise: s.exercise_log_id, reps: s.reps ?? 0 }
+        : best),
+      { weight: 0, exercise: null, reps: 0 },
+    );
+    const topExerciseName = topSet.exercise
+      ? EXERCISES.find((e) => e.id === exerciseLogs.find((l) => l.id === topSet.exercise)?.exercise_id)?.name ?? null
+      : null;
+
+    // Per-exercise best set for the summary list
+    const exerciseSummary = planned.map((p) => {
+      const log = exerciseLogs.find((l) => l.exercise_id === p.exercise.id);
+      const sets = log ? setLogs.filter((s) => s.exercise_log_id === log.id && s.completed) : [];
+      const maxWeight = Math.max(0, ...sets.map((s) => s.weight_kg ?? 0));
+      const totalRepsForEx = sets.reduce((acc, s) => acc + (s.reps ?? 0), 0);
+      return { exercise: p.exercise, maxWeight, totalReps: totalRepsForEx, setCount: sets.length };
+    });
+
     return (
       <AppShell>
-        <div className="flex min-h-[70vh] flex-col items-center justify-center px-6 py-12 text-center">
-          <div className="relative">
-            <Illustration variant="medal" size={140} className="animate-pop" />
-          </div>
-          <span className="mt-8 t-eyebrow text-[#80827f]">Sesión completa</span>
-          <h1 className="mt-3 t-display text-[#2c2e2a]">¡Hecho!</h1>
-          <p className="mt-3 t-body-lg text-[#2c2e2a]/80">
-            {totalRounds} {totalRounds === 1 ? 'ronda' : 'rondas'} · {planned.length} ejercicios
-          </p>
-          <div className="mt-8 flex flex-col items-center gap-3">
+        <div className="py-6 md:py-10">
+          <section className="relative text-center">
+            <div className="relative inline-block">
+              <Illustration variant="medal" size={120} className="animate-pop" />
+            </div>
+            <span className="mt-5 t-eyebrow text-[#80827f]">Sesión completa</span>
+            <h1 className="mt-2 t-display text-[#2c2e2a]">¡Hecho!</h1>
+            <p className="mt-2 t-body-lg text-[#2c2e2a]/80">
+              {totalRounds} {totalRounds === 1 ? 'ronda' : 'rondas'} · {planned.length} ejercicios
+            </p>
+          </section>
+
+          <section className="mt-8 grid grid-cols-2 gap-3 md:gap-4">
+            <Card padding="md" tone="white">
+              <span className="t-eyebrow text-[#80827f]">Tiempo</span>
+              <p className="mt-2 t-display text-[#2c2e2a] tabular-nums leading-[0.9]">
+                {formatDuration(totalElapsed).split(':')[0]}
+                <span className="text-[#80827f] text-[20px]"> min</span>
+              </p>
+              <p className="mt-1 t-body-sm tabular-nums text-[#80827f]">
+                {formatDuration(totalElapsed)}
+              </p>
+            </Card>
+            <Card padding="md" tone="white">
+              <span className="t-eyebrow text-[#80827f]">Reps totales</span>
+              <p className="mt-2 t-display text-[#2c2e2a] tabular-nums leading-[0.9]">
+                {totalReps}
+              </p>
+              <p className="mt-1 t-body-sm text-[#80827f]">
+                en {completedSets.length} sets
+              </p>
+            </Card>
+            <Card padding="md" tone="white">
+              <span className="t-eyebrow text-[#80827f]">Top peso</span>
+              <p className="mt-2 t-display text-[#2c2e2a] tabular-nums leading-[0.9]">
+                {topSet.weight > 0 ? topSet.weight : '—'}
+                {topSet.weight > 0 ? <span className="text-[#80827f] text-[20px]"> kg</span> : null}
+              </p>
+              <p className="mt-1 t-body-sm text-[#80827f] truncate">
+                {topExerciseName ? `${topExerciseName} · ${topSet.reps} reps` : 'sin peso registrado'}
+              </p>
+            </Card>
+            <Card padding="md" tone="grass">
+              <span className="t-eyebrow text-[#2c2e2a]/70">Completitud</span>
+              <p className="mt-2 t-display text-[#2c2e2a] tabular-nums leading-[0.9]">
+                {Math.round((completedSets.length / (planned.length * totalRounds)) * 100)}
+                <span className="text-[#2c2e2a]/60 text-[20px]">%</span>
+              </p>
+              <p className="mt-1 t-body-sm text-[#2c2e2a]/80">
+                {completedSets.length} de {planned.length * totalRounds} sets
+              </p>
+            </Card>
+          </section>
+
+          <section className="mt-6">
+            <h2 className="mb-3 t-eyebrow text-[#80827f]">Tu sesión</h2>
+            <ul className="flex flex-col gap-2">
+              {exerciseSummary.map((s, idx) => (
+                <li
+                  key={s.exercise.id}
+                  className="flex items-center gap-3 overflow-hidden rounded-[24px] border border-[#2c2e2a]/10 bg-white p-2"
+                >
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#f5f1e4] text-[13px] font-semibold text-[#2c2e2a]">
+                    {idx + 1}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-[14px] font-semibold text-[#2c2e2a]">
+                      {s.exercise.name}
+                    </p>
+                    <p className="t-eyebrow text-[#80827f]">
+                      {s.setCount} {s.setCount === 1 ? 'set' : 'sets'} · {s.totalReps} reps
+                    </p>
+                  </div>
+                  {s.maxWeight > 0 ? (
+                    <span className="shrink-0 rounded-full bg-[#2c2e2a] px-3 py-1.5 text-[13px] font-semibold tabular-nums text-[#f5f1e4]">
+                      {s.maxWeight} kg
+                    </span>
+                  ) : (
+                    <span className="shrink-0 t-body-sm text-[#80827f]">—</span>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </section>
+
+          <div className="mt-8 flex flex-col items-stretch gap-3">
             <Button
               variant="coral"
               size="lg"
+              fullWidth
               onClick={async () => {
                 if (!session) return;
                 try {
@@ -313,15 +419,16 @@ export function ActiveSessionPage() {
               }}
               dotColor="sunshine"
             >
-              Terminar y ver historial
+              Ver historial completo
             </Button>
-            <button
-              type="button"
+            <Button
+              variant="ghost"
+              size="md"
+              fullWidth
               onClick={() => router.push('/home')}
-              className="text-[14px] text-[#80827f] hover:text-[#2c2e2a]"
             >
               Volver al inicio
-            </button>
+            </Button>
           </div>
         </div>
       </AppShell>
@@ -443,30 +550,35 @@ export function ActiveSessionPage() {
               updateSetLog(currentSet.id, patch).catch((err) => console.error(err));
             }}
             onMarkDone={() => {
-              if (!currentSet) return;
-              setSetLogs((prev) =>
-                prev.map((s) => (s.id === currentSet.id ? { ...s, completed: true } : s)),
-              );
-              updateSetLog(currentSet.id, { completed: true }).catch((err) =>
-                console.error(err),
-              );
+              const targetSetId = currentSet?.id;
+              if (targetSetId) {
+                setSetLogs((prev) =>
+                  prev.map((s) => (s.id === targetSetId ? { ...s, completed: true } : s)),
+                );
+                updateSetLog(targetSetId, { completed: true }).catch((err) =>
+                  console.error(err),
+                );
+              }
               const isFinalRound = currentRound >= totalRounds - 1;
               const isFinalExercise = currentIndex >= planned.length - 1;
-              if (isFinalExercise && isFinalRound) {
-                // Direct transition to "¡Hecho!" screen — no waiting.
-                setCurrentIndex(planned.length);
-                return;
-              }
-              if (isFinalExercise) {
-                setRoundJustCompleted(true);
-                setTimeout(() => {
-                  setRoundJustCompleted(false);
-                  setCurrentRound(currentRound + 1);
-                  setCurrentIndex(0);
-                }, 900);
-                return;
-              }
-              setCurrentIndex(currentIndex + 1);
+              // Defer state transitions to the next macrotask so React commits
+              // the setLog update before we read `roundStatus` for the "Hecho" check.
+              setTimeout(() => {
+                if (isFinalExercise && isFinalRound) {
+                  setCurrentIndex(planned.length);
+                  return;
+                }
+                if (isFinalExercise) {
+                  setRoundJustCompleted(true);
+                  setTimeout(() => {
+                    setRoundJustCompleted(false);
+                    setCurrentRound(currentRound + 1);
+                    setCurrentIndex(0);
+                  }, 700);
+                  return;
+                }
+                setCurrentIndex(currentIndex + 1);
+              }, 0);
             }}
           />
         ) : null}
