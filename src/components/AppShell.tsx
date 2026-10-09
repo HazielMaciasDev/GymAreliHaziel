@@ -51,25 +51,14 @@ export function AppShell({ children }: { children: ReactNode }) {
                   key={item.path}
                   type="button"
                   onClick={() => router.push(item.path)}
-                  className="group relative inline-flex h-10 items-center rounded-full px-4 text-[14px] transition-colors"
+                  className={classNames(
+                    'inline-flex h-10 items-center rounded-full px-4 text-[14px] transition-colors',
+                    active
+                      ? 'text-[#2c2e2a] font-bold'
+                      : 'text-[#2c2e2a]/55 font-medium hover:text-[#2c2e2a]',
+                  )}
                 >
-                  <span
-                    className={classNames(
-                      'transition-colors',
-                      active
-                        ? 'text-[#2c2e2a] font-bold'
-                        : 'text-[#2c2e2a]/60 font-medium group-hover:text-[#2c2e2a]',
-                    )}
-                  >
-                    {item.label}
-                  </span>
-                  <span
-                    aria-hidden="true"
-                    className={classNames(
-                      'pointer-events-none absolute bottom-1 left-3 right-3 h-[3px] origin-left rounded-full bg-[#2c2e2a] transition-transform duration-300 ease-out',
-                      active ? 'scale-x-100' : 'scale-x-0',
-                    )}
-                  />
+                  {item.label}
                 </button>
               );
             })}
@@ -112,27 +101,16 @@ export function AppShell({ children }: { children: ReactNode }) {
                 <button
                   type="button"
                   onClick={() => router.push(item.path)}
-                  className="group relative flex h-full w-full flex-col items-center justify-center gap-0.5 rounded-full transition-colors"
+                  className={classNames(
+                    'flex h-full w-full items-center justify-center gap-1.5 rounded-full transition-colors',
+                    active
+                      ? 'text-[#2c2e2a] font-bold'
+                      : 'text-[#2c2e2a]/55 font-medium hover:text-[#2c2e2a]',
+                  )}
                   aria-current={active ? 'page' : undefined}
                 >
-                  <span
-                    className={classNames(
-                      'flex items-center gap-1.5 transition-colors',
-                      active
-                        ? 'text-[#2c2e2a] font-bold'
-                        : 'text-[#2c2e2a]/55 font-medium group-hover:text-[#2c2e2a]',
-                    )}
-                  >
-                    <IconComp size={18} strokeWidth={active ? 2.2 : 1.7} />
-                    <span className="text-[12px]">{item.label}</span>
-                  </span>
-                  <span
-                    aria-hidden="true"
-                    className={classNames(
-                      'pointer-events-none absolute bottom-1.5 h-[3px] w-8 origin-center rounded-full bg-[#2c2e2a] transition-transform duration-300 ease-out',
-                      active ? 'scale-x-100' : 'scale-x-0',
-                    )}
-                  />
+                  <IconComp size={18} strokeWidth={active ? 2.2 : 1.7} />
+                  <span className="text-[12px]">{item.label}</span>
                 </button>
               </li>
             );

@@ -6,10 +6,8 @@ import { Tag } from '@/components/ui/Tag';
 import { Button } from '@/components/ui/Button';
 import { Icon } from '@/components/Icon';
 import { Illustration, Sparkle } from '@/components/Illustration';
-import { ProgressChart } from '@/components/ProgressChart';
 import {
   fetchAdherenceWeeks,
-  fetchExerciseProgress,
   type AdherenceWeek,
 } from '@/lib/history';
 import {
@@ -49,9 +47,6 @@ export function HistoryPage() {
   const [error, setError] = useState<string | null>(null);
   const [expandedSessionId, setExpandedSessionId] = useState<string | null>(null);
   const [sessionDetails, setSessionDetails] = useState<Map<string, SessionDetail>>(new Map());
-  const [selectedExerciseId, setSelectedExerciseId] = useState<string>('');
-  const [progress, setProgress] = useState<import('@/lib/history').ExerciseProgressPoint[]>([]);
-  const [chartMetric, setChartMetric] = useState<'maxWeight' | 'volume'>('maxWeight');
   const [calendarMonth, setCalendarMonth] = useState<{ year: number; month: number }>(() => {
     const now = new Date();
     return { year: now.getFullYear(), month: now.getMonth() };
@@ -112,21 +107,6 @@ export function HistoryPage() {
       cancelled = true;
     };
   }, [profile]);
-
-  useEffect(() => {
-    if (!profile || !selectedExerciseId) {
-      setProgress([]);
-      return;
-    }
-    let cancelled = false;
-    (async () => {
-      const data = await fetchExerciseProgress(profile, selectedExerciseId);
-      if (!cancelled) setProgress(data);
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [profile, selectedExerciseId]);
 
   const toggleSession = async (s: SessionRecord) => {
     if (expandedSessionId === s.id) {
@@ -408,49 +388,6 @@ export function HistoryPage() {
             </ul>
           )}
         </section>
-
-        {/* Progress per exercise */}
-        <section className="mt-12">
-          <div className="mb-4 flex items-end justify-between">
-            <h2 className="t-eyebrow text-[#80827f]">Progreso por ejercicio</h2>
-          </div>
-          <Card padding="md">
-            <div className="mb-5 flex flex-col gap-3">
-              <select
-                value={selectedExerciseId}
-                onChange={(e) => setSelectedExerciseId(e.target.value)}
-                className="h-12 w-full rounded-full border-2 border-[#2c2e2a] bg-white px-4 text-[15px] text-[#2c2e2a] outline-none focus:bg-[#f5e211]/10 md:max-w-xs"
-              >
-                <option value="">Elige un ejercicio</option>
-                {profileExercises.map((ex) => (
-                  <option key={ex.id} value={ex.id}>{ex.name}</option>
-                ))}
-              </select>
-
-              {selectedExerciseId ? (
-                <div className="flex gap-1.5">
-                  <ChartTab
-                    active={chartMetric === 'maxWeight'}
-                    onClick={() => setChartMetric('maxWeight')}
-                    label="Peso máximo"
-                  />
-                  <ChartTab
-                    active={chartMetric === 'volume'}
-                    onClick={() => setChartMetric('volume')}
-                    label="Volumen"
-                  />
-                </div>
-              ) : null}
-            </div>
-            {selectedExerciseId ? (
-              <ProgressChart data={progress} metric={chartMetric} />
-            ) : (
-              <p className="t-body text-[#80827f]">
-                Seleccioná un ejercicio para ver su progreso.
-              </p>
-            )}
-          </Card>
-        </section>
       </div>
     </AppShell>
   );
@@ -527,20 +464,5 @@ function SessionExpandedDetail({ detail }: { detail: SessionDetail }) {
         );
       })}
     </div>
-  );
-}
-
-function ChartTab({ active, onClick, label }: { active: boolean; onClick: () => void; label: string }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={classNames(
-        'rounded-full px-4 h-10 text-[13px] font-medium transition-colors',
-        active ? 'bg-[#2c2e2a] text-[#f5f1e4]' : 'bg-white text-[#2c2e2a] border-2 border-[#2c2e2a]/10 hover:border-[#2c2e2a]/30',
-      )}
-    >
-      {label}
-    </button>
   );
 }

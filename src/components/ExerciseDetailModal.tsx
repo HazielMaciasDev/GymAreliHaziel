@@ -38,14 +38,14 @@ export function ExerciseDetailModal({ exercise, onClose }: ExerciseDetailModalPr
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end justify-center bg-[#2c2e2a]/40 backdrop-blur-sm md:items-center md:p-6"
+      className="fixed inset-0 z-[60] flex items-center justify-center bg-[#2c2e2a]/40 p-3 backdrop-blur-sm md:p-6"
       role="dialog"
       aria-modal="true"
       aria-label={exercise.name}
       onClick={onClose}
     >
       <div
-        className="relative flex max-h-[96dvh] w-full flex-col overflow-y-auto rounded-t-[50px] bg-[#f5f1e4] md:max-h-[92dvh] md:max-w-[1080px] md:rounded-[50px]"
+        className="relative flex max-h-[96dvh] w-full flex-col overflow-y-auto rounded-[50px] bg-[#f5f1e4] md:max-h-[92dvh] md:max-w-[1080px]"
         onClick={(e) => e.stopPropagation()}
       >
         <button
@@ -71,7 +71,6 @@ export function ExerciseDetailModal({ exercise, onClose }: ExerciseDetailModalPr
             <div className="mb-3 flex flex-wrap items-center gap-1.5">
               <Tag tone="grass" size="sm">{primary.label}</Tag>
               <Tag tone="sandstone" size="sm">{EQUIPMENT_LABEL[exercise.equipment]}</Tag>
-              <Tag tone="sandstone" size="sm">{exercise.difficulty}</Tag>
             </div>
             <h2 className="t-heading text-[#2c2e2a]">{exercise.name}</h2>
             <p className="mt-3 max-w-[60ch] t-body-lg text-[#2c2e2a]">

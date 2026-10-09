@@ -219,6 +219,10 @@
 .animate-float { animation: float 4s ease-in-out infinite; }
 .animate-wobble { animation: wobble 3s ease-in-out infinite; }
 .animate-pop { animation: pop 250ms ease-out both; }
+@keyframes fade-up {
+  0% { transform: translateY(8px); opacity: 0; }
+  100% { transform: translateY(0); opacity: 1; }
+}
 
 @media (prefers-reduced-motion: reduce) {
   *,

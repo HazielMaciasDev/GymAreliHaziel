@@ -209,8 +209,9 @@ export function ExerciseBankPage() {
           muscleFilter={muscleFilter}
           onSelect={(m) => {
             setMuscleFilter(m);
-            setMobileMenuOpen(false);
           }}
+          openSection={openSection}
+          onToggleSection={setOpenSection}
           exercises={exercises}
         />
       ) : null}
@@ -321,11 +322,15 @@ function MobileMuscleMenu({
   onClose,
   muscleFilter,
   onSelect,
+  openSection,
+  onToggleSection,
   exercises,
 }: {
   onClose: () => void;
   muscleFilter: MuscleGroup | null;
   onSelect: (m: MuscleGroup | null) => void;
+  openSection: string | null;
+  onToggleSection: (s: string | null) => void;
   exercises: Exercise[];
 }) {
   return (
@@ -358,9 +363,10 @@ function MobileMuscleMenu({
             muscleFilter={muscleFilter}
             onSelect={(m) => {
               onSelect(m);
+              if (m) onClose();
             }}
-            openSection={null}
-            onToggleSection={() => {}}
+            openSection={openSection}
+            onToggleSection={onToggleSection}
             exercises={exercises}
           />
         </div>
@@ -431,7 +437,6 @@ function BankItem({ exercise, onSelect }: { exercise: Exercise; onSelect: (e: Ex
           <p className="t-body-sm line-clamp-2 text-[#80827f]">{exercise.description}</p>
           <div className="mt-auto flex flex-wrap items-center gap-1.5">
             <Tag tone="grass" size="sm">{primary.label}</Tag>
-            <Tag tone="sandstone" size="sm">{exercise.difficulty}</Tag>
           </div>
         </div>
       </button>

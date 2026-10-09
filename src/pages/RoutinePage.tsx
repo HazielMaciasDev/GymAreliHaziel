@@ -938,7 +938,7 @@ function PaletteSheet({
                                 {ex.name}
                               </p>
                               <p className="truncate text-[12px] text-[#80827f]">
-                                {ex.equipment} · {ex.difficulty}
+                                {ex.equipment}
                               </p>
                             </button>
                             <button

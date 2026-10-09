@@ -18,6 +18,7 @@ import {
   toIsoDate,
 } from '@/lib/format';
 import { EXERCISES } from '@/data/exercises';
+import { FITNESS_FACTS, factOfDayIndex } from '@/data/fitnessFacts';
 import type { Exercise, ProfileId } from '@/types';
 
 function exerciseById(id: string): Exercise | undefined {
@@ -31,7 +32,6 @@ export function HomePage() {
   const [weekIso, setWeekIso] = useState<string[]>([]);
   const [planned, setPlanned] = useState(0);
   const [doneIso, setDoneIso] = useState<Set<string>>(new Set());
-  const [streak, setStreak] = useState<number>(0);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -70,16 +70,6 @@ export function HomePage() {
         const sessions = await listSessions(profile, 60);
         const completed = new Set(sessions.filter((s) => s.completed).map((s) => s.routine_date));
         if (!cancelled) setDoneIso(completed);
-
-        let s = 0;
-        for (let i = 0; i < 60; i++) {
-          const d = new Date(today);
-          d.setDate(d.getDate() - i);
-          const iso = toIsoDate(d);
-          if (completed.has(iso)) s += 1;
-          else break;
-        }
-        if (!cancelled) setStreak(s);
       } catch (err) {
         console.error(err);
       } finally {
@@ -152,20 +142,15 @@ export function HomePage() {
         </section>
 
         {/* Today + Streak */}
-        <section className="mt-8 grid grid-cols-1 gap-4 md:mt-12 md:grid-cols-3 md:gap-5">
-          <Card padding="lg" className="relative overflow-hidden md:col-span-2">
-            <div className="flex items-start justify-between">
-              <div className="flex flex-col gap-1">
-                <span className="t-eyebrow text-[#80827f]">Hoy</span>
-                {todaysSessionDone ? (
-                  <Tag tone="grass" icon={<span className="h-1.5 w-1.5 rounded-full bg-[#2c2e2a]" />}>
-                    Sesión hecha
-                  </Tag>
-                ) : null}
-              </div>
-              <span className="t-display text-[#2c2e2a] leading-none tabular-nums">
-                {dayNumber.toString().padStart(2, '0')}
-              </span>
+        <section className="mt-8 grid grid-cols-1 gap-4 md:mt-12">
+          <Card padding="lg" className="relative overflow-hidden">
+            <div className="flex flex-col gap-1">
+              <span className="t-eyebrow text-[#80827f]">Hoy</span>
+              {todaysSessionDone ? (
+                <Tag tone="grass" icon={<span className="h-1.5 w-1.5 rounded-full bg-[#2c2e2a]" />}>
+                  Sesión hecha
+                </Tag>
+              ) : null}
             </div>
 
             {loading ? (
@@ -233,23 +218,6 @@ export function HomePage() {
                 </div>
               </div>
             )}
-          </Card>
-
-          <Card padding="lg" tone="grass" className="relative overflow-hidden">
-            <span className="t-eyebrow text-[#2c2e2a]/70">Racha</span>
-            <div className="mt-3 flex items-end gap-2">
-              <span className="t-display text-[#2c2e2a] leading-[0.85] tabular-nums">
-                {streak}
-              </span>
-              <span className="mb-2 t-body-lg text-[#2c2e2a]/80">
-                {streak === 1 ? 'día' : 'días'}
-              </span>
-            </div>
-            <p className="mt-3 t-body text-[#2c2e2a]/80">
-              {streak === 0
-                ? 'Hoy puedes empezar tu primera racha.'
-                : 'Vas volando, no la dejes caer.'}
-            </p>
           </Card>
         </section>
 
@@ -329,22 +297,72 @@ export function HomePage() {
           />
         </section>
 
-        {/* Bottom yellow band — editorial tip */}
-        <section className="mt-12 rounded-[50px] bg-[#f5e211] px-6 py-6 md:mt-20 md:px-10 md:py-8">
-          <div className="flex items-start gap-5">
-            <span className="t-display text-[#2c2e2a]/15 leading-[0.8] tabular-nums">
-              {(today.getMonth() + 1).toString().padStart(2, '0')}
-            </span>
-            <div>
-              <span className="t-eyebrow text-[#2c2e2a]/70">Tip del día</span>
-              <p className="mt-2 t-body-lg text-[#2c2e2a] max-w-[60ch]">
-                La consistencia gana a la intensidad. Mejor tres sesiones tranquilas que una heroica.
-              </p>
-            </div>
-          </div>
+        {/* Daily fact carousel */}
+        <section className="mt-12 md:mt-20">
+          <DailyFactCard />
         </section>
       </div>
     </AppShell>
+  );
+}
+
+function DailyFactCard() {
+  const [index, setIndex] = useState(() => factOfDayIndex());
+  const [direction, setDirection] = useState<1 | -1>(1);
+  const total = FITNESS_FACTS.length;
+  const fact = FITNESS_FACTS[index];
+
+  const go = (dir: 1 | -1) => {
+    setDirection(dir);
+    setIndex((i) => (i + dir + total) % total);
+  };
+
+  return (
+    <div className="overflow-hidden rounded-[50px] bg-[#f5e211] px-6 py-6 md:px-10 md:py-8">
+      <div className="flex items-start gap-4 md:gap-6">
+        <div className="flex shrink-0 flex-col items-start">
+          <span className="t-display text-[#2c2e2a]/15 leading-[0.8] tabular-nums">
+            {(index + 1).toString().padStart(2, '0')}
+          </span>
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+            <span className="t-eyebrow text-[#2c2e2a]/70">Sabías que…</span>
+            <span className="t-eyebrow text-[#2c2e2a]/60 tabular-nums">
+              {index + 1} <span className="text-[#2c2e2a]/30">/</span> {total}
+            </span>
+            <span className="rounded-full bg-[#2c2e2a] px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#f5e211]">
+              {fact.category}
+            </span>
+          </div>
+          <div
+            key={index}
+            className="mt-2 animate-[fade-up_300ms_ease-out]"
+          >
+            <h3 className="t-subheading leading-[1.1] text-[#2c2e2a]">{fact.title}</h3>
+            <p className="mt-2 t-body text-[#2c2e2a] max-w-[60ch]">{fact.body}</p>
+          </div>
+          <div className="mt-4 flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => go(-1)}
+              aria-label="Dato anterior"
+              className="flex h-10 w-10 items-center justify-center rounded-full bg-[#2c2e2a] text-[#f5e211] transition-transform hover:scale-105"
+            >
+              <Icon.ChevronLeft size={16} />
+            </button>
+            <button
+              type="button"
+              onClick={() => go(1)}
+              aria-label="Dato siguiente"
+              className="flex h-10 w-10 items-center justify-center rounded-full bg-[#2c2e2a] text-[#f5e211] transition-transform hover:scale-105"
+            >
+              <Icon.ChevronRight size={16} />
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }
 

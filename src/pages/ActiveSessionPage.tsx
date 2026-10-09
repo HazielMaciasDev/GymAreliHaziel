@@ -625,21 +625,37 @@ function ActiveExercisePanel({
 
   const [weight, setWeight] = useState<string>(currentSet?.weight_kg?.toString() ?? '');
   const [reps, setReps] = useState<string>(currentSet?.reps?.toString() ?? '');
+  const [scrollY, setScrollY] = useState(0);
 
   useEffect(() => {
     setWeight(currentSet?.weight_kg?.toString() ?? '');
     setReps(currentSet?.reps?.toString() ?? '');
   }, [currentSet?.id, exercise.id]);
 
+  useEffect(() => {
+    const onScroll = () => setScrollY(window.scrollY);
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+
   const commitField = (field: 'weight_kg' | 'reps', value: string) => {
     const num = value === '' ? null : Number(value);
     onCommit({ [field]: num } as Partial<SetLogRecord>);
   };
 
+  const videoScale = Math.max(0.55, 1 - scrollY / 800);
+  const videoShrunk = scrollY > 200;
+
   return (
     <div className="grid gap-5 md:grid-cols-[1.1fr_1fr] md:gap-6">
       <div className="order-1">
-        <VideoCarousel media={allMedia} alt={exercise.name} ratio="4/3" />
+        <div
+          className="md:relative md:top-auto sticky top-2 z-10 origin-top transition-transform duration-300 ease-out"
+          style={{ transform: videoShrunk ? `scale(${videoScale})` : 'scale(1)' }}
+        >
+          <VideoCarousel media={allMedia} alt={exercise.name} ratio="4/3" />
+        </div>
 
         <div className="mt-4 rounded-[32px] bg-white p-4">
           <div className="flex items-start gap-3">

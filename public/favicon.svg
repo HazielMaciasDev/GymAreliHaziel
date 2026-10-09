@@ -1,5 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-  <rect width="32" height="32" rx="8" fill="#163300"/>
-  <text x="50%" y="56%" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-weight="900" font-size="18" fill="#9fe870" letter-spacing="-1">G</text>
+  <rect width="32" height="32" rx="7" fill="#f5e211"/>
+  <text x="50%" y="55%" text-anchor="middle" dominant-baseline="middle"
+    font-family="Inter, system-ui, -apple-system, sans-serif"
+    font-weight="900" font-size="20" fill="#2c2e2a"
+    letter-spacing="-1.2">G</text>
+  <circle cx="25" cy="7" r="2.4" fill="#ff705d"/>
 </svg>
