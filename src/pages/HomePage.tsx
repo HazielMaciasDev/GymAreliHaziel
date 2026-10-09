@@ -7,6 +7,7 @@ import { Card } from '@/components/ui/Card';
 import { Tag } from '@/components/ui/Tag';
 import { Icon } from '@/components/Icon';
 import { Illustration, Sparkle } from '@/components/Illustration';
+import { ExerciseCardHome } from '@/components/ExerciseCardHome';
 import { fetchWeeklyRoutine } from '@/lib/weekly-routine';
 import { listSessions } from '@/lib/sessions';
 import {
@@ -204,25 +205,19 @@ export function HomePage() {
                 <p className="t-body-lg text-[#2c2e2a]/80">
                   <span className="text-[#80827f]">Tienes </span>
                   <span className="t-subheading text-[#2c2e2a]">{todayExercises.length}</span>
-                  <span className="text-[#80827f]"> en cola.</span>
+                  <span className="text-[#80827f]"> en cola. Pasá el mouse sobre una tarjeta para ver el video.</span>
                 </p>
-                <ul className="mt-5 flex flex-col gap-2">
-                  {todayExercises.slice(0, 3).map((entry) => (
-                    <li
-                      key={entry.exercise.id}
-                      className="flex items-center justify-between gap-3 rounded-full bg-[#f5f1e4] px-4 py-2.5"
-                    >
-                      <span className="truncate text-[15px] font-medium text-[#2c2e2a]">
-                        {entry.exercise.name}
-                      </span>
-                      <span className="shrink-0 rounded-full bg-white px-3 py-1 text-[12px] font-medium tabular-nums text-[#2c2e2a]">
-                        {entry.sets} × {entry.reps}
-                      </span>
+                <ul className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  {todayExercises.map((entry, idx) => (
+                    <li key={entry.exercise.id}>
+                      <ExerciseCardHome
+                        exercise={entry.exercise}
+                        sets={entry.sets}
+                        reps={entry.reps}
+                        position={idx + 1}
+                      />
                     </li>
                   ))}
-                  {todayExercises.length > 3 ? (
-                    <li className="px-4 text-[13px] text-[#80827f]">+ {todayExercises.length - 3} más</li>
-                  ) : null}
                 </ul>
                 <div className="mt-6">
                   <Button

@@ -21,6 +21,7 @@ import { Input } from '@/components/ui/Input';
 import { Tag } from '@/components/ui/Tag';
 import { Icon } from '@/components/Icon';
 import { Illustration, Sparkle } from '@/components/Illustration';
+import { ExerciseMedia } from '@/components/ExerciseMedia';
 import { ExerciseDetailModal } from '@/components/ExerciseDetailModal';
 import { fetchWeeklyRoutine, addExerciseToDay, removeFromRoutine, moveExercise, type WeeklyRoutineEntry } from '@/lib/weekly-routine';
 import { EXERCISES } from '@/data/exercises';
@@ -32,6 +33,21 @@ import {
   isRestDay,
 } from '@/lib/format';
 import { MUSCLES, MUSCLE_LIST } from '@/lib/muscles';
+
+const PALETTE_GROUPS: { label: string; muscles: MuscleGroup[] }[] = [
+  {
+    label: 'Tren superior',
+    muscles: ['pecho', 'espalda', 'dorsales', 'trapecio', 'hombros', 'biceps', 'triceps', 'antebrazos'],
+  },
+  {
+    label: 'Tren inferior',
+    muscles: ['cuadriceps', 'femorales', 'gluteos', 'gemelos'],
+  },
+  {
+    label: 'Core',
+    muscles: ['core', 'oblicuos'],
+  },
+];
 
 export function RoutinePage() {
   const router = useRouter();
@@ -477,33 +493,45 @@ function DayCardMobile({
           Sumar ejercicio
         </button>
       ) : (
-        <ul className="flex flex-col gap-2">
+        <ul className="flex flex-col gap-2.5">
           {entries.map((entry) => {
             const ex = EXERCISES.find((e) => e.id === entry.exercise_id);
+            if (!ex) return null;
             return (
               <li
                 key={entry.id}
-                className="flex items-center gap-3 rounded-full bg-[#f5f1e4] px-3 py-2.5"
+                className="group flex items-center gap-3 overflow-hidden rounded-[24px] border border-[#2c2e2a]/10 bg-white p-1.5"
               >
-                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white text-[12px] font-semibold text-[#2c2e2a]">
-                  {entry.position + 1}
-                </span>
                 <button
                   type="button"
-                  onClick={() => ex && onSelectExercise(ex)}
-                  className="min-w-0 flex-1 text-left"
+                  onClick={() => onSelectExercise(ex)}
+                  className="relative h-14 w-14 shrink-0 overflow-hidden rounded-[18px] bg-[#f5f1e4]"
                 >
-                  <p className="truncate text-[14px] font-medium text-[#2c2e2a]">
-                    {ex?.name ?? entry.exercise_id}
-                  </p>
+                  <ExerciseMedia
+                    src={ex.gifPath}
+                    alt={ex.name}
+                    className="h-full w-full object-cover"
+                    loading="lazy"
+                    onError={(e) => {
+                      (e.currentTarget as HTMLElement).style.opacity = '0.2';
+                    }}
+                  />
+                  <span className="absolute left-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-white text-[10px] font-semibold text-[#2c2e2a]">
+                    {entry.position + 1}
+                  </span>
                 </button>
-                <span className="shrink-0 rounded-full bg-white px-2.5 py-0.5 text-[11px] tabular-nums text-[#2c2e2a]">
-                  {entry.default_sets}×{entry.default_reps}
-                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-[14px] font-semibold leading-tight text-[#2c2e2a]">
+                    {ex.name}
+                  </p>
+                  <p className="mt-0.5 t-eyebrow text-[#80827f]">
+                    {MUSCLES[ex.primaryMuscle].label} · {entry.default_sets}×{entry.default_reps}
+                  </p>
+                </div>
                 <button
                   type="button"
                   onClick={() => onRemove(entry.id)}
-                  className="flex h-8 w-8 items-center justify-center rounded-full text-[#80827f] hover:bg-[#ff705d]/10 hover:text-[#ff705d]"
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[#80827f] hover:bg-[#ff705d]/10 hover:text-[#ff705d]"
                   aria-label="Quitar"
                 >
                   <Icon.Trash size={14} />
@@ -618,36 +646,53 @@ function RoutineItem({
     <li
       ref={setNodeRef}
       style={style}
-      className="group flex items-start gap-1.5 rounded-[15px] border border-[#2c2e2a]/10 bg-white p-2"
+      className="group flex items-center gap-1.5 overflow-hidden rounded-[12px] border border-[#2c2e2a]/10 bg-white p-1"
     >
       <button
         type="button"
         {...attributes}
         {...listeners}
-        className="mt-0.5 cursor-grab text-[#80827f] hover:text-[#2c2e2a] active:cursor-grabbing"
+        className="ml-1 shrink-0 cursor-grab text-[#80827f] hover:text-[#2c2e2a] active:cursor-grabbing"
         aria-label="Reordenar"
       >
-        <Icon.Drag size={12} />
+        <Icon.Drag size={11} />
       </button>
+      {exercise ? (
+        <button
+          type="button"
+          onClick={() => onSelectExercise(exercise)}
+          className="relative h-9 w-9 shrink-0 overflow-hidden rounded-[8px] bg-[#f5f1e4]"
+        >
+          <ExerciseMedia
+            src={exercise.gifPath}
+            alt={exercise.name}
+            className="h-full w-full object-cover"
+            loading="lazy"
+            onError={(e) => {
+              (e.currentTarget as HTMLElement).style.opacity = '0.2';
+            }}
+          />
+        </button>
+      ) : null}
       <button
         type="button"
         onClick={() => exercise && onSelectExercise(exercise)}
         className="min-w-0 flex-1 text-left"
       >
-        <p className="truncate text-[12px] font-medium leading-[1.25] text-[#2c2e2a]">
+        <p className="truncate text-[11px] font-medium leading-[1.2] text-[#2c2e2a]">
           {exercise?.name ?? entry.exercise_id}
         </p>
-        <p className="mt-0.5 text-[10px] text-[#80827f]">
-          {entry.default_sets} × {entry.default_reps}
+        <p className="mt-0.5 text-[9px] text-[#80827f]">
+          {entry.default_sets}×{entry.default_reps}
         </p>
       </button>
       <button
         type="button"
         onClick={() => onRemove(entry.id)}
-        className="text-[#80827f] opacity-0 hover:text-[#ff705d] group-hover:opacity-100"
+        className="mr-1 shrink-0 text-[#80827f] opacity-0 hover:text-[#ff705d] group-hover:opacity-100"
         aria-label="Quitar"
       >
-        <Icon.Close size={12} />
+        <Icon.Close size={11} />
       </button>
     </li>
   );
@@ -662,6 +707,7 @@ function PalettePanel({
 }) {
   const [query, setQuery] = useState('');
   const [muscleFilter, setMuscleFilter] = useState<MuscleGroup | null>(null);
+  const [openGroup, setOpenGroup] = useState<string | null>('Tren superior');
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -675,12 +721,26 @@ function PalettePanel({
     });
   }, [exercises, query, muscleFilter]);
 
+  const grouped = useMemo(() => {
+    const out: { label: string; exercises: Exercise[] }[] = [];
+    for (const g of PALETTE_GROUPS) {
+      const exs: Exercise[] = [];
+      for (const m of g.muscles) {
+        for (const ex of filtered) {
+          if (ex.primaryMuscle === m) exs.push(ex);
+        }
+      }
+      if (exs.length > 0) out.push({ label: g.label, exercises: exs });
+    }
+    return out;
+  }, [filtered]);
+
   return (
     <Card padding="lg" className="flex h-full flex-col">
       <div>
         <span className="t-eyebrow text-[#80827f]">Catálogo</span>
         <p className="mt-1 t-body-sm text-[#2c2e2a]">
-          Toca un ejercicio para sumarlo al día de hoy.
+          Tocá un ejercicio para sumarlo al día.
         </p>
       </div>
       <div className="mt-3">
@@ -693,58 +753,71 @@ function PalettePanel({
           }
         />
       </div>
-      <div className="mt-3 flex flex-wrap gap-1.5">
-        <button
-          type="button"
-          onClick={() => setMuscleFilter(null)}
-          className={classNames(
-            'rounded-[10px] px-2.5 h-7 text-[11px] font-medium transition-colors',
-            muscleFilter === null
-              ? 'bg-[#2c2e2a] text-white'
-              : 'bg-white text-[#2c2e2a] border border-[#2c2e2a]/10 hover:border-[#2c2e2a]/30',
-          )}
-        >
-          Todos
-        </button>
-        {MUSCLE_LIST.slice(0, 6).map((m) => (
-          <button
-            key={m.id}
-            type="button"
-            onClick={() => setMuscleFilter(muscleFilter === m.id ? null : m.id)}
-            className={classNames(
-              'rounded-[10px] px-2.5 h-7 text-[11px] font-medium transition-colors',
-              muscleFilter === m.id
-                ? 'bg-[#2c2e2a] text-white'
-                : 'bg-white text-[#2c2e2a] border border-[#2c2e2a]/10 hover:border-[#2c2e2a]/30',
-            )}
-          >
-            {m.label}
-          </button>
-        ))}
-      </div>
       <div className="mt-3 flex-1 overflow-y-auto pr-1">
-        <ul className="flex flex-col gap-1">
-          {filtered.map((ex) => {
-            const primary = MUSCLES[ex.primaryMuscle];
-            return (
-              <li key={ex.id}>
-                <button
-                  type="button"
-                  onClick={() => onPick(ex.id)}
-                  className="flex w-full items-center justify-between gap-2 rounded-full px-3 py-2 text-left transition-colors hover:bg-[#2c2e2a]/5"
-                >
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-[13px] font-medium text-[#2c2e2a]">
-                      {ex.name}
-                    </p>
-                    <p className="text-[10px] text-[#80827f]">{primary.label}</p>
-                  </div>
-                  <Icon.Plus size={14} className="text-[#80827f]" />
-                </button>
-              </li>
-            );
-          })}
-        </ul>
+        {grouped.length === 0 ? (
+          <p className="t-body-sm text-[#80827f]">Sin resultados.</p>
+        ) : (
+          <div className="flex flex-col gap-3">
+            {grouped.map((g) => {
+              const isOpen = muscleFilter ? false : openGroup === g.label;
+              return (
+                <div key={g.label}>
+                  <button
+                    type="button"
+                    onClick={() => setOpenGroup(isOpen ? null : g.label)}
+                    className="flex w-full items-center justify-between gap-2 rounded-full bg-[#f5f1e4] px-3 py-1.5 text-left"
+                  >
+                    <span className="t-eyebrow text-[#2c2e2a]">{g.label}</span>
+                    <span className="flex items-center gap-2 text-[10px] text-[#80827f]">
+                      {g.exercises.length}
+                      <Icon.ChevronDown
+                        size={12}
+                        className={classNames('transition-transform', isOpen && 'rotate-180')}
+                      />
+                    </span>
+                  </button>
+                  {isOpen ? (
+                    <ul className="mt-1.5 flex flex-col gap-1">
+                      {g.exercises.map((ex) => {
+                        const primary = MUSCLES[ex.primaryMuscle];
+                        return (
+                          <li key={ex.id}>
+                            <button
+                              type="button"
+                              onClick={() => onPick(ex.id)}
+                              className="flex w-full items-center justify-between gap-2 rounded-full px-3 py-2 text-left transition-colors hover:bg-[#2c2e2a]/5"
+                            >
+                              <div className="flex min-w-0 flex-1 items-center gap-2.5">
+                                <span className="relative h-7 w-7 shrink-0 overflow-hidden rounded-[10px] bg-[#f5f1e4]">
+                                  <ExerciseMedia
+                                    src={ex.gifPath}
+                                    alt={ex.name}
+                                    className="h-full w-full object-cover"
+                                    loading="lazy"
+                                    onError={(e) => {
+                                      (e.currentTarget as HTMLElement).style.opacity = '0.2';
+                                    }}
+                                  />
+                                </span>
+                                <div className="min-w-0 flex-1">
+                                  <p className="truncate text-[13px] font-medium text-[#2c2e2a]">
+                                    {ex.name}
+                                  </p>
+                                  <p className="text-[10px] text-[#80827f]">{primary.label}</p>
+                                </div>
+                              </div>
+                              <Icon.Plus size={14} className="text-[#80827f]" />
+                            </button>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  ) : null}
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
     </Card>
   );

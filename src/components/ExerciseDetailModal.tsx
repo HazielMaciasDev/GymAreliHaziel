@@ -41,14 +41,14 @@ export function ExerciseDetailModal({ exercise, onClose }: ExerciseDetailModalPr
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end justify-center bg-[#2c2e2a]/40 backdrop-blur-sm md:items-center md:p-6"
+      className="fixed inset-0 z-50 flex items-end justify-center bg-[#2c2e2a]/40 backdrop-blur-sm md:items-stretch md:p-6"
       role="dialog"
       aria-modal="true"
       aria-label={exercise.name}
       onClick={onClose}
     >
       <div
-        className="relative flex max-h-[92dvh] w-full flex-col overflow-hidden rounded-t-[50px] bg-[#f5f1e4] md:max-w-[860px] md:rounded-[50px]"
+        className="relative flex max-h-[96dvh] w-full flex-col overflow-y-auto rounded-t-[50px] bg-[#f5f1e4] md:max-w-[960px] md:rounded-[50px]"
         onClick={(e) => e.stopPropagation()}
       >
         <button
@@ -60,7 +60,7 @@ export function ExerciseDetailModal({ exercise, onClose }: ExerciseDetailModalPr
           <Icon.Close size={18} />
         </button>
 
-        <div className="relative h-[260px] flex-shrink-0 overflow-hidden bg-white md:h-[340px]">
+        <div className="relative aspect-video w-full shrink-0 overflow-hidden bg-white">
           <ExerciseMedia
             src={activeMedia}
             alt={exercise.name}
@@ -80,7 +80,7 @@ export function ExerciseDetailModal({ exercise, onClose }: ExerciseDetailModalPr
                   aria-label={`Ver ángulo ${idx + 1}`}
                   className={classNames(
                     'h-2 rounded-full transition-all',
-                    idx === activeMediaIndex ? 'w-8 bg-[#2c2e2a]' : 'w-2 bg-[#2c2e2a]/30 hover:bg-[#2c2e2a]/50',
+                    idx === activeMediaIndex ? 'w-8 bg-[#f5f1e4]' : 'w-2 bg-[#f5f1e4]/40 hover:bg-[#f5f1e4]/70',
                   )}
                 />
               ))}

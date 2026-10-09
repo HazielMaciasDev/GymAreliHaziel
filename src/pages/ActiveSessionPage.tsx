@@ -7,7 +7,7 @@ import { Card } from '@/components/ui/Card';
 import { Tag } from '@/components/ui/Tag';
 import { Icon } from '@/components/Icon';
 import { Illustration, Sparkle } from '@/components/Illustration';
-import { ExerciseMedia } from '@/components/ExerciseMedia';
+import { VideoCarousel } from '@/components/VideoCarousel';
 import { ExerciseDetailModal } from '@/components/ExerciseDetailModal';
 import {
   addExerciseLog,
@@ -130,6 +130,10 @@ export function ActiveSessionPage() {
         setSetLogs(logs.setLogs);
 
         const totalRounds = plannedList[0]?.plannedSets ?? 1;
+        if (plannedList.length === 0) {
+          if (!cancelled) setLoading(false);
+          return;
+        }
 
         let resumeRound = 0;
         for (let r = 0; r < totalRounds; r++) {
@@ -446,20 +450,23 @@ export function ActiveSessionPage() {
               updateSetLog(currentSet.id, { completed: true }).catch((err) =>
                 console.error(err),
               );
-              if (isLastExerciseInRound) {
+              const isFinalRound = currentRound >= totalRounds - 1;
+              const isFinalExercise = currentIndex >= planned.length - 1;
+              if (isFinalExercise && isFinalRound) {
+                // Direct transition to "¡Hecho!" screen — no waiting.
+                setCurrentIndex(planned.length);
+                return;
+              }
+              if (isFinalExercise) {
                 setRoundJustCompleted(true);
                 setTimeout(() => {
                   setRoundJustCompleted(false);
-                  if (isLastRound) {
-                    setCurrentIndex(planned.length);
-                  } else {
-                    setCurrentRound(currentRound + 1);
-                    setCurrentIndex(0);
-                  }
-                }, 1500);
-              } else {
-                setCurrentIndex(currentIndex + 1);
+                  setCurrentRound(currentRound + 1);
+                  setCurrentIndex(0);
+                }, 900);
+                return;
               }
+              setCurrentIndex(currentIndex + 1);
             }}
           />
         ) : null}
@@ -505,8 +512,6 @@ function ActiveExercisePanel({
     () => [exercise.gifPath, ...(exercise.extraMediaPaths ?? [])],
     [exercise],
   );
-  const [mediaIndex, setMediaIndex] = useState(0);
-  const activeMedia = allMedia[mediaIndex] ?? exercise.gifPath;
   const primary = MUSCLES[exercise.primaryMuscle];
 
   const [weight, setWeight] = useState<string>(currentSet?.weight_kg?.toString() ?? '');
@@ -515,7 +520,6 @@ function ActiveExercisePanel({
   useEffect(() => {
     setWeight(currentSet?.weight_kg?.toString() ?? '');
     setReps(currentSet?.reps?.toString() ?? '');
-    setMediaIndex(0);
   }, [currentSet?.id, exercise.id]);
 
   const commitField = (field: 'weight_kg' | 'reps', value: string) => {
@@ -526,33 +530,7 @@ function ActiveExercisePanel({
   return (
     <div className="grid gap-5 md:grid-cols-[1.1fr_1fr] md:gap-6">
       <div className="order-1">
-        <div className="relative aspect-[4/3] overflow-hidden rounded-[50px] bg-white">
-          <ExerciseMedia
-            src={activeMedia}
-            alt={exercise.name}
-            className="h-full w-full object-cover"
-            loading="eager"
-            onError={(e) => {
-              (e.currentTarget as HTMLElement).style.opacity = '0.15';
-            }}
-          />
-        </div>
-        {allMedia.length > 1 ? (
-          <div className="mt-3 flex items-center justify-center gap-1.5">
-            {allMedia.map((_, idx) => (
-              <button
-                key={idx}
-                type="button"
-                onClick={() => setMediaIndex(idx)}
-                aria-label={`Ver ángulo ${idx + 1}`}
-                className={classNames(
-                  'h-2 rounded-full transition-all',
-                  idx === mediaIndex ? 'w-8 bg-[#2c2e2a]' : 'w-2 bg-[#2c2e2a]/30 hover:bg-[#2c2e2a]/60',
-                )}
-              />
-            ))}
-          </div>
-        ) : null}
+        <VideoCarousel media={allMedia} alt={exercise.name} ratio="4/3" />
 
         <div className="mt-4 rounded-[32px] bg-white p-4">
           <div className="flex items-start gap-3">
@@ -659,7 +637,11 @@ function ActiveExercisePanel({
           dotColor={isCurrentSetDone ? 'grass' : 'sunshine'}
           iconRight={isCurrentSetDone ? undefined : <Icon.Check size={14} />}
         >
-          {isCurrentSetDone ? 'Listo en esta ronda' : 'Marcar listo'}
+          {isCurrentSetDone
+            ? 'Listo en esta ronda'
+            : currentRound >= totalRounds - 1 && currentIndex >= plannedCount - 1
+              ? 'Terminar sesión'
+              : 'Marcar listo'}
         </Button>
 
         <div className="text-center text-[12px] text-[#80827f]">
