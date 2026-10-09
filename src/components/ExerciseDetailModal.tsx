@@ -1,10 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import type { Exercise } from '@/types';
 import { MUSCLES } from '@/lib/muscles';
-import { ExerciseMedia } from '@/components/ExerciseMedia';
+import { VideoCarousel } from '@/components/VideoCarousel';
 import { Icon } from '@/components/Icon';
 import { Tag } from '@/components/ui/Tag';
-import { classNames } from '@/lib/format';
 
 const EQUIPMENT_LABEL: Record<Exercise['equipment'], string> = {
   barra: 'Barra',
@@ -23,8 +22,6 @@ interface ExerciseDetailModalProps {
 
 export function ExerciseDetailModal({ exercise, onClose }: ExerciseDetailModalProps) {
   const allMedia = [exercise.gifPath, ...(exercise.extraMediaPaths ?? [])];
-  const [activeMediaIndex, setActiveMediaIndex] = useState(0);
-  const activeMedia = allMedia[activeMediaIndex];
   const primary = MUSCLES[exercise.primaryMuscle];
 
   useEffect(() => {
@@ -41,51 +38,32 @@ export function ExerciseDetailModal({ exercise, onClose }: ExerciseDetailModalPr
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end justify-center bg-[#2c2e2a]/40 backdrop-blur-sm md:items-stretch md:p-6"
+      className="fixed inset-0 z-50 flex items-end justify-center bg-[#2c2e2a]/40 backdrop-blur-sm md:items-center md:p-6"
       role="dialog"
       aria-modal="true"
       aria-label={exercise.name}
       onClick={onClose}
     >
       <div
-        className="relative flex max-h-[96dvh] w-full flex-col overflow-y-auto rounded-t-[50px] bg-[#f5f1e4] md:max-w-[960px] md:rounded-[50px]"
+        className="relative flex max-h-[96dvh] w-full flex-col overflow-y-auto rounded-t-[50px] bg-[#f5f1e4] md:max-h-[92dvh] md:max-w-[1080px] md:rounded-[50px]"
         onClick={(e) => e.stopPropagation()}
       >
         <button
           type="button"
           onClick={onClose}
           aria-label="Cerrar"
-          className="absolute right-4 top-4 z-10 inline-flex h-11 w-11 items-center justify-center rounded-full bg-white text-[#2c2e2a] hover:bg-[#e0dbce]"
+          className="absolute right-4 top-4 z-20 inline-flex h-11 w-11 items-center justify-center rounded-full bg-white text-[#2c2e2a] hover:bg-[#e0dbce]"
         >
           <Icon.Close size={18} />
         </button>
 
-        <div className="relative aspect-video w-full shrink-0 overflow-hidden bg-white">
-          <ExerciseMedia
-            src={activeMedia}
+        <div className="shrink-0 bg-white p-2 md:p-4">
+          <VideoCarousel
+            media={allMedia}
             alt={exercise.name}
-            className="h-full w-full object-cover"
-            loading="eager"
-            onError={(e) => {
-              (e.currentTarget as HTMLElement).style.opacity = '0.15';
-            }}
+            ratio="16/9"
+            rounded="rounded-[32px] md:rounded-[40px]"
           />
-          {allMedia.length > 1 ? (
-            <div className="absolute inset-x-3 bottom-4 flex justify-center gap-1.5">
-              {allMedia.map((_, idx) => (
-                <button
-                  key={idx}
-                  type="button"
-                  onClick={() => setActiveMediaIndex(idx)}
-                  aria-label={`Ver ángulo ${idx + 1}`}
-                  className={classNames(
-                    'h-2 rounded-full transition-all',
-                    idx === activeMediaIndex ? 'w-8 bg-[#f5f1e4]' : 'w-2 bg-[#f5f1e4]/40 hover:bg-[#f5f1e4]/70',
-                  )}
-                />
-              ))}
-            </div>
-          ) : null}
         </div>
 
         <div className="flex flex-1 flex-col gap-6 overflow-y-auto p-6 md:p-8">
@@ -115,7 +93,7 @@ export function ExerciseDetailModal({ exercise, onClose }: ExerciseDetailModalPr
 
           {exercise.secondaryMuscles.length > 0 ? (
             <section>
-              <span className="t-eyebrow text-[#80827f]">Sinergia</span>
+              <span className="t-eyebrow text-[#80827f]">Grupos musculares</span>
               <div className="mt-2 flex flex-wrap gap-1.5">
                 {exercise.secondaryMuscles.map((m) => (
                   <Tag key={m} tone="sandstone" size="sm">{MUSCLES[m].label}</Tag>

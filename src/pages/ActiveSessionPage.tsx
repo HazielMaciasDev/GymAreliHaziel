@@ -39,8 +39,8 @@ interface PlannedExercise {
 }
 
 const REST_COPY: Record<string, string> = {
-  areli: 'Recuperá el cuerpo: caminata, hidratación y un buen sueño.',
-  haziel: 'Mantené el ritmo suave. Estiramientos, agua y descanso.',
+  areli: 'Recupera el cuerpo: caminata, hidratación y un buen sueño.',
+  haziel: 'Mantén el ritmo suave. Estiramientos, agua y descanso.',
 };
 
 export function ActiveSessionPage() {
@@ -52,7 +52,6 @@ export function ActiveSessionPage() {
   const [setLogs, setSetLogs] = useState<SetLogRecord[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [currentRound, setCurrentRound] = useState(0);
-  const [exerciseElapsed, setExerciseElapsed] = useState(0);
   const [totalElapsed, setTotalElapsed] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -211,16 +210,14 @@ export function ActiveSessionPage() {
   }, [exerciseLogs, setLogs, currentRound]);
 
   useEffect(() => {
-    if (!session || !currentPlanned) return;
-    const startedAt = Date.now();
-    setExerciseElapsed(0);
-    const interval = window.setInterval(() => {
-      const now = Date.now();
-      setExerciseElapsed(Math.floor((now - startedAt) / 1000));
-      setTotalElapsed(Math.floor((now - sessionStartedAtRef.current) / 1000));
-    }, 1000);
+    if (!session) return;
+    const tick = () => {
+      setTotalElapsed(Math.floor((Date.now() - sessionStartedAtRef.current) / 1000));
+    };
+    tick();
+    const interval = window.setInterval(tick, 1000);
     return () => window.clearInterval(interval);
-  }, [session, currentIndex, currentRound, currentPlanned]);
+  }, [session]);
 
   if (!profile) return null;
 
@@ -234,7 +231,7 @@ export function ActiveSessionPage() {
           <span className="mt-8 t-eyebrow text-[#80827f]">Día de descanso</span>
           <h1 className="mt-3 t-display text-[#2c2e2a]">Descanso.</h1>
           <p className="mt-3 max-w-[40ch] t-body-lg text-[#2c2e2a]/80">
-            {REST_COPY[profile] ?? 'Recuperá el cuerpo. Mañana vuelve el circuito.'}
+            {REST_COPY[profile] ?? 'Recupera el cuerpo. Mañana vuelve el circuito.'}
           </p>
           <div className="mt-8 flex flex-col items-center gap-3">
             <Button
@@ -460,7 +457,7 @@ export function ActiveSessionPage() {
           </div>
           <div className="inline-flex h-11 items-center gap-1.5 rounded-full bg-[#2c2e2a] px-4 text-[13px] font-medium text-[#f5f1e4]">
             <Icon.Timer size={14} />
-            <span className="tabular-nums">{formatDuration(exerciseElapsed)}</span>
+            <span className="tabular-nums">{formatDuration(totalElapsed)}</span>
           </div>
         </header>
 

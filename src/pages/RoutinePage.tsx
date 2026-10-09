@@ -339,6 +339,7 @@ export function RoutinePage() {
                   <PalettePanel
                     exercises={profileExercises}
                     onPick={(exId) => onAddFromPalette(todayIndex, exId)}
+                    onPreview={setSelectedExercise}
                   />
                 </div>
                 <Card padding="lg" className="overflow-hidden">
@@ -409,6 +410,7 @@ export function RoutinePage() {
             exercises={profileExercises}
             takenIds={takenByDay.get(paletteOpen) ?? new Set()}
             onPick={(exId) => onAddFromPalette(paletteOpen, exId)}
+            onPreview={setSelectedExercise}
             onClose={() => setPaletteOpen(null)}
           />
         ) : null}
@@ -447,7 +449,7 @@ function DayCardMobile({
               <p className="t-eyebrow text-[#80827f]">Descanso</p>
             </div>
           </div>
-          <Tag tone="sandstone" size="sm">Recuperá</Tag>
+          <Tag tone="sandstone" size="sm">Recupera</Tag>
         </div>
         <p className="mt-4 t-body text-[#80827f]">
           Caminata, hidratación, estiramientos. Mañana vuelve el circuito.
@@ -580,7 +582,7 @@ function DesktopDayColumn({
     return (
       <div className="flex min-h-[360px] flex-col items-center justify-center gap-1.5 rounded-[25px] border-2 border-dashed border-[#2c2e2a]/10 bg-white/40 p-3 text-center">
         <span className="t-eyebrow text-[#80827f]">Descanso</span>
-        <span className="text-[11px] text-[#80827f]/70">Recuperá el cuerpo</span>
+        <span className="text-[11px] text-[#80827f]/70">Recupera el cuerpo</span>
       </div>
     );
   }
@@ -701,9 +703,11 @@ function RoutineItem({
 function PalettePanel({
   exercises,
   onPick,
+  onPreview,
 }: {
   exercises: Exercise[];
   onPick: (id: string) => void;
+  onPreview: (ex: Exercise) => void;
 }) {
   const [query, setQuery] = useState('');
   const [muscleFilter, setMuscleFilter] = useState<MuscleGroup | null>(null);
@@ -740,7 +744,7 @@ function PalettePanel({
       <div>
         <span className="t-eyebrow text-[#80827f]">Catálogo</span>
         <p className="mt-1 t-body-sm text-[#2c2e2a]">
-          Tocá un ejercicio para sumarlo al día.
+          Toca un ejercicio para sumarlo al día.
         </p>
       </div>
       <div className="mt-3">
@@ -777,17 +781,17 @@ function PalettePanel({
                     </span>
                   </button>
                   {isOpen ? (
-                    <ul className="mt-1.5 flex flex-col gap-1">
+                      <ul className="mt-1.5 flex flex-col gap-1">
                       {g.exercises.map((ex) => {
                         const primary = MUSCLES[ex.primaryMuscle];
                         return (
                           <li key={ex.id}>
-                            <button
-                              type="button"
-                              onClick={() => onPick(ex.id)}
-                              className="flex w-full items-center justify-between gap-2 rounded-full px-3 py-2 text-left transition-colors hover:bg-[#2c2e2a]/5"
-                            >
-                              <div className="flex min-w-0 flex-1 items-center gap-2.5">
+                            <div className="group flex items-center gap-1 rounded-full hover:bg-[#2c2e2a]/5">
+                              <button
+                                type="button"
+                                onClick={() => onPick(ex.id)}
+                                className="flex min-w-0 flex-1 items-center gap-2.5 rounded-full px-3 py-2 text-left"
+                              >
                                 <span className="relative h-7 w-7 shrink-0 overflow-hidden rounded-[10px] bg-[#f5f1e4]">
                                   <ExerciseMedia
                                     src={ex.gifPath}
@@ -805,9 +809,24 @@ function PalettePanel({
                                   </p>
                                   <p className="text-[10px] text-[#80827f]">{primary.label}</p>
                                 </div>
-                              </div>
-                              <Icon.Plus size={14} className="text-[#80827f]" />
-                            </button>
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => onPreview(ex)}
+                                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[#80827f] hover:bg-white hover:text-[#2c2e2a]"
+                                aria-label={`Ver vista previa de ${ex.name}`}
+                              >
+                                <Icon.Eye size={14} />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => onPick(ex.id)}
+                                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#2c2e2a] text-[#f5f1e4] hover:bg-[#1f211d]"
+                                aria-label={`Sumar ${ex.name} a la rutina`}
+                              >
+                                <Icon.Plus size={14} />
+                              </button>
+                            </div>
                           </li>
                         );
                       })}
@@ -828,12 +847,14 @@ function PaletteSheet({
   exercises,
   takenIds,
   onPick,
+  onPreview,
   onClose,
 }: {
   dayId: number;
   exercises: Exercise[];
   takenIds: Set<string>;
   onPick: (id: string) => void;
+  onPreview: (ex: Exercise) => void;
   onClose: () => void;
 }) {
   const [query, setQuery] = useState('');
@@ -866,7 +887,7 @@ function PaletteSheet({
         <div className="flex items-center justify-between border-b-2 border-[#2c2e2a]/10 px-5 py-4">
           <div>
             <span className="t-eyebrow text-[#80827f]">Sumar a {day.long}</span>
-            <p className="mt-1 t-heading-sm text-[#2c2e2a]">Elegí un ejercicio</p>
+            <p className="mt-1 t-heading-sm text-[#2c2e2a]">Elige un ejercicio</p>
           </div>
           <button
             type="button"
@@ -907,23 +928,36 @@ function PaletteSheet({
                     <ul className="flex flex-col">
                       {group.map((ex) => (
                         <li key={ex.id}>
-                          <button
-                            type="button"
-                            onClick={() => onPick(ex.id)}
-                            className="flex w-full items-center gap-3 rounded-full bg-white px-3 py-3 text-left transition-colors hover:bg-[#2c2e2a] hover:text-white"
-                          >
-                            <div className="min-w-0 flex-1">
-                              <p className="truncate text-[15px] font-medium">
+                          <div className="flex items-center gap-2 rounded-full bg-white p-1 pl-4">
+                            <button
+                              type="button"
+                              onClick={() => onPick(ex.id)}
+                              className="min-w-0 flex-1 py-2 text-left"
+                            >
+                              <p className="truncate text-[15px] font-medium text-[#2c2e2a]">
                                 {ex.name}
                               </p>
-                              <p className="truncate text-[12px] opacity-60">
+                              <p className="truncate text-[12px] text-[#80827f]">
                                 {ex.equipment} · {ex.difficulty}
                               </p>
-                            </div>
-                            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#8ed462] text-[#2c2e2a]">
-                              <Icon.Plus size={14} />
-                            </span>
-                          </button>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => onPreview(ex)}
+                              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#f5f1e4] text-[#2c2e2a] hover:bg-[#e0dbce]"
+                              aria-label={`Ver vista previa de ${ex.name}`}
+                            >
+                              <Icon.Eye size={16} />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => onPick(ex.id)}
+                              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#8ed462] text-[#2c2e2a] hover:bg-[#7dc452]"
+                              aria-label={`Sumar ${ex.name} a la rutina`}
+                            >
+                              <Icon.Plus size={16} />
+                            </button>
+                          </div>
                         </li>
                       ))}
                     </ul>

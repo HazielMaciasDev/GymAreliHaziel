@@ -421,7 +421,7 @@ export function HistoryPage() {
                 onChange={(e) => setSelectedExerciseId(e.target.value)}
                 className="h-12 w-full rounded-full border-2 border-[#2c2e2a] bg-white px-4 text-[15px] text-[#2c2e2a] outline-none focus:bg-[#f5e211]/10 md:max-w-xs"
               >
-                <option value="">Elegí un ejercicio</option>
+                <option value="">Elige un ejercicio</option>
                 {profileExercises.map((ex) => (
                   <option key={ex.id} value={ex.id}>{ex.name}</option>
                 ))}

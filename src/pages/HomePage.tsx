@@ -107,7 +107,7 @@ export function HomePage() {
   const totalReps = todayExercises.reduce((acc, e) => acc + e.sets * e.reps, 0);
   const isRest = isRestDay(todayDow);
   const greeting = isRest
-    ? 'Recuperá el cuerpo.'
+    ? 'Recupera el cuerpo.'
     : todayExercises.length === 0
       ? 'Descansa hoy.'
       : profile === 'areli'
@@ -172,7 +172,7 @@ export function HomePage() {
               <p className="mt-8 text-[16px] text-[#80827f]">Cargando…</p>
             ) : isRest ? (
               <div className="mt-6">
-                <h2 className="t-heading text-[#2c2e2a]">Recuperá el cuerpo</h2>
+                <h2 className="t-heading text-[#2c2e2a]">Recupera el cuerpo</h2>
                 <p className="mt-2 max-w-[40ch] t-body text-[#2c2e2a]/80">
                   Caminata, hidratación y estiramientos. Mañana el circuito vuelve con todo.
                 </p>
@@ -205,7 +205,7 @@ export function HomePage() {
                 <p className="t-body-lg text-[#2c2e2a]/80">
                   <span className="text-[#80827f]">Tienes </span>
                   <span className="t-subheading text-[#2c2e2a]">{todayExercises.length}</span>
-                  <span className="text-[#80827f]"> en cola. Pasá el mouse sobre una tarjeta para ver el video.</span>
+                  <span className="text-[#80827f]"> en cola. Pasa el cursor encima de una tarjeta para ver el video.</span>
                 </p>
                 <ul className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2">
                   {todayExercises.map((entry, idx) => (

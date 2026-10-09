@@ -79,7 +79,7 @@ export function ExerciseBankPage() {
           <span className="t-eyebrow text-[#80827f]">Catálogo · {exercises.length} ejercicios</span>
           <h1 className="mt-3 t-display text-[#2c2e2a]">Banco.</h1>
           <p className="mt-3 max-w-[44ch] t-body-lg text-[#2c2e2a]">
-            Tocá un ejercicio para ver la técnica completa. Después armás el circuito en Rutina.
+            Toca un ejercicio para ver la técnica completa. Después armas el circuito en Rutina.
           </p>
           <div className="absolute right-0 top-0 hidden md:block">
             <Sparkle size={36} color="#ff705d" className="animate-float" />
@@ -146,11 +146,19 @@ export function ExerciseBankPage() {
               ) : null}
             </div>
 
+            {muscleFilter ? (
+              <FilterBodyPreview
+                muscleLabel={MUSCLES[muscleFilter].label}
+                muscleImagePath={filtered.find((ex) => ex.muscleImagePath)?.muscleImagePath}
+                count={filtered.length}
+              />
+            ) : null}
+
             {filtered.length === 0 ? (
               <Card padding="lg" className="text-center">
                 <p className="t-body-lg font-semibold text-[#2c2e2a]">Sin resultados</p>
                 <p className="mt-1 t-body text-[#80827f]">
-                  Probá quitar el filtro o ajustar la búsqueda.
+                  Prueba quitar el filtro o ajustar la búsqueda.
                 </p>
               </Card>
             ) : muscleFilter ? (
@@ -356,6 +364,37 @@ function MobileMuscleMenu({
             exercises={exercises}
           />
         </div>
+      </div>
+    </div>
+  );
+}
+
+function FilterBodyPreview({
+  muscleLabel,
+  muscleImagePath,
+  count,
+}: {
+  muscleLabel: string;
+  muscleImagePath: string | undefined;
+  count: number;
+}) {
+  if (!muscleImagePath) return null;
+  return (
+    <div className="mb-4 flex items-stretch gap-4 overflow-hidden rounded-[50px] bg-white p-3 md:p-4">
+      <div className="flex shrink-0 items-center justify-center rounded-[40px] bg-[#f5f1e4] p-2">
+        <img
+          src={muscleImagePath}
+          alt={`Músculos trabajados en ${muscleLabel}`}
+          className="h-[160px] w-[200px] object-contain md:h-[200px] md:w-[260px]"
+          loading="lazy"
+        />
+      </div>
+      <div className="flex min-w-0 flex-1 flex-col justify-center">
+        <span className="t-eyebrow text-[#80827f]">Músculo filtrado</span>
+        <p className="mt-1 t-heading-sm leading-[1.05] text-[#2c2e2a]">{muscleLabel}.</p>
+        <p className="mt-1.5 t-body-sm text-[#2c2e2a]/80">
+          {count} {count === 1 ? 'ejercicio' : 'ejercicios'} en el banco que lo trabajan.
+        </p>
       </div>
     </div>
   );
