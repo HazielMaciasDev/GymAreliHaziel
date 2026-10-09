@@ -1,21 +1,37 @@
-import { useEffect } from 'react';
+import { lazy, Suspense, useEffect } from 'react';
 import { usePathname } from '@/lib/router';
 import { useProfile } from '@/hooks/useProfile';
 import { ProfileSelectorPage } from '@/pages/ProfileSelectorPage';
-import { HomePage } from '@/pages/HomePage';
-import { RoutinePage } from '@/pages/RoutinePage';
-import { ExerciseBankPage } from '@/pages/ExerciseBankPage';
-import { HistoryPage } from '@/pages/HistoryPage';
-import { ActiveSessionPage } from '@/pages/ActiveSessionPage';
+
+const HomePage = lazy(() =>
+  import('@/pages/HomePage').then((m) => ({ default: m.HomePage })),
+);
+const RoutinePage = lazy(() =>
+  import('@/pages/RoutinePage').then((m) => ({ default: m.RoutinePage })),
+);
+const ActiveSessionPage = lazy(() =>
+  import('@/pages/ActiveSessionPage').then((m) => ({ default: m.ActiveSessionPage })),
+);
+const ExerciseBankPage = lazy(() =>
+  import('@/pages/ExerciseBankPage').then((m) => ({ default: m.ExerciseBankPage })),
+);
+const HistoryPage = lazy(() =>
+  import('@/pages/HistoryPage').then((m) => ({ default: m.HistoryPage })),
+);
+
+function PageLoader() {
+  return (
+    <div className="flex min-h-[60vh] flex-col items-center justify-center gap-4">
+      <span className="block h-2 w-2 animate-pulse rounded-full bg-[#2c2e2a]" />
+      <span className="t-eyebrow text-[#80827f]">Cargando</span>
+    </div>
+  );
+}
 
 function RequireProfile({ children }: { children: React.ReactNode }) {
   const { profile, ready } = useProfile();
   if (!ready) {
-    return (
-      <main className="flex min-h-dvh items-center justify-center bg-[#f5f1e4]">
-        <span className="block h-2 w-2 animate-pulse rounded-full bg-[#2c2e2a]" />
-      </main>
-    );
+    return <PageLoader />;
   }
   if (!profile) {
     if (typeof window !== 'undefined') {
@@ -39,35 +55,45 @@ export function App() {
   if (pathname === '/home' || pathname === '/home/') {
     return (
       <RequireProfile>
-        <HomePage />
+        <Suspense fallback={<PageLoader />}>
+          <HomePage />
+        </Suspense>
       </RequireProfile>
     );
   }
   if (pathname === '/routine' || pathname === '/routine/') {
     return (
       <RequireProfile>
-        <RoutinePage />
+        <Suspense fallback={<PageLoader />}>
+          <RoutinePage />
+        </Suspense>
       </RequireProfile>
     );
   }
   if (pathname === '/routine/active' || pathname === '/routine/active/') {
     return (
       <RequireProfile>
-        <ActiveSessionPage />
+        <Suspense fallback={<PageLoader />}>
+          <ActiveSessionPage />
+        </Suspense>
       </RequireProfile>
     );
   }
   if (pathname === '/exercises' || pathname === '/exercises/') {
     return (
       <RequireProfile>
-        <ExerciseBankPage />
+        <Suspense fallback={<PageLoader />}>
+          <ExerciseBankPage />
+        </Suspense>
       </RequireProfile>
     );
   }
   if (pathname === '/history' || pathname === '/history/') {
     return (
       <RequireProfile>
-        <HistoryPage />
+        <Suspense fallback={<PageLoader />}>
+          <HistoryPage />
+        </Suspense>
       </RequireProfile>
     );
   }

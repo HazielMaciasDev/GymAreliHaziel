@@ -49,6 +49,36 @@ const PALETTE_GROUPS: { label: string; muscles: MuscleGroup[] }[] = [
   },
 ];
 
+function routineCacheKey(profile: string): string {
+  return `gym.routine.${profile}.v1`;
+}
+
+function loadCachedRoutine(profile: string): WeeklyRoutineEntry[] | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    const raw = window.localStorage.getItem(routineCacheKey(profile));
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as WeeklyRoutineEntry[];
+    if (!Array.isArray(parsed)) return null;
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
+function saveCachedRoutine(profile: string, entries: WeeklyRoutineEntry[]): void {
+  if (typeof window === 'undefined') return;
+  try {
+    window.localStorage.setItem(routineCacheKey(profile), JSON.stringify(entries));
+  } catch {
+    // ignore quota errors
+  }
+}
+
+function makeTempId(): string {
+  return `temp-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+}
+
 export function RoutinePage() {
   const router = useRouter();
   const { profile } = useProfile();
@@ -63,13 +93,20 @@ export function RoutinePage() {
 
   const loadEntries = useCallback(async () => {
     if (!profile) return;
-    setLoading(true);
+    const cached = loadCachedRoutine(profile);
+    if (cached && cached.length > 0) {
+      setEntries(cached);
+      setLoading(false);
+    }
     try {
       const data = await fetchWeeklyRoutine(profile);
       setEntries(data);
+      saveCachedRoutine(profile, data);
     } catch (err) {
       console.error(err);
-      setError('No se pudo cargar la rutina.');
+      if (!cached) {
+        setError('No se pudo cargar la rutina.');
+      }
     } finally {
       setLoading(false);
     }
@@ -129,13 +166,41 @@ export function RoutinePage() {
         setTimeout(() => setError(null), 2400);
         return;
       }
-      try {
-        const created = await addExerciseToDay(profile, day, exerciseId, 3, 10);
-        setEntries((prev) => [...prev, created]);
-      } catch (err) {
-        console.error(err);
-        setError('No se pudo agregar el ejercicio.');
-      }
+      const existingForDay = entries.filter((e) => e.day_of_week === day);
+      const nextPosition = existingForDay.length;
+      const tempId = makeTempId();
+      const optimistic: WeeklyRoutineEntry = {
+        id: tempId,
+        profile_id: profile,
+        day_of_week: day,
+        exercise_id: exerciseId,
+        position: nextPosition,
+        default_sets: 3,
+        default_reps: 10,
+      };
+      setEntries((prev) => {
+        const next = [...prev, optimistic];
+        saveCachedRoutine(profile, next);
+        return next;
+      });
+      (async () => {
+        try {
+          const created = await addExerciseToDay(profile, day, exerciseId, 3, 10, nextPosition);
+          setEntries((prev) => {
+            const next = prev.map((e) => (e.id === tempId ? created : e));
+            saveCachedRoutine(profile, next);
+            return next;
+          });
+        } catch (err) {
+          console.error(err);
+          setEntries((prev) => {
+            const next = prev.filter((e) => e.id !== tempId);
+            saveCachedRoutine(profile, next);
+            return next;
+          });
+          setError('No se pudo agregar el ejercicio.');
+        }
+      })();
       return;
     }
 
@@ -163,54 +228,69 @@ export function RoutinePage() {
         const targetList = prev
           .filter((e) => e.day_of_week === targetDay && e.id !== entry.id)
           .sort((a, b) => a.position - b.position);
+        let result: WeeklyRoutineEntry[];
         if (targetDay === entry.day_of_week) {
           const oldList = prev
             .filter((e) => e.day_of_week === targetDay)
             .sort((a, b) => a.position - b.position);
           const oldIndex = oldList.findIndex((e) => e.id === entry.id);
           const newIndex = targetList.findIndex((e) => e.id === over.id);
-          if (oldIndex === -1 || newIndex === -1) return prev;
-          const reordered = arrayMove(oldList, oldIndex, newIndex);
-          const others = prev.filter((e) => e.day_of_week !== targetDay);
-          return [...others, ...reordered.map((e, idx) => ({ ...e, position: idx }))];
+          if (oldIndex === -1 || newIndex === -1) {
+            result = prev;
+          } else {
+            const reordered = arrayMove(oldList, oldIndex, newIndex);
+            const others = prev.filter((e) => e.day_of_week !== targetDay);
+            result = [...others, ...reordered.map((e, idx) => ({ ...e, position: idx }))];
+          }
+        } else {
+          const fromList = prev
+            .filter((e) => e.day_of_week === entry.day_of_week && e.id !== entry.id)
+            .sort((a, b) => a.position - b.position)
+            .map((e, idx) => ({ ...e, position: idx }));
+          const others = prev.filter(
+            (e) => e.day_of_week !== entry.day_of_week && e.day_of_week !== targetDay,
+          );
+          const newTarget = [
+            ...targetList.slice(0, targetIndex),
+            { ...entry, day_of_week: targetDay!, position: -1 },
+            ...targetList.slice(targetIndex),
+          ].map((e, idx) => ({ ...e, position: idx }));
+          result = [...fromList, ...others, ...newTarget];
         }
-        const fromList = prev
-          .filter((e) => e.day_of_week === entry.day_of_week && e.id !== entry.id)
-          .sort((a, b) => a.position - b.position)
-          .map((e, idx) => ({ ...e, position: idx }));
-        const others = prev.filter(
-          (e) => e.day_of_week !== entry.day_of_week && e.day_of_week !== targetDay,
-        );
-        const newTarget = [
-          ...targetList.slice(0, targetIndex),
-          { ...entry, day_of_week: targetDay!, position: -1 },
-          ...targetList.slice(targetIndex),
-        ].map((e, idx) => ({ ...e, position: idx }));
-        return [...fromList, ...others, ...newTarget];
+        if (profile) saveCachedRoutine(profile, result);
+        return result;
       });
 
+      (async () => {
+        try {
+          await moveExercise(entry.id, targetDay, targetIndex);
+        } catch (err) {
+          console.error(err);
+          setError('No se pudo mover el ejercicio.');
+          loadEntries();
+        }
+      })();
+    }
+  };
+
+  const onRemoveEntry = (id: string) => {
+    setEntries((prev) => {
+      const next = prev.filter((e) => e.id !== id);
+      if (profile) saveCachedRoutine(profile, next);
+      return next;
+    });
+    (async () => {
       try {
-        await moveExercise(entry.id, targetDay, targetIndex);
+        await removeFromRoutine(id);
       } catch (err) {
         console.error(err);
-        setError('No se pudo mover el ejercicio.');
+        setError('No se pudo quitar el ejercicio.');
         loadEntries();
       }
-    }
+    })();
   };
 
-  const onRemoveEntry = async (id: string) => {
-    setEntries((prev) => prev.filter((e) => e.id !== id));
-    try {
-      await removeFromRoutine(id);
-    } catch (err) {
-      console.error(err);
-      setError('No se pudo quitar el ejercicio.');
-      loadEntries();
-    }
-  };
-
-  const onAddFromPalette = async (day: number, exerciseId: string) => {
+  const onAddFromPalette = (day: number, exerciseId: string) => {
     if (!profile) return;
     if (isRestDay(day)) {
       setError('Sábado y domingo son de descanso.');
@@ -223,13 +303,44 @@ export function RoutinePage() {
       return;
     }
     setPaletteOpen(null);
-    try {
-      const created = await addExerciseToDay(profile, day, exerciseId, 3, 10);
-      setEntries((prev) => [...prev, created]);
-    } catch (err) {
-      console.error(err);
-      setError('No se pudo agregar el ejercicio.');
-    }
+
+    const existingForDay = entries.filter((e) => e.day_of_week === day);
+    const nextPosition = existingForDay.length;
+    const tempId = makeTempId();
+    const optimistic: WeeklyRoutineEntry = {
+      id: tempId,
+      profile_id: profile,
+      day_of_week: day,
+      exercise_id: exerciseId,
+      position: nextPosition,
+      default_sets: 3,
+      default_reps: 10,
+    };
+
+    setEntries((prev) => {
+      const next = [...prev, optimistic];
+      saveCachedRoutine(profile, next);
+      return next;
+    });
+
+    (async () => {
+      try {
+        const created = await addExerciseToDay(profile, day, exerciseId, 3, 10, nextPosition);
+        setEntries((prev) => {
+          const next = prev.map((e) => (e.id === tempId ? created : e));
+          saveCachedRoutine(profile, next);
+          return next;
+        });
+      } catch (err) {
+        console.error(err);
+        setEntries((prev) => {
+          const next = prev.filter((e) => e.id !== tempId);
+          saveCachedRoutine(profile, next);
+          return next;
+        });
+        setError('No se pudo agregar el ejercicio.');
+      }
+    })();
   };
 
   if (!profile) return null;

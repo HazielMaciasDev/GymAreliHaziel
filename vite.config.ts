@@ -17,5 +17,14 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     emptyOutDir: true,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'react-vendor': ['react', 'react-dom'],
+          'supabase-vendor': ['@supabase/supabase-js'],
+          'dnd-vendor': ['@dnd-kit/core', '@dnd-kit/sortable'],
+        },
+      },
+    },
   },
 });

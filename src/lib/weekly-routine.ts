@@ -28,16 +28,20 @@ export async function addExerciseToDay(
   exerciseId: string,
   defaultSets = 3,
   defaultReps = 10,
+  position?: number,
 ): Promise<WeeklyRoutineEntry> {
-  const { data: existing, error: readErr } = await db()
-    .from('weekly_routine')
-    .select('position')
-    .eq('profile_id', profile)
-    .eq('day_of_week', dayOfWeek)
-    .order('position', { ascending: false })
-    .limit(1);
-  if (readErr) throw readErr;
-  const nextPosition = existing && existing.length > 0 ? (existing[0].position as number) + 1 : 0;
+  let nextPosition = position;
+  if (nextPosition === undefined) {
+    const { data: existing, error: readErr } = await db()
+      .from('weekly_routine')
+      .select('position')
+      .eq('profile_id', profile)
+      .eq('day_of_week', dayOfWeek)
+      .order('position', { ascending: false })
+      .limit(1);
+    if (readErr) throw readErr;
+    nextPosition = existing && existing.length > 0 ? (existing[0].position as number) + 1 : 0;
+  }
 
   const { data, error } = await db()
     .from('weekly_routine')
