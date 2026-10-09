@@ -247,7 +247,7 @@ export function HistoryPage() {
                 const y = calendarMonth.month === 0 ? calendarMonth.year - 1 : calendarMonth.year;
                 setCalendarMonth({ year: y, month: m });
               }}
-              className="flex h-10 w-10 items-center justify-center rounded-full bg-white hover:bg-[#e0dbce]"
+              className="flex h-11 w-11 items-center justify-center rounded-full bg-white hover:bg-[#e0dbce]"
               aria-label="Mes anterior"
             >
               <Icon.ChevronLeft size={16} />
@@ -262,7 +262,7 @@ export function HistoryPage() {
                 const y = calendarMonth.month === 11 ? calendarMonth.year + 1 : calendarMonth.year;
                 setCalendarMonth({ year: y, month: m });
               }}
-              className="flex h-10 w-10 items-center justify-center rounded-full bg-white hover:bg-[#e0dbce]"
+              className="flex h-11 w-11 items-center justify-center rounded-full bg-white hover:bg-[#e0dbce]"
               aria-label="Mes siguiente"
             >
               <Icon.ChevronRight size={16} />
@@ -289,7 +289,7 @@ export function HistoryPage() {
                     onClick={() => onDayClick(cell)}
                     aria-label={`Ver día ${cell.day}`}
                     className={classNames(
-                      'relative flex aspect-square items-center justify-center rounded-full text-[12px] font-medium tabular-nums transition-all',
+                      'relative flex aspect-square min-h-[44px] min-w-[44px] items-center justify-center rounded-full text-[12px] font-medium tabular-nums transition-all',
                       'hover:scale-110 active:scale-95 cursor-pointer',
                       cell.isRest && !cell.hasSession
                         ? 'border-2 border-dashed border-[#2c2e2a]/10 bg-transparent text-[#80827f]'

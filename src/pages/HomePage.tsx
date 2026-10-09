@@ -347,7 +347,7 @@ function DailyFactCard() {
               type="button"
               onClick={() => go(-1)}
               aria-label="Dato anterior"
-              className="flex h-10 w-10 items-center justify-center rounded-full bg-[#2c2e2a] text-[#f5e211] transition-transform hover:scale-105"
+              className="flex h-11 w-11 items-center justify-center rounded-full bg-[#2c2e2a] text-[#f5e211] transition-transform hover:scale-105"
             >
               <Icon.ChevronLeft size={16} />
             </button>
@@ -355,7 +355,7 @@ function DailyFactCard() {
               type="button"
               onClick={() => go(1)}
               aria-label="Dato siguiente"
-              className="flex h-10 w-10 items-center justify-center rounded-full bg-[#2c2e2a] text-[#f5e211] transition-transform hover:scale-105"
+              className="flex h-11 w-11 items-center justify-center rounded-full bg-[#2c2e2a] text-[#f5e211] transition-transform hover:scale-105"
             >
               <Icon.ChevronRight size={16} />
             </button>

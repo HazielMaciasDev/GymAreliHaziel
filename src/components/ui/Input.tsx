@@ -31,7 +31,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
       <input
         ref={ref}
         {...rest}
-        className="flex-1 min-w-0 bg-transparent px-5 text-[15px] text-[#2c2e2a] placeholder:text-[#80827f] outline-none"
+        className="flex-1 min-w-0 bg-transparent px-5 text-[16px] text-[#2c2e2a] placeholder:text-[#80827f] outline-none"
       />
       {suffix ? (
         <span className="flex items-center px-5 text-[12px] font-medium tracking-[0.04em] uppercase text-[#80827f]">

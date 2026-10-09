@@ -533,7 +533,7 @@ function DayCardMobile({
                 <button
                   type="button"
                   onClick={() => onRemove(entry.id)}
-                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[#80827f] hover:bg-[#ff705d]/10 hover:text-[#ff705d]"
+                  className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[#80827f] hover:bg-[#ff705d]/10 hover:text-[#ff705d]"
                   aria-label="Quitar"
                 >
                   <Icon.Trash size={14} />
@@ -744,7 +744,7 @@ function PalettePanel({
       <div>
         <span className="t-eyebrow text-[#80827f]">Catálogo</span>
         <p className="mt-1 t-body-sm text-[#2c2e2a]">
-          Toca un ejercicio para sumarlo al día.
+          Toca un ejercicio para sumarlo. El ícono del ojo abre la vista previa.
         </p>
       </div>
       <div className="mt-3">
@@ -789,9 +789,9 @@ function PalettePanel({
                             <div className="group flex items-center gap-1 rounded-full hover:bg-[#2c2e2a]/5">
                               <button
                                 type="button"
-                                onClick={() => onPreview(ex)}
+                                onClick={() => onPick(ex.id)}
                                 className="flex min-w-0 flex-1 items-center gap-2.5 rounded-full px-3 py-2 text-left"
-                                aria-label={`Ver vista previa de ${ex.name}`}
+                                aria-label={`Sumar ${ex.name} a la rutina`}
                               >
                                 <span className="relative h-7 w-7 shrink-0 overflow-hidden rounded-[10px] bg-[#f5f1e4]">
                                   <ExerciseMedia
@@ -814,18 +814,18 @@ function PalettePanel({
                               <button
                                 type="button"
                                 onClick={() => onPreview(ex)}
-                                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[#80827f] hover:bg-white hover:text-[#2c2e2a]"
+                                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[#80827f] hover:bg-white hover:text-[#2c2e2a]"
                                 aria-label={`Ver vista previa de ${ex.name}`}
                               >
-                                <Icon.Eye size={14} />
+                                <Icon.Eye size={16} />
                               </button>
                               <button
                                 type="button"
                                 onClick={() => onPick(ex.id)}
-                                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#2c2e2a] text-[#f5f1e4] hover:bg-[#1f211d]"
+                                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#2c2e2a] text-[#f5f1e4] hover:bg-[#1f211d]"
                                 aria-label={`Sumar ${ex.name} a la rutina`}
                               >
-                                <Icon.Plus size={14} />
+                                <Icon.Plus size={16} />
                               </button>
                             </div>
                           </li>
@@ -894,7 +894,7 @@ function PaletteSheet({
             type="button"
             onClick={onClose}
             aria-label="Cerrar"
-            className="flex h-10 w-10 items-center justify-center rounded-full bg-white hover:bg-[#e0dbce]"
+            className="flex h-11 w-11 items-center justify-center rounded-full bg-white hover:bg-[#e0dbce]"
           >
             <Icon.Close size={16} />
           </button>
@@ -932,9 +932,9 @@ function PaletteSheet({
                           <div className="flex items-center gap-2 rounded-full bg-white p-1 pl-4">
                             <button
                               type="button"
-                              onClick={() => onPreview(ex)}
+                              onClick={() => onPick(ex.id)}
                               className="min-w-0 flex-1 py-2 text-left"
-                              aria-label={`Ver vista previa de ${ex.name}`}
+                              aria-label={`Sumar ${ex.name} a la rutina`}
                             >
                               <p className="truncate text-[15px] font-medium text-[#2c2e2a]">
                                 {ex.name}
@@ -946,7 +946,7 @@ function PaletteSheet({
                             <button
                               type="button"
                               onClick={() => onPreview(ex)}
-                              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#f5f1e4] text-[#2c2e2a] hover:bg-[#e0dbce]"
+                              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#f5f1e4] text-[#2c2e2a] hover:bg-[#e0dbce]"
                               aria-label={`Ver vista previa de ${ex.name}`}
                             >
                               <Icon.Eye size={16} />
@@ -954,10 +954,10 @@ function PaletteSheet({
                             <button
                               type="button"
                               onClick={() => onPick(ex.id)}
-                              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#8ed462] text-[#2c2e2a] hover:bg-[#7dc452]"
+                              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#8ed462] text-[#2c2e2a] hover:bg-[#7dc452]"
                               aria-label={`Sumar ${ex.name} a la rutina`}
                             >
-                              <Icon.Plus size={16} />
+                              <Icon.Plus size={18} />
                             </button>
                           </div>
                         </li>

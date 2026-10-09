@@ -489,7 +489,7 @@ export function ActiveSessionPage() {
                 type="button"
                 onClick={() => setCurrentIndex(i)}
                 className={classNames(
-                  'flex items-center gap-2 rounded-full border-2 px-3 h-9 text-[12px] font-medium transition-colors',
+                  'flex items-center gap-2 rounded-full border-2 px-3 h-11 text-[12px] font-medium transition-colors',
                   status?.completed
                     ? 'border-[#8ed462] bg-[#8ed462]/15 text-[#2c2e2a]'
                     : isCurrent

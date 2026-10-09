@@ -81,7 +81,9 @@ export function AppShell({ children }: { children: ReactNode }) {
         </nav>
       </header>
 
-      <main className="pb-32 md:pb-12">
+      <main
+        className="pb-[calc(8rem+env(safe-area-inset-bottom,0px))] md:pb-12"
+      >
         <div className="mx-auto max-w-[1200px] px-4 pt-6 md:px-6 md:pt-10">
           {children}
         </div>
@@ -89,7 +91,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
       {/* Floating pill bottom tab bar (mobile) */}
       <nav
-        className="fixed bottom-3 left-3 right-3 z-30 md:hidden"
+        className="fixed bottom-[max(12px,env(safe-area-inset-bottom,0px))] left-3 right-3 z-30 md:hidden"
         aria-label="Navegación inferior"
       >
         <ul className="mx-auto flex h-16 max-w-[420px] items-center gap-1 rounded-full bg-white p-1.5">
