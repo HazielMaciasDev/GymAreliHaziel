@@ -2,7 +2,7 @@ import { forwardRef, type InputHTMLAttributes, type ReactNode } from 'react';
 import { classNames } from '@/lib/format';
 
 interface InputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'prefix'> {
-  suffix?: string;
+  suffix?: ReactNode;
   prefix?: ReactNode;
   invalid?: boolean;
   pillSize?: 'md' | 'lg';

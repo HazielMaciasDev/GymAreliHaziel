@@ -18,6 +18,9 @@ const ExerciseBankPage = lazy(() =>
 const HistoryPage = lazy(() =>
   import('@/pages/HistoryPage').then((m) => ({ default: m.HistoryPage })),
 );
+const ProgressPage = lazy(() =>
+  import('@/pages/ProgressPage').then((m) => ({ default: m.ProgressPage })),
+);
 
 function PageLoader() {
   return (
@@ -93,6 +96,15 @@ export function App() {
       <RequireProfile>
         <Suspense fallback={<PageLoader />}>
           <HistoryPage />
+        </Suspense>
+      </RequireProfile>
+    );
+  }
+  if (pathname === '/progress' || pathname === '/progress/') {
+    return (
+      <RequireProfile>
+        <Suspense fallback={<PageLoader />}>
+          <ProgressPage />
         </Suspense>
       </RequireProfile>
     );

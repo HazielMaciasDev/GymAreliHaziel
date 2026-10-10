@@ -11,6 +11,7 @@ import { VideoCarousel } from '@/components/VideoCarousel';
 import { ExerciseDetailModal } from '@/components/ExerciseDetailModal';
 import {
   addExerciseLog,
+  cancelSession,
   fetchSessionLogs,
   finishSession,
   startSession,
@@ -57,6 +58,8 @@ export function ActiveSessionPage() {
   const [loading, setLoading] = useState(true);
   const [roundJustCompleted, setRoundJustCompleted] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
+  const [exitSheetOpen, setExitSheetOpen] = useState(false);
+  const [exiting, setExiting] = useState<null | 'save' | 'cancel' | 'restart'>(null);
   const initRef = useRef(false);
   const sessionStartedAtRef = useRef<number>(Date.now());
 
@@ -218,6 +221,36 @@ export function ActiveSessionPage() {
     const interval = window.setInterval(tick, 1000);
     return () => window.clearInterval(interval);
   }, [session]);
+
+  const handleExit = async (action: 'save' | 'cancel' | 'restart') => {
+    if (!session) return;
+    setExiting(action);
+    try {
+      if (action === 'save') {
+        await finishSession(session.id, false);
+        setExitSheetOpen(false);
+        router.push('/routine');
+        return;
+      }
+      if (action === 'cancel') {
+        await cancelSession(session.id);
+        setExitSheetOpen(false);
+        router.push('/routine');
+        return;
+      }
+      if (action === 'restart') {
+        await cancelSession(session.id);
+        setExitSheetOpen(false);
+        router.push('/routine/active');
+        return;
+      }
+    } catch (err) {
+      console.error(err);
+      setError('No se pudo completar la acción.');
+    } finally {
+      setExiting(null);
+    }
+  };
 
   if (!profile) return null;
 
@@ -443,9 +476,9 @@ export function ActiveSessionPage() {
         <header className="mb-4 flex items-center justify-between">
           <button
             type="button"
-            onClick={() => router.push('/routine')}
+            onClick={() => setExitSheetOpen(true)}
             className="flex h-11 w-11 items-center justify-center rounded-full bg-white hover:bg-[#e0dbce]"
-            aria-label="Volver"
+            aria-label="Salir de la sesión"
           >
             <Icon.ChevronLeft size={18} />
           </button>
@@ -585,6 +618,15 @@ export function ActiveSessionPage() {
         <ExerciseDetailModal
           exercise={currentPlanned.exercise}
           onClose={() => setShowDetails(false)}
+        />
+      ) : null}
+
+      {exitSheetOpen && session ? (
+        <ExitSheet
+          onClose={() => !exiting && setExitSheetOpen(false)}
+          onPick={handleExit}
+          exiting={exiting}
+          hasAnyProgress={setLogs.some((s) => s.completed)}
         />
       ) : null}
     </AppShell>
@@ -771,6 +813,120 @@ function ActiveExercisePanel({
 
         <div className="text-center text-[12px] text-[#80827f]">
           Ronda {currentRound + 1} de {totalRounds} · Ejercicio {currentIndex + 1} de {plannedCount}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ExitSheet({
+  onClose,
+  onPick,
+  exiting,
+  hasAnyProgress,
+}: {
+  onClose: () => void;
+  onPick: (action: 'save' | 'cancel' | 'restart') => void;
+  exiting: null | 'save' | 'cancel' | 'restart';
+  hasAnyProgress: boolean;
+}) {
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-end justify-center bg-[#2c2e2a]/40 backdrop-blur-sm"
+      role="dialog"
+      aria-modal="true"
+      onClick={onClose}
+    >
+      <div
+        className="flex w-full flex-col overflow-hidden rounded-t-[50px] bg-[#f5f1e4] animate-[fade-up_300ms_ease-out]"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between px-5 pt-4 pb-2">
+          <span className="block h-1.5 w-12 rounded-full bg-[#2c2e2a]/15" />
+        </div>
+        <div className="px-5 pt-2 pb-5">
+          <span className="t-eyebrow text-[#80827f]">Salir de la sesión</span>
+          <h2 className="mt-1 t-heading-sm text-[#2c2e2a]">¿Qué querés hacer?</h2>
+        </div>
+
+        <ul className="flex flex-col gap-2.5 px-5 pb-5">
+          <li>
+            <button
+              type="button"
+              disabled={exiting !== null}
+              onClick={() => onPick('save')}
+              className="group flex w-full items-center gap-4 overflow-hidden rounded-[24px] border-2 border-[#2c2e2a]/10 bg-white p-4 text-left transition-transform hover:-translate-y-0.5 disabled:opacity-50"
+            >
+              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#8ed462] text-[#2c2e2a]">
+                <Icon.Save size={20} />
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className="text-[15px] font-semibold text-[#2c2e2a]">Salir y guardar parcial</p>
+                <p className="mt-0.5 t-eyebrow text-[#80827f]">
+                  Queda como parcial en el historial
+                </p>
+              </div>
+              {exiting === 'save' ? (
+                <span className="block h-2 w-2 animate-pulse rounded-full bg-[#8ed462]" />
+              ) : (
+                <Icon.ChevronRight size={14} className="text-[#80827f]" />
+              )}
+            </button>
+          </li>
+
+          <li>
+            <button
+              type="button"
+              disabled={exiting !== null}
+              onClick={() => onPick('cancel')}
+              className="group flex w-full items-center gap-4 overflow-hidden rounded-[24px] border-2 border-[#2c2e2a]/10 bg-white p-4 text-left transition-transform hover:-translate-y-0.5 disabled:opacity-50"
+            >
+              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#ff705d] text-white">
+                <Icon.Trash size={20} />
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className="text-[15px] font-semibold text-[#2c2e2a]">Cancelar y descartar todo</p>
+                <p className="mt-0.5 t-eyebrow text-[#80827f]">
+                  Borra la sesión y los sets que marcaste
+                </p>
+              </div>
+              {exiting === 'cancel' ? (
+                <span className="block h-2 w-2 animate-pulse rounded-full bg-[#ff705d]" />
+              ) : (
+                <Icon.ChevronRight size={14} className="text-[#80827f]" />
+              )}
+            </button>
+          </li>
+
+          <li>
+            <button
+              type="button"
+              disabled={exiting !== null}
+              onClick={() => onPick('restart')}
+              className="group flex w-full items-center gap-4 overflow-hidden rounded-[24px] border-2 border-[#2c2e2a]/10 bg-white p-4 text-left transition-transform hover:-translate-y-0.5 disabled:opacity-50"
+            >
+              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#f5e211] text-[#2c2e2a]">
+                <Icon.Swap size={20} />
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className="text-[15px] font-semibold text-[#2c2e2a]">Reiniciar desde cero</p>
+                <p className="mt-0.5 t-eyebrow text-[#80827f]">
+                  Borra todo y empieza la rutina de nuevo
+                </p>
+              </div>
+              {exiting === 'restart' ? (
+                <span className="block h-2 w-2 animate-pulse rounded-full bg-[#f5e211]" />
+              ) : (
+                <Icon.ChevronRight size={14} className="text-[#80827f]" />
+              )}
+            </button>
+          </li>
+        </ul>
+
+        <div className="px-5 pb-8 pt-2">
+          <Button variant="ghost" size="md" fullWidth onClick={onClose} disabled={exiting !== null}>
+            Seguir entrenando
+          </Button>
         </div>
       </div>
     </div>

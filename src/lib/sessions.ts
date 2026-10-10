@@ -68,6 +68,19 @@ export async function finishSession(id: string, completed = true): Promise<void>
   if (error) throw error;
 }
 
+export async function cancelSession(sessionId: string): Promise<void> {
+  const { error: logsErr } = await db()
+    .from('exercise_logs')
+    .delete()
+    .eq('session_id', sessionId);
+  if (logsErr) throw logsErr;
+  const { error: sessionErr } = await db()
+    .from('sessions')
+    .delete()
+    .eq('id', sessionId);
+  if (sessionErr) throw sessionErr;
+}
+
 export async function addExerciseLog(
   sessionId: string,
   exerciseId: string,

@@ -15,6 +15,7 @@ const NAV_ITEMS: NavItem[] = [
   { path: '/home', label: 'Inicio', icon: 'Home' },
   { path: '/routine', label: 'Rutina', icon: 'Calendar' },
   { path: '/exercises', label: 'Banco', icon: 'Library' },
+  { path: '/progress', label: 'Progreso', icon: 'Trend' },
   { path: '/history', label: 'Historial', icon: 'History' },
 ];
 
@@ -94,7 +95,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         className="fixed bottom-[max(12px,env(safe-area-inset-bottom,0px))] left-3 right-3 z-30 md:hidden"
         aria-label="Navegación inferior"
       >
-        <ul className="mx-auto flex h-16 max-w-[420px] items-center gap-1 rounded-full bg-white p-1.5">
+        <ul className="mx-auto flex h-16 max-w-[480px] items-stretch gap-0.5 rounded-full bg-white p-1.5">
           {NAV_ITEMS.map((item) => {
             const active = pathname === item.path || pathname.startsWith(`${item.path}/`);
             const IconComp = Icon[item.icon];
@@ -104,15 +105,16 @@ export function AppShell({ children }: { children: ReactNode }) {
                   type="button"
                   onClick={() => router.push(item.path)}
                   className={classNames(
-                    'flex h-full w-full items-center justify-center gap-1.5 rounded-full transition-colors',
+                    'flex h-full w-full flex-col items-center justify-center gap-0.5 rounded-full transition-colors',
                     active
                       ? 'text-[#2c2e2a] font-bold'
                       : 'text-[#2c2e2a]/55 font-medium hover:text-[#2c2e2a]',
                   )}
                   aria-current={active ? 'page' : undefined}
+                  aria-label={item.label}
                 >
-                  <IconComp size={18} strokeWidth={active ? 2.2 : 1.7} />
-                  <span className="text-[12px]">{item.label}</span>
+                  <IconComp size={20} strokeWidth={active ? 2.2 : 1.7} />
+                  <span className="text-[9px] leading-none">{item.label}</span>
                 </button>
               </li>
             );

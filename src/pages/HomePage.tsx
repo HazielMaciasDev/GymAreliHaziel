@@ -8,6 +8,7 @@ import { Tag } from '@/components/ui/Tag';
 import { Icon } from '@/components/Icon';
 import { Illustration, Sparkle } from '@/components/Illustration';
 import { ExerciseCardHome } from '@/components/ExerciseCardHome';
+import { ExerciseDetailModal } from '@/components/ExerciseDetailModal';
 import { fetchWeeklyRoutine } from '@/lib/weekly-routine';
 import { listSessions } from '@/lib/sessions';
 import {
@@ -19,6 +20,8 @@ import {
 } from '@/lib/format';
 import { EXERCISES } from '@/data/exercises';
 import { FITNESS_FACTS, factOfDayIndex } from '@/data/fitnessFacts';
+import { MUSCLES } from '@/lib/muscles';
+import { ExerciseMedia } from '@/components/ExerciseMedia';
 import type { Exercise, ProfileId } from '@/types';
 
 function exerciseById(id: string): Exercise | undefined {
@@ -33,6 +36,82 @@ export function HomePage() {
   const [planned, setPlanned] = useState(0);
   const [doneIso, setDoneIso] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
+  const [selectedWeekDay, setSelectedWeekDay] = useState<number>(() => dayOfWeekFromDate(new Date()));
+  const [weekEntries, setWeekEntries] = useState<{ exerciseId: string; sets: number; reps: number }[]>([]);
+  const [weekLoading, setWeekLoading] = useState(false);
+  const [selectedExercise, setSelectedExercise] = useState<Exercise | null>(null);
+
+  useEffect(() => {
+    if (!profile) {
+      router.replace('/');
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      setLoading(true);
+      try {
+        const routine = await fetchWeeklyRoutine(profile);
+        const today = new Date();
+        const todayDow = dayOfWeekFromDate(today);
+        const todayList = routine
+          .filter((r) => r.day_of_week === todayDow)
+          .sort((a, b) => a.position - b.position)
+          .map((r) => ({ exerciseId: r.exercise_id, sets: r.default_sets, reps: r.default_reps }));
+        if (!cancelled) setTodayEntries(todayList);
+
+        const ws = new Date(today);
+        ws.setDate(ws.getDate() - ((ws.getDay() + 6) % 7));
+        ws.setHours(0, 0, 0, 0);
+        const weekDates: string[] = [];
+        for (let i = 0; i < 7; i++) {
+          const d = new Date(ws);
+          d.setDate(d.getDate() + i);
+          weekDates.push(toIsoDate(d));
+        }
+        if (!cancelled) setWeekIso(weekDates);
+
+        const plannedDays = new Set<number>();
+        for (const r of routine) plannedDays.add(r.day_of_week);
+        if (!cancelled) setPlanned(plannedDays.size);
+
+        const sessions = await listSessions(profile, 60);
+        const completed = new Set(sessions.filter((s) => s.completed).map((s) => s.routine_date));
+        if (!cancelled) setDoneIso(completed);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [profile, router]);
+
+  useEffect(() => {
+    if (!profile) return;
+    let cancelled = false;
+    (async () => {
+      setWeekLoading(true);
+      try {
+        const routine = await fetchWeeklyRoutine(profile);
+        const list = routine
+          .filter((r) => r.day_of_week === selectedWeekDay)
+          .sort((a, b) => a.position - b.position)
+          .map((r) => ({ exerciseId: r.exercise_id, sets: r.default_sets, reps: r.default_reps }));
+        if (!cancelled) {
+          setWeekEntries(list);
+        }
+      } catch (err) {
+        console.error(err);
+      } finally {
+        if (!cancelled) setWeekLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [profile, selectedWeekDay]);
 
   useEffect(() => {
     if (!profile) {
@@ -187,20 +266,33 @@ export function HomePage() {
               </div>
             ) : (
               <div className="mt-6">
-                <p className="t-body-lg text-[#2c2e2a]/80">
-                  <span className="text-[#80827f]">Tienes </span>
-                  <span className="t-subheading text-[#2c2e2a]">{todayExercises.length}</span>
-                  <span className="text-[#80827f]"> en cola. Pasa el cursor encima de una tarjeta para ver el video.</span>
+                <FirstExerciseCard
+                  exercise={todayExercises[0].exercise}
+                  sets={todayExercises[0].sets}
+                  reps={todayExercises[0].reps}
+                  total={todayExercises.length}
+                  onStart={() => router.push('/routine/active')}
+                />
+                <p className="mt-5 t-body-lg text-[#2c2e2a]/80">
+                  <span className="text-[#80827f]">Después siguen </span>
+                  <span className="t-subheading text-[#2c2e2a]">{todayExercises.length - 1}</span>
+                  <span className="text-[#80827f]"> más. Toca una tarjeta para ver el video.</span>
                 </p>
-                <ul className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2">
-                  {todayExercises.map((entry, idx) => (
+                <ul className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  {todayExercises.slice(1).map((entry, idx) => (
                     <li key={entry.exercise.id}>
-                      <ExerciseCardHome
-                        exercise={entry.exercise}
-                        sets={entry.sets}
-                        reps={entry.reps}
-                        position={idx + 1}
-                      />
+                      <button
+                        type="button"
+                        onClick={() => setSelectedExercise(entry.exercise)}
+                        className="block w-full text-left"
+                      >
+                        <ExerciseCardHome
+                          exercise={entry.exercise}
+                          sets={entry.sets}
+                          reps={entry.reps}
+                          position={idx + 2}
+                        />
+                      </button>
                     </li>
                   ))}
                 </ul>
@@ -239,11 +331,15 @@ export function HomePage() {
               const isToday = d.id === todayDow;
               const isDone = doneIso.has(iso);
               const isRest = isRestDay(d.id);
+              const isSelected = selectedWeekDay === d.id;
               return (
-                <div
+                <button
                   key={d.id}
+                  type="button"
+                  onClick={() => setSelectedWeekDay(d.id)}
                   className={classNames(
-                    'relative flex flex-col items-center gap-1 rounded-full py-3 transition-colors',
+                    'relative flex flex-col items-center gap-1 rounded-full py-3 transition-all min-h-[44px]',
+                    'hover:scale-[1.04] active:scale-95',
                     isRest
                       ? 'bg-white/60 text-[#80827f] border-2 border-dashed border-[#2c2e2a]/10'
                       : isDone
@@ -251,6 +347,7 @@ export function HomePage() {
                         : isToday
                           ? 'bg-[#2c2e2a] text-[#f5f1e4]'
                           : 'bg-white text-[#2c2e2a]',
+                    isSelected && 'ring-[3px] ring-[#2c2e2a] ring-offset-2 ring-offset-[#f5f1e4]',
                   )}
                 >
                   <span className="t-micro">{d.short}</span>
@@ -260,18 +357,32 @@ export function HomePage() {
                   {isToday ? (
                     <span className="absolute -bottom-1.5 h-1 w-6 rounded-full bg-[#f5e211]" />
                   ) : null}
-                </div>
+                </button>
               );
             })}
+          </div>
+
+          <div key={selectedWeekDay} className="mt-4 animate-[fade-up_300ms_ease-out]">
+            <WeekDayPanel
+              dayId={selectedWeekDay}
+              isToday={selectedWeekDay === todayDow}
+              isRest={isRestDay(selectedWeekDay)}
+              entries={weekEntries}
+              todaysSessionDone={selectedWeekDay === todayDow && todaysSessionDone}
+              loading={weekLoading}
+              onStart={() => router.push('/routine/active')}
+              onPlan={() => router.push('/routine')}
+              onExerciseClick={(ex) => setSelectedExercise(ex)}
+            />
           </div>
         </section>
 
         {/* Quick links — letter stamp */}
-        <section className="mt-10 grid grid-cols-1 gap-3 md:mt-14 md:grid-cols-3 md:gap-4">
+        <section className="mt-10 grid grid-cols-2 gap-3 md:mt-14 md:grid-cols-4 md:gap-4">
           <NavTile
             letter="R"
             title="Rutina"
-            description="Calendario semanal, agregar ejercicios"
+            description="Calendario semanal"
             path="/routine"
             letterBg="bg-[#2ba0ff]"
             letterColor="text-[#f5f1e4]"
@@ -280,16 +391,25 @@ export function HomePage() {
           <NavTile
             letter="B"
             title="Banco"
-            description={`${exerciseCount} ejercicios con técnica`}
+            description={`${exerciseCount} ejercicios`}
             path="/exercises"
             letterBg="bg-[#f5e211]"
             letterColor="text-[#2c2e2a]"
             letterShadow="text-[#f5e211]/30"
           />
           <NavTile
+            letter="P"
+            title="Progreso"
+            description="Peso, IMC, records"
+            path="/progress"
+            letterBg="bg-[#8ed462]"
+            letterColor="text-[#2c2e2a]"
+            letterShadow="text-[#8ed462]/30"
+          />
+          <NavTile
             letter="H"
             title="Historial"
-            description="Sesiones, adherencia y progreso"
+            description="Sesiones y adherencia"
             path="/history"
             letterBg="bg-[#ff705d]"
             letterColor="text-[#f5f1e4]"
@@ -302,6 +422,13 @@ export function HomePage() {
           <DailyFactCard />
         </section>
       </div>
+
+      {selectedExercise ? (
+        <ExerciseDetailModal
+          exercise={selectedExercise}
+          onClose={() => setSelectedExercise(null)}
+        />
+      ) : null}
     </AppShell>
   );
 }
@@ -416,5 +543,242 @@ function NavTile({
         <Icon.ChevronRight size={14} />
       </span>
     </button>
+  );
+}
+
+function FirstExerciseCard({
+  exercise,
+  sets,
+  reps,
+  total,
+  onStart,
+}: {
+  exercise: Exercise;
+  sets: number;
+  reps: number;
+  total: number;
+  onStart: () => void;
+}) {
+  const primary = MUSCLES[exercise.primaryMuscle];
+  const [expanded, setExpanded] = useState(false);
+
+  return (
+    <div
+      onMouseLeave={() => setExpanded(false)}
+      className={classNames(
+        'group relative overflow-hidden rounded-[40px] border-2 transition-colors',
+        expanded ? 'border-[#2c2e2a]' : 'border-[#2c2e2a]/10',
+      )}
+    >
+      <div className="relative aspect-[16/9] overflow-hidden bg-[#2c2e2a]">
+        {expanded ? (
+          <ExerciseMedia
+            src={exercise.gifPath}
+            alt={exercise.name}
+            className="h-full w-full object-cover"
+            loading="eager"
+            onError={(e) => {
+              (e.currentTarget as HTMLElement).style.opacity = '0.15';
+            }}
+          />
+        ) : (
+          <>
+            <ExerciseMedia
+              src={exercise.gifPath}
+              alt={exercise.name}
+              className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+              loading="eager"
+              onError={(e) => {
+                (e.currentTarget as HTMLElement).style.opacity = '0.15';
+              }}
+            />
+            <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#2c2e2a]/70 via-[#2c2e2a]/10 to-transparent" />
+          </>
+        )}
+
+        <div className="absolute left-4 top-4 flex items-center gap-2">
+          <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#f5e211] text-[14px] font-semibold text-[#2c2e2a] shadow-md">
+            1
+          </span>
+          <span className="rounded-full bg-white/90 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#2c2e2a] backdrop-blur-sm">
+            Empezás con esto
+          </span>
+        </div>
+
+        <div className="absolute right-4 top-4 inline-flex items-center gap-1.5 rounded-full bg-[#2c2e2a] px-3 py-1.5 text-[12px] font-semibold tabular-nums text-[#f5f1e4]">
+          {sets}<span className="opacity-50">×</span>{reps}
+        </div>
+
+        <div className="absolute inset-x-0 bottom-0 px-4 pb-4 md:px-6 md:pb-5">
+          <div className="flex items-end justify-between gap-3">
+            <div className="min-w-0 flex-1">
+              <Tag tone="grass" size="sm" className="bg-white/90 backdrop-blur-sm">{primary.label}</Tag>
+              <h3 className="mt-2 truncate text-[20px] font-semibold leading-[1.1] text-white md:text-[24px]">
+                {exercise.name}
+              </h3>
+              {total > 1 ? (
+                <p className="mt-1 text-[12px] text-white/70">
+                  +{total - 1} más en la rutina
+                </p>
+              ) : null}
+            </div>
+          </div>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => setExpanded((e) => !e)}
+          className="absolute inset-0 hidden md:block"
+          aria-label={`Vista previa de ${exercise.name}`}
+        />
+      </div>
+
+      <div className="flex items-center gap-2 bg-white px-4 py-3">
+        <button
+          type="button"
+          onClick={() => setExpanded((e) => !e)}
+          className="inline-flex h-11 items-center gap-1.5 rounded-full bg-[#f5f1e4] px-4 text-[13px] font-medium text-[#2c2e2a] hover:bg-[#e0dbce]"
+          aria-label="Vista previa"
+        >
+          <Icon.Eye size={14} />
+          <span>{expanded ? 'Ocultar' : 'Preview'}</span>
+        </button>
+        <div className="ml-auto">
+          <Button
+            variant="coral"
+            size="md"
+            onClick={onStart}
+            iconRight={<Icon.Play size={14} />}
+            dotColor="sunshine"
+          >
+            Empezar
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function WeekDayPanel({
+  dayId,
+  isToday,
+  isRest,
+  entries,
+  todaysSessionDone,
+  loading,
+  onStart,
+  onPlan,
+  onExerciseClick,
+}: {
+  dayId: number;
+  isToday: boolean;
+  isRest: boolean;
+  entries: { exerciseId: string; sets: number; reps: number }[];
+  todaysSessionDone: boolean;
+  loading: boolean;
+  onStart: () => void;
+  onPlan: () => void;
+  onExerciseClick: (ex: Exercise) => void;
+}) {
+  const day = DAYS_OF_WEEK[dayId];
+
+  if (isRest) {
+    return (
+      <div className="rounded-[32px] border-2 border-dashed border-[#2c2e2a]/10 bg-white/60 p-4 md:p-5">
+        <div className="flex items-center gap-3">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#f5e211] text-[14px] font-semibold text-[#2c2e2a]">
+            {day.short.charAt(0)}
+          </span>
+          <div className="min-w-0">
+            <p className="text-[14px] font-semibold text-[#2c2e2a]">{day.long} es descanso</p>
+            <p className="t-eyebrow text-[#80827f]">Recupera el cuerpo, mañana vuelve el circuito</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const list = entries
+    .map((e) => ({ ...e, exercise: exerciseById(e.exerciseId) }))
+    .filter((x): x is { exerciseId: string; sets: number; reps: number; exercise: Exercise } => Boolean(x.exercise));
+
+  if (loading) {
+    return (
+      <div className="rounded-[32px] bg-white p-4 text-center md:p-5">
+        <p className="t-body-sm text-[#80827f]">Cargando…</p>
+      </div>
+    );
+  }
+
+  if (list.length === 0) {
+    return (
+      <div className="rounded-[32px] border-2 border-dashed border-[#2c2e2a]/10 bg-white p-4 md:p-5">
+        <div className="flex items-center justify-between gap-3">
+          <div className="min-w-0">
+            <p className="text-[14px] font-semibold text-[#2c2e2a]">Nada planeado para {day.long.toLowerCase()}</p>
+            <p className="t-eyebrow text-[#80827f]">Día libre</p>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onPlan}
+            iconLeft={<Icon.Plus size={12} />}
+          >
+            Planificar
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="rounded-[32px] bg-white p-4 md:p-5">
+      <div className="mb-3 flex items-center justify-between">
+        <div>
+          <p className="text-[14px] font-semibold text-[#2c2e2a]">
+            {list.length} {list.length === 1 ? 'ejercicio' : 'ejercicios'} · {day.long.toLowerCase()}
+          </p>
+          <p className="t-eyebrow text-[#80827f]">
+            {isToday ? (todaysSessionDone ? 'Sesión hecha' : 'Hoy') : 'Planificado'}
+          </p>
+        </div>
+        {isToday && !todaysSessionDone ? (
+          <Button
+            variant="coral"
+            size="sm"
+            onClick={onStart}
+            iconRight={<Icon.Play size={12} />}
+            dotColor="sunshine"
+          >
+            Empezar
+          </Button>
+        ) : null}
+      </div>
+      <ul className="flex flex-col gap-1.5">
+        {list.map((entry, idx) => {
+          const primary = MUSCLES[entry.exercise.primaryMuscle];
+          return (
+            <li key={entry.exercise.id}>
+              <button
+                type="button"
+                onClick={() => onExerciseClick(entry.exercise)}
+                className="flex w-full items-center gap-3 rounded-[20px] border border-transparent p-2 text-left transition-colors hover:border-[#2c2e2a]/10 hover:bg-[#f5f1e4]"
+              >
+                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#2c2e2a]/8 text-[11px] font-semibold text-[#2c2e2a]">
+                  {idx + 1}
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-[14px] font-medium text-[#2c2e2a]">{entry.exercise.name}</p>
+                  <p className="t-eyebrow text-[#80827f]">
+                    {primary.label} · {entry.sets}×{entry.reps}
+                  </p>
+                </div>
+                <Icon.ChevronRight size={12} className="shrink-0 text-[#80827f]" />
+              </button>
+            </li>
+          );
+        })}
+      </ul>
+    </div>
   );
 }
