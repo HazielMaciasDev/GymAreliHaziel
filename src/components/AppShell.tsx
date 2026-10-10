@@ -95,26 +95,33 @@ export function AppShell({ children }: { children: ReactNode }) {
         className="fixed bottom-[max(12px,env(safe-area-inset-bottom,0px))] left-3 right-3 z-30 md:hidden"
         aria-label="Navegación inferior"
       >
-        <ul className="mx-auto flex h-16 max-w-[480px] items-stretch gap-0.5 rounded-full bg-white p-1.5">
+        <ul className="mx-auto flex h-16 max-w-[440px] items-stretch gap-1 rounded-full bg-white p-1.5 shadow-[0_2px_8px_rgba(44,46,42,0.06)]">
           {NAV_ITEMS.map((item) => {
             const active = pathname === item.path || pathname.startsWith(`${item.path}/`);
             const IconComp = Icon[item.icon];
             return (
-              <li key={item.path} className="flex-1">
+              <li key={item.path} className="min-w-0 flex-1">
                 <button
                   type="button"
                   onClick={() => router.push(item.path)}
                   className={classNames(
-                    'flex h-full w-full flex-col items-center justify-center gap-0.5 rounded-full transition-colors',
+                    'flex h-full w-full flex-col items-center justify-center gap-1 rounded-full px-1 transition-colors',
                     active
-                      ? 'text-[#2c2e2a] font-bold'
-                      : 'text-[#2c2e2a]/55 font-medium hover:text-[#2c2e2a]',
+                      ? 'bg-[#f5f1e4] text-[#2c2e2a]'
+                      : 'text-[#2c2e2a]/55 hover:text-[#2c2e2a]',
                   )}
                   aria-current={active ? 'page' : undefined}
                   aria-label={item.label}
                 >
                   <IconComp size={20} strokeWidth={active ? 2.2 : 1.7} />
-                  <span className="text-[9px] leading-none">{item.label}</span>
+                  <span
+                    className={classNames(
+                      'w-full truncate text-center text-[10px] leading-none',
+                      active ? 'font-bold' : 'font-medium',
+                    )}
+                  >
+                    {item.label}
+                  </span>
                 </button>
               </li>
             );

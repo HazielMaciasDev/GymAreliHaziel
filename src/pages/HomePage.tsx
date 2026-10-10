@@ -378,7 +378,7 @@ export function HomePage() {
         </section>
 
         {/* Quick links — letter stamp */}
-        <section className="mt-10 grid grid-cols-2 gap-3 md:mt-14 md:grid-cols-4 md:gap-4">
+        <section className="mt-10 grid grid-cols-1 gap-3 sm:grid-cols-2 md:mt-14 md:gap-4 lg:grid-cols-4">
           <NavTile
             letter="R"
             title="Rutina"
@@ -515,12 +515,12 @@ function NavTile({
     <button
       type="button"
       onClick={() => router.push(path)}
-      className="group relative flex items-center gap-4 overflow-hidden rounded-[50px] border-2 border-[#2c2e2a] bg-white p-4 text-left transition-transform hover:-translate-y-1 md:p-5"
+      className="group relative flex items-center gap-3 overflow-hidden rounded-[50px] border-2 border-[#2c2e2a] bg-white p-3 text-left transition-transform hover:-translate-y-1 sm:gap-4 sm:p-3.5 md:p-4 lg:p-5"
     >
       <span
         aria-hidden
         className={classNames(
-          'absolute -right-2 -top-3 select-none t-display leading-none',
+          'absolute -right-2 -top-3 hidden select-none t-display leading-none lg:block',
           letterShadow,
         )}
       >
@@ -528,20 +528,29 @@ function NavTile({
       </span>
       <span
         className={classNames(
-          'flex h-16 w-16 shrink-0 items-center justify-center rounded-full md:h-20 md:w-20',
+          'flex h-12 w-12 shrink-0 items-center justify-center rounded-full text-[18px] font-medium sm:h-14 sm:w-14 md:h-16 md:w-16 md:text-[24px] lg:h-20 lg:w-20',
           letterBg,
           letterColor,
         )}
       >
-        <span className="t-display leading-none">{letter}</span>
+        <span className="leading-none">{letter}</span>
       </span>
       <div className="relative min-w-0 flex-1">
-        <p className="t-subheading text-[#2c2e2a]">{title}</p>
-        <p className="mt-1 t-body-sm text-[#80827f]">{description}</p>
+        <p className="truncate text-[16px] font-semibold leading-tight text-[#2c2e2a] sm:text-[18px] md:text-[19px] lg:text-[20px]">
+          {title}
+        </p>
+        <p className="mt-0.5 truncate text-[12px] text-[#80827f] sm:text-[13px] sm:mt-1 md:text-[14px] lg:text-[15px]">
+          {description}
+        </p>
       </div>
-      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border-2 border-[#2c2e2a] transition-colors group-hover:bg-[#2c2e2a] group-hover:text-[#f5f1e4]">
+      <span className="hidden h-8 w-8 shrink-0 items-center justify-center rounded-full border-2 border-[#2c2e2a] transition-colors group-hover:bg-[#2c2e2a] group-hover:text-[#f5f1e4] sm:flex sm:h-9 sm:w-9 md:h-10 md:w-10">
         <Icon.ChevronRight size={14} />
       </span>
+      <Icon.ChevronRight
+        size={16}
+        className="shrink-0 text-[#80827f] sm:hidden"
+        aria-hidden
+      />
     </button>
   );
 }
