@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   DndContext,
   PointerSensor,
+  TouchSensor,
   useSensor,
   useSensors,
   type DragEndEvent,
@@ -89,7 +90,12 @@ export function RoutinePage() {
   const [error, setError] = useState<string | null>(null);
   const [paletteOpen, setPaletteOpen] = useState<number | null>(null);
 
-  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
+    useSensor(TouchSensor, {
+      activationConstraint: { delay: 200, tolerance: 8 },
+    }),
+  );
 
   const loadEntries = useCallback(async () => {
     if (!profile) return;
@@ -523,6 +529,8 @@ export function RoutinePage() {
             onPick={(exId) => onAddFromPalette(paletteOpen, exId)}
             onPreview={setSelectedExercise}
             onClose={() => setPaletteOpen(null)}
+            onChangeDay={setPaletteOpen}
+            todayIndex={todayIndex}
           />
         ) : null}
       </DndContext>
@@ -547,6 +555,12 @@ function DayCardMobile({
   onRemove: (id: string) => void;
   onSelectExercise: (ex: Exercise) => void;
 }) {
+  const { setNodeRef, isOver } = useDroppable({
+    id: `day-${day.id}`,
+    data: { type: 'day', dayOfWeek: day.id },
+    disabled: isRest,
+  });
+
   if (isRest) {
     return (
       <div className="rounded-[50px] border-2 border-dashed border-[#2c2e2a]/15 bg-white p-5">
@@ -571,9 +585,11 @@ function DayCardMobile({
 
   return (
     <div
+      ref={setNodeRef}
       className={classNames(
         'rounded-[50px] border-2 bg-white p-5 transition-colors',
         isToday ? 'border-[#2c2e2a]' : 'border-[#2c2e2a]/10',
+        isOver && 'border-[#8ed462] bg-[#8ed462]/10',
       )}
     >
       <div className="mb-4 flex items-center justify-between">
@@ -600,9 +616,9 @@ function DayCardMobile({
         <button
           type="button"
           onClick={onAdd}
-          className="flex w-full items-center justify-center gap-2 rounded-full border-2 border-dashed border-[#2c2e2a]/15 py-4 text-[14px] text-[#80827f] hover:border-[#2c2e2a]/40 hover:text-[#2c2e2a]"
+          className="flex w-full items-center justify-center gap-2 rounded-full bg-[#f5e211] py-4 text-[14px] font-semibold text-[#2c2e2a] transition-transform hover:scale-[1.01] active:scale-[0.99]"
         >
-          <Icon.Plus size={14} />
+          <Icon.Plus size={16} />
           Sumar ejercicio
         </button>
       ) : (
@@ -611,45 +627,13 @@ function DayCardMobile({
             const ex = EXERCISES.find((e) => e.id === entry.exercise_id);
             if (!ex) return null;
             return (
-              <li
+              <DraggableDayEntry
                 key={entry.id}
-                className="group flex items-center gap-3 overflow-hidden rounded-[24px] border border-[#2c2e2a]/10 bg-white p-1.5"
-              >
-                <button
-                  type="button"
-                  onClick={() => onSelectExercise(ex)}
-                  className="relative h-14 w-14 shrink-0 overflow-hidden rounded-[18px] bg-[#f5f1e4]"
-                >
-                  <ExerciseMedia
-                    src={ex.gifPath}
-                    alt={ex.name}
-                    className="h-full w-full object-cover"
-                    loading="lazy"
-                    onError={(e) => {
-                      (e.currentTarget as HTMLElement).style.opacity = '0.2';
-                    }}
-                  />
-                  <span className="absolute left-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-white text-[10px] font-semibold text-[#2c2e2a]">
-                    {entry.position + 1}
-                  </span>
-                </button>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-[14px] font-semibold leading-tight text-[#2c2e2a]">
-                    {ex.name}
-                  </p>
-                  <p className="mt-0.5 t-eyebrow text-[#80827f]">
-                    {MUSCLES[ex.primaryMuscle].label} · {entry.default_sets}×{entry.default_reps}
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => onRemove(entry.id)}
-                  className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[#80827f] hover:bg-[#ff705d]/10 hover:text-[#ff705d]"
-                  aria-label="Quitar"
-                >
-                  <Icon.Trash size={14} />
-                </button>
-              </li>
+                entry={entry}
+                exercise={ex}
+                onRemove={onRemove}
+                onSelectExercise={onSelectExercise}
+              />
             );
           })}
           <li>
@@ -665,6 +649,78 @@ function DayCardMobile({
         </ul>
       )}
     </div>
+  );
+}
+
+function DraggableDayEntry({
+  entry,
+  exercise,
+  onRemove,
+  onSelectExercise,
+}: {
+  entry: WeeklyRoutineEntry;
+  exercise: Exercise;
+  onRemove: (id: string) => void;
+  onSelectExercise: (ex: Exercise) => void;
+}) {
+  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
+    id: entry.id,
+    data: { type: 'routine', entry },
+  });
+  const style = {
+    transform: transform ? `translate3d(${transform.x}px, ${transform.y}px, 0)` : undefined,
+    opacity: isDragging ? 0.4 : 1,
+  };
+  return (
+    <li
+      ref={setNodeRef}
+      style={style}
+      className="group flex items-center gap-3 overflow-hidden rounded-[24px] border border-[#2c2e2a]/10 bg-white p-1.5"
+    >
+      <button
+        type="button"
+        {...attributes}
+        {...listeners}
+        className="ml-1 shrink-0 cursor-grab touch-none text-[#80827f] hover:text-[#2c2e2a] active:cursor-grabbing"
+        aria-label="Reordenar"
+      >
+        <Icon.Drag size={14} />
+      </button>
+      <button
+        type="button"
+        onClick={() => onSelectExercise(exercise)}
+        className="relative h-14 w-14 shrink-0 overflow-hidden rounded-[18px] bg-[#f5f1e4]"
+      >
+        <ExerciseMedia
+          src={exercise.gifPath}
+          alt={exercise.name}
+          className="h-full w-full object-cover"
+          loading="lazy"
+          onError={(e) => {
+            (e.currentTarget as HTMLElement).style.opacity = '0.2';
+          }}
+        />
+        <span className="absolute left-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-white text-[10px] font-semibold text-[#2c2e2a]">
+          {entry.position + 1}
+        </span>
+      </button>
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-[14px] font-semibold leading-tight text-[#2c2e2a]">
+          {exercise.name}
+        </p>
+        <p className="mt-0.5 t-eyebrow text-[#80827f]">
+          {MUSCLES[exercise.primaryMuscle].label} · {entry.default_sets}×{entry.default_reps}
+        </p>
+      </div>
+      <button
+        type="button"
+        onClick={() => onRemove(entry.id)}
+        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[#80827f] hover:bg-[#ff705d]/10 hover:text-[#ff705d]"
+        aria-label="Quitar"
+      >
+        <Icon.Trash size={14} />
+      </button>
+    </li>
   );
 }
 
@@ -961,6 +1017,8 @@ function PaletteSheet({
   onPick,
   onPreview,
   onClose,
+  onChangeDay,
+  todayIndex,
 }: {
   dayId: number;
   exercises: Exercise[];
@@ -968,9 +1026,16 @@ function PaletteSheet({
   onPick: (id: string) => void;
   onPreview: (ex: Exercise) => void;
   onClose: () => void;
+  onChangeDay?: (dayId: number) => void;
+  todayIndex?: number;
 }) {
   const [query, setQuery] = useState('');
   const day = DAYS_OF_WEEK[dayId];
+
+  const activeDays = useMemo(
+    () => DAYS_OF_WEEK.filter((d) => !isRestDay(d.id)),
+    [],
+  );
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -1010,6 +1075,39 @@ function PaletteSheet({
             <Icon.Close size={16} />
           </button>
         </div>
+        {onChangeDay ? (
+          <div className="border-b-2 border-[#2c2e2a]/10 px-4 py-3">
+            <div className="mb-2 flex items-center justify-between">
+              <span className="t-eyebrow text-[#80827f]">Cambiar día</span>
+              <span className="t-eyebrow text-[#2c2e2a]">{day.short}</span>
+            </div>
+            <div className="flex gap-1.5">
+              {activeDays.map((d) => {
+                const isActive = d.id === dayId;
+                const isToday = todayIndex === d.id;
+                return (
+                  <button
+                    key={d.id}
+                    type="button"
+                    onClick={() => onChangeDay(d.id)}
+                    aria-pressed={isActive}
+                    className={classNames(
+                      'flex flex-1 items-center justify-center rounded-full py-2 text-[12px] font-semibold transition-colors min-h-[44px]',
+                      isActive
+                        ? 'bg-[#2c2e2a] text-[#f5f1e4]'
+                        : 'bg-white text-[#2c2e2a] hover:bg-[#e0dbce]',
+                    )}
+                  >
+                    {d.short.charAt(0)}
+                    {isToday && !isActive ? (
+                      <span className="ml-1 h-1.5 w-1.5 rounded-full bg-[#f5e211]" />
+                    ) : null}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        ) : null}
         <div className="border-b-2 border-[#2c2e2a]/10 p-4">
           <Input
             placeholder="Buscar…"
@@ -1039,39 +1137,12 @@ function PaletteSheet({
                     <p className="px-3 pb-1.5 t-eyebrow text-[#80827f]">{m.label}</p>
                     <ul className="flex flex-col">
                       {group.map((ex) => (
-                        <li key={ex.id}>
-                          <div className="flex items-center gap-2 rounded-full bg-white p-1 pl-4">
-                            <button
-                              type="button"
-                              onClick={() => onPick(ex.id)}
-                              className="min-w-0 flex-1 py-2 text-left"
-                              aria-label={`Sumar ${ex.name} a la rutina`}
-                            >
-                              <p className="truncate text-[15px] font-medium text-[#2c2e2a]">
-                                {ex.name}
-                              </p>
-                              <p className="truncate text-[12px] text-[#80827f]">
-                                {ex.equipment}
-                              </p>
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => onPreview(ex)}
-                              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#f5f1e4] text-[#2c2e2a] hover:bg-[#e0dbce]"
-                              aria-label={`Ver vista previa de ${ex.name}`}
-                            >
-                              <Icon.Eye size={16} />
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => onPick(ex.id)}
-                              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#8ed462] text-[#2c2e2a] hover:bg-[#7dc452]"
-                              aria-label={`Sumar ${ex.name} a la rutina`}
-                            >
-                              <Icon.Plus size={18} />
-                            </button>
-                          </div>
-                        </li>
+                        <DraggablePaletteItem
+                          key={ex.id}
+                          exercise={ex}
+                          onPick={() => onPick(ex.id)}
+                          onPreview={() => onPreview(ex)}
+                        />
                       ))}
                     </ul>
                   </li>
@@ -1082,5 +1153,64 @@ function PaletteSheet({
         </div>
       </div>
     </div>
+  );
+}
+
+function DraggablePaletteItem({
+  exercise,
+  onPick,
+  onPreview,
+}: {
+  exercise: Exercise;
+  onPick: () => void;
+  onPreview: () => void;
+}) {
+  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
+    id: `palette-${exercise.id}`,
+    data: { type: 'palette', exerciseId: exercise.id },
+  });
+  const style = {
+    transform: transform ? `translate3d(${transform.x}px, ${transform.y}px, 0)` : undefined,
+    opacity: isDragging ? 0.4 : 1,
+  };
+  return (
+    <li ref={setNodeRef} style={style}>
+      <div className="flex items-center gap-2 rounded-full bg-white p-1 pl-4">
+        <button
+          type="button"
+          {...attributes}
+          {...listeners}
+          className="flex h-11 w-6 shrink-0 cursor-grab touch-none items-center justify-center text-[#80827f] hover:text-[#2c2e2a] active:cursor-grabbing"
+          aria-label={`Arrastrar ${exercise.name}`}
+        >
+          <Icon.Drag size={12} />
+        </button>
+        <button
+          type="button"
+          onClick={onPick}
+          className="min-w-0 flex-1 py-2 text-left"
+          aria-label={`Sumar ${exercise.name} a la rutina`}
+        >
+          <p className="truncate text-[15px] font-medium text-[#2c2e2a]">{exercise.name}</p>
+          <p className="truncate text-[12px] text-[#80827f]">{exercise.equipment}</p>
+        </button>
+        <button
+          type="button"
+          onClick={onPreview}
+          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#f5f1e4] text-[#2c2e2a] hover:bg-[#e0dbce]"
+          aria-label={`Ver vista previa de ${exercise.name}`}
+        >
+          <Icon.Eye size={16} />
+        </button>
+        <button
+          type="button"
+          onClick={onPick}
+          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#8ed462] text-[#2c2e2a] hover:bg-[#7dc452]"
+          aria-label={`Sumar ${exercise.name} a la rutina`}
+        >
+          <Icon.Plus size={18} />
+        </button>
+      </div>
+    </li>
   );
 }
