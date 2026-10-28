@@ -31,13 +31,13 @@ function exerciseById(id: string): Exercise | undefined {
 export function HomePage() {
   const router = useRouter();
   const { profile } = useProfile();
-  const [todayEntries, setTodayEntries] = useState<{ exerciseId: string; sets: number; reps: number }[]>([]);
+  const [todayEntries, setTodayEntries] = useState<{ exerciseId: string; sets: number; reps: number; weightKg: number | null }[]>([]);
   const [weekIso, setWeekIso] = useState<string[]>([]);
   const [planned, setPlanned] = useState(0);
   const [doneIso, setDoneIso] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [selectedWeekDay, setSelectedWeekDay] = useState<number>(() => dayOfWeekFromDate(new Date()));
-  const [weekEntries, setWeekEntries] = useState<{ exerciseId: string; sets: number; reps: number }[]>([]);
+  const [weekEntries, setWeekEntries] = useState<{ exerciseId: string; sets: number; reps: number; weightKg: number | null }[]>([]);
   const [weekLoading, setWeekLoading] = useState(false);
   const [selectedExercise, setSelectedExercise] = useState<Exercise | null>(null);
 
@@ -56,7 +56,12 @@ export function HomePage() {
         const todayList = routine
           .filter((r) => r.day_of_week === todayDow)
           .sort((a, b) => a.position - b.position)
-          .map((r) => ({ exerciseId: r.exercise_id, sets: r.default_sets, reps: r.default_reps }));
+          .map((r) => ({
+            exerciseId: r.exercise_id,
+            sets: r.default_sets,
+            reps: r.default_reps,
+            weightKg: r.default_weight_kg ?? null,
+          }));
         if (!cancelled) setTodayEntries(todayList);
 
         const ws = new Date(today);
@@ -98,7 +103,12 @@ export function HomePage() {
         const list = routine
           .filter((r) => r.day_of_week === selectedWeekDay)
           .sort((a, b) => a.position - b.position)
-          .map((r) => ({ exerciseId: r.exercise_id, sets: r.default_sets, reps: r.default_reps }));
+          .map((r) => ({
+            exerciseId: r.exercise_id,
+            sets: r.default_sets,
+            reps: r.default_reps,
+            weightKg: r.default_weight_kg ?? null,
+          }));
         if (!cancelled) {
           setWeekEntries(list);
         }
@@ -128,7 +138,12 @@ export function HomePage() {
         const todayList = routine
           .filter((r) => r.day_of_week === todayDow)
           .sort((a, b) => a.position - b.position)
-          .map((r) => ({ exerciseId: r.exercise_id, sets: r.default_sets, reps: r.default_reps }));
+          .map((r) => ({
+            exerciseId: r.exercise_id,
+            sets: r.default_sets,
+            reps: r.default_reps,
+            weightKg: r.default_weight_kg ?? null,
+          }));
         if (!cancelled) setTodayEntries(todayList);
 
         const ws = new Date(today);
@@ -167,7 +182,7 @@ export function HomePage() {
   const todayMeta = DAYS_OF_WEEK[todayDow];
   const todayExercises = todayEntries
     .map((t) => ({ ...t, exercise: exerciseById(t.exerciseId) }))
-    .filter((e): e is { exerciseId: string; sets: number; reps: number; exercise: Exercise } => Boolean(e.exercise));
+    .filter((e): e is { exerciseId: string; sets: number; reps: number; weightKg: number | null; exercise: Exercise } => Boolean(e.exercise));
 
   const weekDone = weekIso.filter((iso) => doneIso.has(iso)).length;
   const todaysSessionDone = doneIso.has(toIsoDate(today));
@@ -270,6 +285,7 @@ export function HomePage() {
                   exercise={todayExercises[0].exercise}
                   sets={todayExercises[0].sets}
                   reps={todayExercises[0].reps}
+                  weightKg={todayExercises[0].weightKg}
                   total={todayExercises.length}
                   onStart={() => router.push('/routine/active')}
                 />
@@ -290,6 +306,7 @@ export function HomePage() {
                           exercise={entry.exercise}
                           sets={entry.sets}
                           reps={entry.reps}
+                          weightKg={entry.weightKg}
                           position={idx + 2}
                         />
                       </button>
@@ -560,12 +577,14 @@ function FirstExerciseCard({
   sets,
   reps,
   total,
+  weightKg,
   onStart,
 }: {
   exercise: Exercise;
   sets: number;
   reps: number;
   total: number;
+  weightKg?: number | null;
   onStart: () => void;
 }) {
   const primary = MUSCLES[exercise.primaryMuscle];
@@ -616,6 +635,12 @@ function FirstExerciseCard({
 
         <div className="absolute right-4 top-4 inline-flex items-center gap-1.5 rounded-full bg-[#2c2e2a] px-3 py-1.5 text-[12px] font-semibold tabular-nums text-[#f5f1e4]">
           {sets}<span className="opacity-50">×</span>{reps}
+          {weightKg ? (
+            <>
+              <span className="opacity-50">·</span>
+              {weightKg}kg
+            </>
+          ) : null}
         </div>
 
         <div className="absolute inset-x-0 bottom-0 px-4 pb-4 md:px-6 md:pb-5">
@@ -682,7 +707,7 @@ function WeekDayPanel({
   dayId: number;
   isToday: boolean;
   isRest: boolean;
-  entries: { exerciseId: string; sets: number; reps: number }[];
+  entries: { exerciseId: string; sets: number; reps: number; weightKg: number | null }[];
   todaysSessionDone: boolean;
   loading: boolean;
   onStart: () => void;
@@ -709,7 +734,7 @@ function WeekDayPanel({
 
   const list = entries
     .map((e) => ({ ...e, exercise: exerciseById(e.exerciseId) }))
-    .filter((x): x is { exerciseId: string; sets: number; reps: number; exercise: Exercise } => Boolean(x.exercise));
+    .filter((x): x is { exerciseId: string; sets: number; reps: number; weightKg: number | null; exercise: Exercise } => Boolean(x.exercise));
 
   if (loading) {
     return (
@@ -780,6 +805,7 @@ function WeekDayPanel({
                   <p className="truncate text-[14px] font-medium text-[#2c2e2a]">{entry.exercise.name}</p>
                   <p className="t-eyebrow text-[#80827f]">
                     {primary.label} · {entry.sets}×{entry.reps}
+                    {entry.weightKg ? ` · ${entry.weightKg} kg` : ''}
                   </p>
                 </div>
                 <Icon.ChevronRight size={12} className="shrink-0 text-[#80827f]" />

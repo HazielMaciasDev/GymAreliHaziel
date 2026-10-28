@@ -87,6 +87,7 @@ export async function addExerciseLog(
   position: number,
   plannedSets: number,
   plannedReps: number,
+  plannedWeightKg: number | null = null,
 ): Promise<{ exerciseLog: ExerciseLogRecord; setLogs: SetLogRecord[] }> {
   const { data: log, error: logErr } = await db()
     .from('exercise_logs')
@@ -98,7 +99,7 @@ export async function addExerciseLog(
     exercise_log_id: log.id,
     set_number: i + 1,
     reps: plannedReps,
-    weight_kg: null,
+    weight_kg: plannedWeightKg,
     completed: false,
   }));
   const { data: sets, error: setErr } = await db()
@@ -139,6 +140,45 @@ export async function updateSetLog(
   if (error) throw error;
 }
 
+/** Agrega una serie a un ejercicio a mitad de sesión. */
+export async function addSetLog(
+  exerciseLogId: string,
+  setNumber: number,
+  reps: number | null,
+  weightKg: number | null,
+): Promise<SetLogRecord> {
+  const { data, error } = await db()
+    .from('set_logs')
+    .insert({
+      exercise_log_id: exerciseLogId,
+      set_number: setNumber,
+      reps,
+      weight_kg: weightKg,
+      completed: false,
+    })
+    .select()
+    .single();
+  if (error) throw error;
+  return data as SetLogRecord;
+}
+
+/** Quita una serie (normalmente la última de la ronda). */
+export async function deleteSetLog(setId: string): Promise<void> {
+  const { error } = await db().from('set_logs').delete().eq('id', setId);
+  if (error) throw error;
+}
+
+/** Reordena los ejercicios de la sesión a mitad de rutina. */
+export async function reorderExerciseLogs(orderedIds: string[]): Promise<void> {
+  for (let i = 0; i < orderedIds.length; i++) {
+    const { error } = await db()
+      .from('exercise_logs')
+      .update({ position: i })
+      .eq('id', orderedIds[i]);
+    if (error) throw error;
+  }
+}
+
 export async function updateExerciseNotes(logId: string, notes: string): Promise<void> {
   const { error } = await db().from('exercise_logs').update({ notes }).eq('id', logId);
   if (error) throw error;
@@ -153,4 +193,48 @@ export async function listSessions(profile: ProfileId, limit = 50): Promise<Sess
     .limit(limit);
   if (error) throw error;
   return (data ?? []) as SessionRecord[];
+}
+
+export interface LastPerformance {
+  reps: number | null;
+  weightKg: number | null;
+  date: string;
+}
+
+/**
+ * Último registro de un ejercicio (para prellenar la planeación con lo que
+ * ya se había hecho la vez anterior).
+ */
+export async function fetchLastPerformance(
+  profile: ProfileId,
+  exerciseId: string,
+): Promise<LastPerformance | null> {
+  const { data: logs, error } = await db()
+    .from('exercise_logs')
+    .select('id, sessions!inner(profile_id, routine_date)')
+    .eq('exercise_id', exerciseId)
+    .eq('sessions.profile_id', profile)
+    .order('sessions.routine_date', { ascending: false })
+    .limit(1);
+  if (error) throw error;
+
+  const logList = logs ?? [];
+  if (logList.length === 0) return null;
+  const log = logList[0] as unknown as { id: string; sessions: { routine_date: string } };
+
+  const { data: sets, error: sErr } = await db()
+    .from('set_logs')
+    .select('weight_kg, reps, completed')
+    .eq('exercise_log_id', log.id)
+    .eq('completed', true)
+    .order('set_number', { ascending: true })
+    .limit(1);
+  if (sErr) throw sErr;
+
+  const set = (sets ?? [])[0] as { weight_kg: number | null; reps: number | null } | undefined;
+  return {
+    reps: set?.reps ?? null,
+    weightKg: set?.weight_kg ?? null,
+    date: log.sessions?.routine_date ?? '',
+  };
 }

@@ -24,7 +24,8 @@ import { Icon } from '@/components/Icon';
 import { Illustration, Sparkle } from '@/components/Illustration';
 import { ExerciseMedia } from '@/components/ExerciseMedia';
 import { ExerciseDetailModal } from '@/components/ExerciseDetailModal';
-import { fetchWeeklyRoutine, addExerciseToDay, removeFromRoutine, moveExercise, type WeeklyRoutineEntry } from '@/lib/weekly-routine';
+import { fetchWeeklyRoutine, addExerciseToDay, removeFromRoutine, moveExercise, updateEntryPlan, updateDaySets, daySets, type EntryPlan, type WeeklyRoutineEntry } from '@/lib/weekly-routine';
+import { fetchLastPerformance } from '@/lib/sessions';
 import { EXERCISES } from '@/data/exercises';
 import type { Exercise, MuscleGroup } from '@/types';
 import {
@@ -51,7 +52,7 @@ const PALETTE_GROUPS: { label: string; muscles: MuscleGroup[] }[] = [
 ];
 
 function routineCacheKey(profile: string): string {
-  return `gym.routine.${profile}.v1`;
+  return `gym.routine.${profile}.v2`;
 }
 
 function loadCachedRoutine(profile: string): WeeklyRoutineEntry[] | null {
@@ -80,6 +81,35 @@ function makeTempId(): string {
   return `temp-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
+/** "3×10 · 20 kg" — el peso solo aparece si está planificado. */
+function planLabel(entry: WeeklyRoutineEntry): string {
+  const base = `${entry.default_sets}×${entry.default_reps}`;
+  const weight = entry.default_weight_kg;
+  if (weight === null || weight === undefined) return base;
+  return `${base} · ${weight} kg`;
+}
+
+type PlanTarget =
+  | {
+      mode: 'edit';
+      entryId: string;
+      exerciseId: string;
+      exerciseName: string;
+      day: number;
+      sets: number;
+      reps: number;
+      weightKg: number | null;
+    }
+  | {
+      mode: 'add';
+      exerciseId: string;
+      exerciseName: string;
+      day: number;
+      sets: number;
+      reps: number;
+      weightKg: number | null;
+    };
+
 export function RoutinePage() {
   const router = useRouter();
   const { profile } = useProfile();
@@ -89,6 +119,9 @@ export function RoutinePage() {
   const [selectedExercise, setSelectedExercise] = useState<Exercise | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [paletteOpen, setPaletteOpen] = useState<number | null>(null);
+  const [planTarget, setPlanTarget] = useState<PlanTarget | null>(null);
+  const [planSaving, setPlanSaving] = useState(false);
+  const [preparingPlan, setPreparingPlan] = useState(false);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
@@ -161,52 +194,7 @@ export function RoutinePage() {
     if (activeData?.type === 'palette') {
       const exerciseId = activeData.exerciseId;
       if (!exerciseId || overData?.type !== 'day' || typeof overData.dayOfWeek !== 'number') return;
-      const day = overData.dayOfWeek;
-      if (isRestDay(day)) {
-        setError('Sábado y domingo son de descanso.');
-        setTimeout(() => setError(null), 2400);
-        return;
-      }
-      if (takenByDay.get(day)?.has(exerciseId)) {
-        setError('Ese ejercicio ya está en este día.');
-        setTimeout(() => setError(null), 2400);
-        return;
-      }
-      const existingForDay = entries.filter((e) => e.day_of_week === day);
-      const nextPosition = existingForDay.length;
-      const tempId = makeTempId();
-      const optimistic: WeeklyRoutineEntry = {
-        id: tempId,
-        profile_id: profile,
-        day_of_week: day,
-        exercise_id: exerciseId,
-        position: nextPosition,
-        default_sets: 3,
-        default_reps: 10,
-      };
-      setEntries((prev) => {
-        const next = [...prev, optimistic];
-        saveCachedRoutine(profile, next);
-        return next;
-      });
-      (async () => {
-        try {
-          const created = await addExerciseToDay(profile, day, exerciseId, 3, 10, nextPosition);
-          setEntries((prev) => {
-            const next = prev.map((e) => (e.id === tempId ? created : e));
-            saveCachedRoutine(profile, next);
-            return next;
-          });
-        } catch (err) {
-          console.error(err);
-          setEntries((prev) => {
-            const next = prev.filter((e) => e.id !== tempId);
-            saveCachedRoutine(profile, next);
-            return next;
-          });
-          setError('No se pudo agregar el ejercicio.');
-        }
-      })();
+      await openPlanForNew(overData.dayOfWeek, exerciseId);
       return;
     }
 
@@ -296,8 +284,24 @@ export function RoutinePage() {
     })();
   };
 
-  const onAddFromPalette = (day: number, exerciseId: string) => {
-    if (!profile) return;
+  const openPlanForEntry = (entry: WeeklyRoutineEntry) => {
+    const ex = EXERCISES.find((e) => e.id === entry.exercise_id);
+    if (!ex) return;
+    setPlanTarget({
+      mode: 'edit',
+      entryId: entry.id,
+      exerciseId: entry.exercise_id,
+      exerciseName: ex.name,
+      day: entry.day_of_week,
+      sets: entry.default_sets,
+      reps: entry.default_reps,
+      weightKg: entry.default_weight_kg ?? null,
+    });
+  };
+
+  /** Al sumar un ejercicio se planea primero (series, reps y peso) y luego se guarda. */
+  const openPlanForNew = async (day: number, exerciseId: string) => {
+    if (!profile || preparingPlan) return;
     if (isRestDay(day)) {
       setError('Sábado y domingo son de descanso.');
       setTimeout(() => setError(null), 2400);
@@ -309,34 +313,99 @@ export function RoutinePage() {
       return;
     }
     setPaletteOpen(null);
+    setPreparingPlan(true);
+    try {
+      const ex = EXERCISES.find((e) => e.id === exerciseId);
+      const last = await fetchLastPerformance(profile, exerciseId).catch(() => null);
+      setPlanTarget({
+        mode: 'add',
+        exerciseId,
+        exerciseName: ex?.name ?? exerciseId,
+        day,
+        sets: daySets(entries, day),
+        reps: last?.reps ?? 10,
+        weightKg: last?.weightKg ?? null,
+      });
+    } finally {
+      setPreparingPlan(false);
+    }
+  };
 
-    const existingForDay = entries.filter((e) => e.day_of_week === day);
-    const nextPosition = existingForDay.length;
-    const tempId = makeTempId();
-    const optimistic: WeeklyRoutineEntry = {
-      id: tempId,
-      profile_id: profile,
-      day_of_week: day,
-      exercise_id: exerciseId,
-      position: nextPosition,
-      default_sets: 3,
-      default_reps: 10,
-    };
+  const savePlan = async (plan: EntryPlan) => {
+    if (!profile || !planTarget) return;
+    setPlanSaving(true);
+    const day = planTarget.day;
+    // Las series son iguales para todo el día: si cambian, se aplica al día entero.
+    const setsChanged = plan.sets !== daySets(entries, day);
+    try {
+      if (planTarget.mode === 'edit') {
+        if (setsChanged) {
+          setEntries((prev) => {
+            const next = prev.map((e) =>
+              e.day_of_week === day ? { ...e, default_sets: plan.sets } : e,
+            );
+            saveCachedRoutine(profile, next);
+            return next;
+          });
+          await updateDaySets(profile, day, plan.sets);
+        }
+        setEntries((prev) => {
+          const next = prev.map((e) =>
+            e.id === planTarget.entryId
+              ? {
+                  ...e,
+                  default_sets: plan.sets,
+                  default_reps: plan.reps,
+                  default_weight_kg: plan.weightKg,
+                }
+              : e,
+          );
+          saveCachedRoutine(profile, next);
+          return next;
+        });
+        await updateEntryPlan(planTarget.entryId, {
+          sets: plan.sets,
+          reps: plan.reps,
+          weightKg: plan.weightKg,
+        });
+        setPlanTarget(null);
+        return;
+      }
 
-    setEntries((prev) => {
-      const next = [...prev, optimistic];
-      saveCachedRoutine(profile, next);
-      return next;
-    });
-
-    (async () => {
+      const existingForDay = entries.filter((e) => e.day_of_week === day);
+      const nextPosition = existingForDay.length;
+      const tempId = makeTempId();
+      const optimistic: WeeklyRoutineEntry = {
+        id: tempId,
+        profile_id: profile,
+        day_of_week: day,
+        exercise_id: planTarget.exerciseId,
+        position: nextPosition,
+        default_sets: plan.sets,
+        default_reps: plan.reps,
+        default_weight_kg: plan.weightKg,
+      };
+      setEntries((prev) => {
+        const next = [...prev, optimistic];
+        saveCachedRoutine(profile, next);
+        return next;
+      });
       try {
-        const created = await addExerciseToDay(profile, day, exerciseId, 3, 10, nextPosition);
+        const created = await addExerciseToDay(
+          profile,
+          day,
+          planTarget.exerciseId,
+          plan,
+          nextPosition,
+        );
         setEntries((prev) => {
           const next = prev.map((e) => (e.id === tempId ? created : e));
           saveCachedRoutine(profile, next);
           return next;
         });
+        if (setsChanged) {
+          await updateDaySets(profile, day, plan.sets);
+        }
       } catch (err) {
         console.error(err);
         setEntries((prev) => {
@@ -345,8 +414,37 @@ export function RoutinePage() {
           return next;
         });
         setError('No se pudo agregar el ejercicio.');
+        return;
       }
-    })();
+      setPlanTarget(null);
+    } catch (err) {
+      console.error(err);
+      setError('No se pudo guardar la planeación.');
+    } finally {
+      setPlanSaving(false);
+    }
+  };
+
+  /** Las series son iguales para todas las entradas del día. */
+  const changeDaySets = async (day: number, delta: number) => {
+    if (!profile) return;
+    const current = daySets(entries, day);
+    const next = Math.min(10, Math.max(1, current + delta));
+    if (next === current) return;
+    setEntries((prev) => {
+      const nextEntries = prev.map((e) =>
+        e.day_of_week === day ? { ...e, default_sets: next } : e,
+      );
+      saveCachedRoutine(profile, nextEntries);
+      return nextEntries;
+    });
+    try {
+      await updateDaySets(profile, day, next);
+    } catch (err) {
+      console.error(err);
+      setError('No se pudo actualizar las series.');
+      loadEntries();
+    }
   };
 
   if (!profile) return null;
@@ -445,6 +543,8 @@ export function RoutinePage() {
                       onAdd={() => setPaletteOpen(d.id)}
                       onRemove={onRemoveEntry}
                       onSelectExercise={setSelectedExercise}
+                      onEditPlan={openPlanForEntry}
+                      onChangeSets={(delta) => changeDaySets(d.id, delta)}
                     />
                   );
                 })}
@@ -455,7 +555,7 @@ export function RoutinePage() {
                 <div className="md:h-[calc(100dvh-10rem)] md:sticky md:top-[6.5rem]">
                   <PalettePanel
                     exercises={profileExercises}
-                    onPick={(exId) => onAddFromPalette(todayIndex, exId)}
+                    onPick={(exId) => openPlanForNew(todayIndex, exId)}
                     onPreview={setSelectedExercise}
                   />
                 </div>
@@ -495,6 +595,8 @@ export function RoutinePage() {
                             entries={dayEntries}
                             onRemove={onRemoveEntry}
                             onSelectExercise={setSelectedExercise}
+                            onEditPlan={openPlanForEntry}
+                            onChangeSets={(delta) => changeDaySets(d.id, delta)}
                           />
                         </div>
                       );
@@ -526,11 +628,20 @@ export function RoutinePage() {
             dayId={paletteOpen}
             exercises={profileExercises}
             takenIds={takenByDay.get(paletteOpen) ?? new Set()}
-            onPick={(exId) => onAddFromPalette(paletteOpen, exId)}
+            onPick={(exId) => openPlanForNew(paletteOpen, exId)}
             onPreview={setSelectedExercise}
             onClose={() => setPaletteOpen(null)}
             onChangeDay={setPaletteOpen}
             todayIndex={todayIndex}
+          />
+        ) : null}
+
+        {planTarget ? (
+          <PlanSheet
+            target={planTarget}
+            saving={planSaving}
+            onClose={() => !planSaving && setPlanTarget(null)}
+            onSave={savePlan}
           />
         ) : null}
       </DndContext>
@@ -546,6 +657,8 @@ function DayCardMobile({
   onAdd,
   onRemove,
   onSelectExercise,
+  onEditPlan,
+  onChangeSets,
 }: {
   day: { id: number; long: string; short: string };
   isToday: boolean;
@@ -554,6 +667,8 @@ function DayCardMobile({
   onAdd: () => void;
   onRemove: (id: string) => void;
   onSelectExercise: (ex: Exercise) => void;
+  onEditPlan: (entry: WeeklyRoutineEntry) => void;
+  onChangeSets: (delta: number) => void;
 }) {
   const { setNodeRef, isOver } = useDroppable({
     id: `day-${day.id}`,
@@ -592,7 +707,7 @@ function DayCardMobile({
         isOver && 'border-[#8ed462] bg-[#8ed462]/10',
       )}
     >
-      <div className="mb-4 flex items-center justify-between">
+      <div className="mb-4 flex items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <span
             className={classNames(
@@ -609,7 +724,16 @@ function DayCardMobile({
             </p>
           </div>
         </div>
-        {isToday ? <Tag tone="grass" size="sm">Hoy</Tag> : null}
+        <div className="flex items-center gap-2">
+          {entries.length > 0 ? (
+            <SetsStepper
+              value={daySets(entries, day.id)}
+              onChange={onChangeSets}
+              label={`Series de ${day.long}`}
+            />
+          ) : null}
+          {isToday ? <Tag tone="grass" size="sm">Hoy</Tag> : null}
+        </div>
       </div>
 
       {entries.length === 0 ? (
@@ -633,6 +757,7 @@ function DayCardMobile({
                 exercise={ex}
                 onRemove={onRemove}
                 onSelectExercise={onSelectExercise}
+                onEditPlan={onEditPlan}
               />
             );
           })}
@@ -657,11 +782,13 @@ function DraggableDayEntry({
   exercise,
   onRemove,
   onSelectExercise,
+  onEditPlan,
 }: {
   entry: WeeklyRoutineEntry;
   exercise: Exercise;
   onRemove: (id: string) => void;
   onSelectExercise: (ex: Exercise) => void;
+  onEditPlan: (entry: WeeklyRoutineEntry) => void;
 }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: entry.id,
@@ -708,9 +835,17 @@ function DraggableDayEntry({
         <p className="truncate text-[14px] font-semibold leading-tight text-[#2c2e2a]">
           {exercise.name}
         </p>
-        <p className="mt-0.5 t-eyebrow text-[#80827f]">
-          {MUSCLES[exercise.primaryMuscle].label} · {entry.default_sets}×{entry.default_reps}
-        </p>
+        <button
+          type="button"
+          onClick={() => onEditPlan(entry)}
+          className="mt-0.5 flex items-center gap-1.5 text-left t-eyebrow text-[#80827f] transition-colors hover:text-[#2c2e2a]"
+          aria-label={`Cambiar series, reps y peso de ${exercise.name}`}
+        >
+          <span className="truncate">{MUSCLES[exercise.primaryMuscle].label}</span>
+          <span aria-hidden>·</span>
+          <span className="shrink-0 tabular-nums">{planLabel(entry)}</span>
+          <Icon.Edit size={11} className="shrink-0" />
+        </button>
       </div>
       <button
         type="button"
@@ -731,6 +866,8 @@ function DesktopDayColumn({
   entries,
   onRemove,
   onSelectExercise,
+  onEditPlan,
+  onChangeSets,
 }: {
   dayId: number;
   isToday: boolean;
@@ -738,6 +875,8 @@ function DesktopDayColumn({
   entries: WeeklyRoutineEntry[];
   onRemove: (id: string) => void;
   onSelectExercise: (ex: Exercise) => void;
+  onEditPlan: (entry: WeeklyRoutineEntry) => void;
+  onChangeSets: (delta: number) => void;
 }) {
   const { setNodeRef, isOver } = useDroppable({
     id: `day-${dayId}`,
@@ -776,6 +915,7 @@ function DesktopDayColumn({
               exercise={ex}
               onRemove={onRemove}
               onSelectExercise={onSelectExercise}
+              onEditPlan={onEditPlan}
             />
           );
         })}
@@ -785,6 +925,16 @@ function DesktopDayColumn({
           </li>
         ) : null}
       </ul>
+      {entries.length > 0 ? (
+        <div className="mt-1 flex justify-center border-t border-[#2c2e2a]/10 pt-2">
+          <SetsStepper
+            value={daySets(entries, dayId)}
+            onChange={onChangeSets}
+            label="Series del día"
+            compact
+          />
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -794,11 +944,13 @@ function RoutineItem({
   exercise,
   onRemove,
   onSelectExercise,
+  onEditPlan,
 }: {
   entry: WeeklyRoutineEntry;
   exercise: Exercise | undefined;
   onRemove: (id: string) => void;
   onSelectExercise: (ex: Exercise) => void;
+  onEditPlan: (entry: WeeklyRoutineEntry) => void;
 }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: entry.id,
@@ -851,9 +1003,14 @@ function RoutineItem({
         <p className="truncate text-[11px] font-medium leading-[1.2] text-[#2c2e2a]">
           {exercise?.name ?? entry.exercise_id}
         </p>
-        <p className="mt-0.5 text-[9px] text-[#80827f]">
-          {entry.default_sets}×{entry.default_reps}
-        </p>
+      </button>
+      <button
+        type="button"
+        onClick={() => onEditPlan(entry)}
+        className="mr-1 shrink-0 rounded-full px-1.5 py-1 text-[9px] tabular-nums text-[#80827f] transition-colors hover:bg-[#f5f1e4] hover:text-[#2c2e2a]"
+        aria-label={`Cambiar series, reps y peso de ${exercise?.name ?? entry.exercise_id}`}
+      >
+        {planLabel(entry)}
       </button>
       <button
         type="button"
@@ -1212,5 +1369,252 @@ function DraggablePaletteItem({
         </button>
       </div>
     </li>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* Planeación: series, reps y peso                                     */
+/* ------------------------------------------------------------------ */
+
+function SetsStepper({
+  value,
+  onChange,
+  label,
+  compact,
+}: {
+  value: number;
+  onChange: (delta: number) => void;
+  label: string;
+  compact?: boolean;
+}) {
+  const btn = compact
+    ? 'flex h-7 w-7 items-center justify-center rounded-full text-[#2c2e2a] transition-colors hover:bg-white'
+    : 'flex h-9 w-9 items-center justify-center rounded-full bg-white text-[#2c2e2a] transition-colors hover:bg-[#e0dbce]';
+  return (
+    <div
+      className={classNames(
+        'flex items-center gap-1 rounded-full bg-[#f5f1e4] p-0.5',
+        compact ? 'text-[10px]' : 'text-[12px]',
+      )}
+    >
+      <button
+        type="button"
+        onClick={() => onChange(-1)}
+        className={btn}
+        aria-label={`Quitar una serie de ${label}`}
+      >
+        <Icon.Minus size={compact ? 11 : 13} />
+      </button>
+      <span
+        className={classNames(
+          'text-center font-semibold tabular-nums text-[#2c2e2a]',
+          compact ? 'min-w-[14px]' : 'min-w-[58px]',
+        )}
+      >
+        {value}
+        {compact ? '' : ' series'}
+      </span>
+      <button
+        type="button"
+        onClick={() => onChange(1)}
+        className={btn}
+        aria-label={`Agregar una serie a ${label}`}
+      >
+        <Icon.Plus size={compact ? 11 : 13} />
+      </button>
+    </div>
+  );
+}
+
+function PlanRow({
+  label,
+  value,
+  onChange,
+  step,
+  suffix,
+  placeholder,
+  min = 0,
+  max = 99,
+  allowEmpty,
+}: {
+  label: string;
+  value: string;
+  onChange: (next: string) => void;
+  step: number;
+  suffix: string;
+  placeholder: string;
+  min?: number;
+  max?: number;
+  allowEmpty?: boolean;
+}) {
+  const numeric = Number(value.replace(',', '.'));
+  const current = Number.isFinite(numeric) ? numeric : (allowEmpty ? 0 : min);
+
+  const bump = (delta: number) => {
+    const next = Math.min(max, Math.max(min, current + delta));
+    onChange(String(next));
+  };
+
+  return (
+    <div className="flex items-center justify-between gap-3 rounded-[24px] bg-white px-4 py-2.5">
+      <span className="t-eyebrow text-[#80827f]">{label}</span>
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          onClick={() => bump(-step)}
+          className="flex h-10 w-10 items-center justify-center rounded-full bg-[#f5f1e4] text-[#2c2e2a] transition-colors hover:bg-[#e0dbce]"
+          aria-label={`Quitar ${step} ${suffix}`}
+        >
+          <Icon.Minus size={14} />
+        </button>
+        <div className="relative w-[92px]">
+          <input
+            type="number"
+            inputMode="decimal"
+            step={step}
+            min={min}
+            max={max}
+            value={value}
+            placeholder={placeholder}
+            onChange={(e) => onChange(e.target.value)}
+            className="h-12 w-full rounded-full border-2 border-[#2c2e2a]/15 bg-white px-3 text-center text-[17px] font-semibold tabular-nums text-[#2c2e2a] outline-none transition-colors focus:border-[#2c2e2a]"
+            aria-label={label}
+          />
+        </div>
+        <button
+          type="button"
+          onClick={() => bump(step)}
+          className="flex h-10 w-10 items-center justify-center rounded-full bg-[#f5f1e4] text-[#2c2e2a] transition-colors hover:bg-[#e0dbce]"
+          aria-label={`Agregar ${step} ${suffix}`}
+        >
+          <Icon.Plus size={14} />
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function PlanSheet({
+  target,
+  saving,
+  onClose,
+  onSave,
+}: {
+  target: PlanTarget;
+  saving: boolean;
+  onClose: () => void;
+  onSave: (plan: EntryPlan) => void;
+}) {
+  const [sets, setSets] = useState(String(target.sets));
+  const [reps, setReps] = useState(String(target.reps));
+  const [weight, setWeight] = useState(
+    target.weightKg === null || target.weightKg === undefined ? '' : String(target.weightKg),
+  );
+  const dayMeta = DAYS_OF_WEEK[target.day];
+
+  const setsNum = Number(sets);
+  const repsNum = Number(reps);
+  const weightNum = weight.trim() === '' ? null : Number(weight.replace(',', '.'));
+  const weightValid = weightNum === null || (Number.isFinite(weightNum) && weightNum >= 0);
+  const valid =
+    Number.isFinite(setsNum) && setsNum >= 1 && setsNum <= 10 &&
+    Number.isFinite(repsNum) && repsNum >= 1 && repsNum <= 99 &&
+    weightValid;
+
+  const submit = () => {
+    if (!valid || saving) return;
+    onSave({
+      sets: Math.round(setsNum),
+      reps: Math.round(repsNum),
+      weightKg: weightNum === null ? null : weightNum,
+    });
+  };
+
+  return (
+    <div
+      className="fixed inset-0 z-[60] flex items-end justify-center bg-[#2c2e2a]/40 backdrop-blur-sm md:items-center md:p-6"
+      role="dialog"
+      aria-modal="true"
+      aria-label={`Planeación de ${target.exerciseName}`}
+      onClick={onClose}
+    >
+      <div
+        className="w-full max-w-md overflow-hidden rounded-t-[50px] bg-[#f5f1e4] md:rounded-[40px]"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-start justify-between gap-3 px-5 pt-5 pb-4">
+          <div className="min-w-0">
+            <span className="t-eyebrow text-[#80827f]">
+              {target.mode === 'add' ? 'Sumar a' : 'Planear'} {dayMeta.long}
+            </span>
+            <p className="mt-1 t-heading-sm leading-tight text-[#2c2e2a]">{target.exerciseName}</p>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Cerrar"
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white hover:bg-[#e0dbce]"
+          >
+            <Icon.Close size={16} />
+          </button>
+        </div>
+
+        <div className="flex flex-col gap-2.5 px-5 pb-5">
+          <PlanRow
+            label="Series"
+            value={sets}
+            onChange={setSets}
+            step={1}
+            suffix="serie"
+            placeholder="3"
+            min={1}
+            max={10}
+          />
+          <PlanRow
+            label="Repeticiones"
+            value={reps}
+            onChange={setReps}
+            step={1}
+            suffix="rep"
+            placeholder="10"
+            min={1}
+            max={99}
+          />
+          <PlanRow
+            label="Peso (kg)"
+            value={weight}
+            onChange={setWeight}
+            step={2.5}
+            suffix="kg"
+            placeholder="sin peso"
+            min={0}
+            max={500}
+            allowEmpty
+          />
+
+          <p className="px-1 pt-1 t-eyebrow text-[#80827f]">
+            Las series son las mismas para todo el día. Deja el peso vacío si el ejercicio va con
+            peso corporal.
+          </p>
+
+          <div className="mt-2 flex flex-col gap-2 sm:flex-row-reverse">
+            <Button
+              variant="coral"
+              size="lg"
+              fullWidth
+              onClick={submit}
+              disabled={!valid || saving}
+              iconRight={<Icon.Check size={14} />}
+              dotColor="sunshine"
+            >
+              {target.mode === 'add' ? 'Sumar a la rutina' : 'Guardar'}
+            </Button>
+            <Button variant="ghost" size="lg" fullWidth onClick={onClose} disabled={saving}>
+              Cancelar
+            </Button>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }

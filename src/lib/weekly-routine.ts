@@ -9,6 +9,44 @@ export interface WeeklyRoutineEntry {
   position: number;
   default_sets: number;
   default_reps: number;
+  default_weight_kg?: number | null;
+}
+
+export interface EntryPlan {
+  sets: number;
+  reps: number;
+  weightKg: number | null;
+}
+
+const DEFAULT_SETS = 3;
+const DEFAULT_REPS = 10;
+
+/**
+ * `weekly_routine.default_weight_kg` se agrega por migración. Si la columna
+ * todavía no existe en la base, los writes con peso fallan: los reintentamos
+ * sin el campo para que la app siga funcionando y el peso se empiece a
+ * guardar solo en cuanto corra la migración.
+ */
+function isMissingWeightColumn(error: {
+  code?: string;
+  message?: string;
+  details?: string;
+} | null): boolean {
+  if (!error) return false;
+  const raw = `${error.message ?? ''} ${error.details ?? ''} ${error.code ?? ''}`.toLowerCase();
+  if (!raw.includes('default_weight_kg')) return false;
+  return (
+    raw.includes('could not find') ||
+    raw.includes('does not exist') ||
+    raw.includes('unknown column') ||
+    raw.includes('42703') ||
+    raw.includes('pgrst204')
+  );
+}
+
+function withoutWeight<T extends Record<string, unknown>>(patch: T): Omit<T, 'default_weight_kg'> {
+  const { default_weight_kg: _ignored, ...rest } = patch as Record<string, unknown>;
+  return rest as Omit<T, 'default_weight_kg'>;
 }
 
 export async function fetchWeeklyRoutine(profile: ProfileId): Promise<WeeklyRoutineEntry[]> {
@@ -26,8 +64,7 @@ export async function addExerciseToDay(
   profile: ProfileId,
   dayOfWeek: number,
   exerciseId: string,
-  defaultSets = 3,
-  defaultReps = 10,
+  plan: EntryPlan = { sets: DEFAULT_SETS, reps: DEFAULT_REPS, weightKg: null },
   position?: number,
 ): Promise<WeeklyRoutineEntry> {
   let nextPosition = position;
@@ -43,20 +80,57 @@ export async function addExerciseToDay(
     nextPosition = existing && existing.length > 0 ? (existing[0].position as number) + 1 : 0;
   }
 
-  const { data, error } = await db()
-    .from('weekly_routine')
-    .insert({
-      profile_id: profile,
-      day_of_week: dayOfWeek,
-      exercise_id: exerciseId,
-      position: nextPosition,
-      default_sets: defaultSets,
-      default_reps: defaultReps,
-    })
-    .select()
-    .single();
+  const row = {
+    profile_id: profile,
+    day_of_week: dayOfWeek,
+    exercise_id: exerciseId,
+    position: nextPosition,
+    default_sets: plan.sets,
+    default_reps: plan.reps,
+    default_weight_kg: plan.weightKg,
+  };
+
+  let { data, error } = await db().from('weekly_routine').insert(row).select().single();
+  if (error && isMissingWeightColumn(error)) {
+    const retry = await db()
+      .from('weekly_routine')
+      .insert(withoutWeight(row))
+      .select()
+      .single();
+    if (retry.error) throw retry.error;
+    data = retry.data;
+    error = null;
+  }
   if (error) throw error;
   return data as WeeklyRoutineEntry;
+}
+
+export async function updateEntryPlan(id: string, plan: Partial<EntryPlan>): Promise<void> {
+  const patch: Record<string, unknown> = {};
+  if (plan.sets !== undefined) patch.default_sets = plan.sets;
+  if (plan.reps !== undefined) patch.default_reps = plan.reps;
+  if (plan.weightKg !== undefined) patch.default_weight_kg = plan.weightKg;
+
+  const { error } = await db().from('weekly_routine').update(patch).eq('id', id);
+  if (error && isMissingWeightColumn(error)) {
+    const { error: retryErr } = await db()
+      .from('weekly_routine')
+      .update(withoutWeight(patch))
+      .eq('id', id);
+    if (retryErr) throw retryErr;
+    return;
+  }
+  if (error) throw error;
+}
+
+/** Las series son iguales para todas las entradas del día: se escriben en todas. */
+export async function updateDaySets(profile: ProfileId, dayOfWeek: number, sets: number): Promise<void> {
+  const { error } = await db()
+    .from('weekly_routine')
+    .update({ default_sets: sets })
+    .eq('profile_id', profile)
+    .eq('day_of_week', dayOfWeek);
+  if (error) throw error;
 }
 
 export async function removeFromRoutine(id: string): Promise<void> {
@@ -139,4 +213,11 @@ export async function clearDay(profile: ProfileId, dayOfWeek: number): Promise<v
 
 export function entryHasExercise(entries: WeeklyRoutineEntry[], dayOfWeek: number, exerciseId: string): boolean {
   return entries.some((e) => e.day_of_week === dayOfWeek && e.exercise_id === exerciseId);
+}
+
+/** Series planificadas para un día (todas las entradas del día comparten el valor). */
+export function daySets(entries: WeeklyRoutineEntry[], dayOfWeek: number): number {
+  const dayEntries = entries.filter((e) => e.day_of_week === dayOfWeek);
+  if (dayEntries.length === 0) return DEFAULT_SETS;
+  return Math.max(...dayEntries.map((e) => e.default_sets));
 }

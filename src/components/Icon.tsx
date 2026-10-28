@@ -269,4 +269,19 @@ export const Icon = {
         </>
       ),
     }),
+  Edit: (p: IconProps) =>
+    svg({
+      ...p,
+      children: (
+        <>
+          <path d="M4 20h4l10-10-4-4L4 16v4z" />
+          <path d="M14 6l4 4" />
+        </>
+      ),
+    }),
+  Minus: (p: IconProps) =>
+    svg({
+      ...p,
+      children: <path d="M5 12h14" />,
+    }),
 };

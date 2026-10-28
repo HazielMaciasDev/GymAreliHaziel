@@ -11,9 +11,10 @@ interface ExerciseCardHomeProps {
   sets: number;
   reps: number;
   position: number;
+  weightKg?: number | null;
 }
 
-export function ExerciseCardHome({ exercise, sets, reps, position }: ExerciseCardHomeProps) {
+export function ExerciseCardHome({ exercise, sets, reps, position, weightKg }: ExerciseCardHomeProps) {
   const primary = MUSCLES[exercise.primaryMuscle];
   const [expanded, setExpanded] = useState(false);
 
@@ -65,6 +66,12 @@ export function ExerciseCardHome({ exercise, sets, reps, position }: ExerciseCar
           {sets}
           <span className="opacity-50">×</span>
           {reps}
+          {weightKg ? (
+            <>
+              <span className="opacity-50">·</span>
+              {weightKg}kg
+            </>
+          ) : null}
         </div>
 
         {!expanded ? (

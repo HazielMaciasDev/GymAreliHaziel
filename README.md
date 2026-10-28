@@ -72,5 +72,29 @@ Como es SPA, navegar directo a una ruta profunda funciona gracias al `404.html` 
 ## Persistencia
 
 - **Perfil** (Haziel / Areli): `localStorage.gym.profile`
-- **Catálogo de ejercicios**: `sessionStorage.gym.exercisesCache.v1` (5 min TTL) + fallback local si SDK falla
-- **Sesión activa**: `sessionStorage.gym.activeSession`
+- **Rutina semanal**: tabla `weekly_routine` en Supabase, cacheada en `localStorage.gym.routine.<perfil>.v2`
+- **Sesión activa**: tablas `sessions` / `exercise_logs` / `set_logs` en Supabase
+- **Catálogo de ejercicios**: `src/data/exercises.ts` (estático, versionado en git)
+
+## Base de datos
+
+Migraciones en `supabase/migrations/`. La última aplicada:
+
+| Migración | Qué hace |
+|---|---|
+| `20261028000000_add_planned_weight.sql` | Agrega `weekly_routine.default_weight_kg` (peso planificado por ejercicio) |
+
+Las series/reps/peso de cada ejercicio de la semana se configuran **antes** de entrenar
+(desde `/routine`) y la sesión los usa como valores iniciales. Durante la sesión se puede
+corregir cualquier set (inclusive uno ya marcado), agregar o quitar series, reordenar los
+ejercicios y devolver todo a la plantilla con **Guardar en la rutina**.
+
+## Ejercicios
+
+Los videos viven en `public/exercises/` con el patrón `<slug>-1.mp4`, `<slug>-2.mp4` y
+`<slug>-muscles.png`. Los Carpeta de origen (`ejerciciosAreli/`, `ejerciciosHaziel/`) están en
+`.gitignore`: son la fuente local para copiar la media y armar la entrada del catálogo.
+
+Al cambiar el nombre de un ejercicio hay que actualizar también su `id` en
+`src/data/exercises.ts` **y** las referencias en la base (`weekly_routine.exercise_id` y
+`exercise_logs.exercise_id`), para que la rutina y el historial sigan apuntando bien.
